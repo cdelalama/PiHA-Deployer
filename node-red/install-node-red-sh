@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Define colors
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# GitHub repository details
+REPO_OWNER="cdelalama"
+REPO_NAME="PiHA-Deployer"
+BRANCH="main"
+
+# Function to download a file from GitHub
+download_from_github() {
+    local file=$1
+    local url="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"
+    curl -s -O "$url"
+}
+
+# Download .env.example
+echo -e "${BLUE}Downloading .env.example...${NC}"
+download_from_github ".env.example"
+
+if [ ! -f ".env.example" ]; then
+    echo -e "${RED}Failed to download .env.example. Exiting.${NC}"
+    exit 1
+fi
+
+# Default values
+DEFAULT_BASE_DIR="/home/cdelalama/docker_temp_setup"
+DEFAULT_USERNAME="cdelalama"
+DEFAULT_SAMBA_USER="cdelalama"
+DEFAULT_DOCKER_COMPOSE_DIR="/srv/docker"
+DEFAULT_PORTAINER_DATA_DIR="/srv/docker/portainer"
+DEFAULT_NODE_RED_DATA_DIR="/srv/docker/node-red"
+DEFAULT_PORTAINER_PORT="9000"
+DEFAULT_NODE_RED_PORT="1880"
+DEFAULT_IP="auto"
+
+# Create .env file interactively
+echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC}"
+while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ $line == \#* ]] || [[ -z $line ]]; then
+        echo "$line" >> .env
+    else
+        var_name=$(echo "$line" | cut -d'=' -f1)
+        default_value=$(eval echo \$DEFAULT_$var_name)
+        
+        if [ "$var_name" == "SAMBA_PASS" ]; then
+            read -s -p "$var_name: " user_value
+            echo
+        else
+            read -p "$var_name [$default_value]: " user_value
+        fi
+        
+        echo "$var_name=${user_value:-$default_value}" >> .env
+    fi
+done < .env.example
+
+# Source the newly created .env file
+set -a
+source .env
+set +a
+
+# Create BASE_DIR if it doesn't exist
+mkdir -p "$BASE_DIR"
+
+# Download PiHA-Deployer-NodeRED.sh
+echo -e "${BLUE}Downloading PiHA-Deployer-NodeRED.sh...${NC}"
+download_from_github "PiHA-Deployer-NodeRED.sh"
+
+if [ ! -f "PiHA-Deployer-NodeRED.sh" ]; then
+    echo -e "${RED}Failed to download PiHA-Deployer-NodeRED.sh. Exiting.${NC}"
+    exit 1
+fi
+
+# Download docker-compose.yml
+echo -e "${BLUE}Downloading docker-compose.yml...${NC}"
+download_from_github "docker-compose.yml"
+
+if [ ! -f "docker-compose.yml" ]; then
+    echo -e "${RED}Failed to download docker-compose.yml. Exiting.${NC}"
+    exit 1
+fi
+
+# Move files to BASE_DIR
+mv .env PiHA-Deployer-NodeRED.sh docker-compose.yml "$BASE_DIR/"
+
+# Change to BASE_DIR
+cd "$BASE_DIR" || exit
+
+# Make PiHA-Deployer-NodeRED.sh executable
+chmod +x PiHA-Deployer-NodeRED.sh
+
+# Run PiHA-Deployer-NodeRED.sh
+echo -e "${BLUE}Running PiHA-Deployer-NodeRED.sh...${NC}"
+./PiHA-Deployer-NodeRED.sh
+
+echo -e "${GREEN}Installation complete!${NC}"
