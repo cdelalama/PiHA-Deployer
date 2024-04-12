@@ -64,7 +64,15 @@ source .env
 set +a
 
 # Create BASE_DIR if it doesn't exist
+echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}"
 mkdir -p "$BASE_DIR"
+
+# Copy .env to BASE_DIR
+echo -e "${BLUE}Copying .env to $BASE_DIR${NC}"
+cp .env "$BASE_DIR/"
+
+# Change to BASE_DIR
+cd "$BASE_DIR" || exit
 
 # Download PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Downloading PiHA-Deployer-NodeRED.sh...${NC}"
@@ -83,12 +91,6 @@ if [ ! -f "docker-compose.yml" ]; then
     echo -e "${RED}Failed to download docker-compose.yml. Exiting.${NC}"
     exit 1
 fi
-
-# Move files to BASE_DIR
-mv .env PiHA-Deployer-NodeRED.sh docker-compose.yml "$BASE_DIR/"
-
-# Change to BASE_DIR
-cd "$BASE_DIR" || exit
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
