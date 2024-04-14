@@ -82,7 +82,7 @@ echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC
     echo "IP=$IP"
 } > .env
 
-# Create BASE_DIR if it doesn't exist
+# Create BASE_DIR
 echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}"
 mkdir -p "$BASE_DIR"
 
