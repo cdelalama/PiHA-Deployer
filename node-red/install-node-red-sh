@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Version
+VERSION="1.0.1"
+
 set -e  # Exit immediately if a command exits with a non-zero status.
 
 # Define colors
@@ -8,6 +11,7 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+echo "PiHA-Deployer Node-RED Install Script v$VERSION"
 echo "Script started"
 
 # GitHub repository details
@@ -21,6 +25,11 @@ download_from_github() {
     local url="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"
     echo "Downloading $file from $url"
     curl -s -O "$url"
+    if [ $? -ne 0 ]; then
+        echo "Failed to download $file"
+        return 1
+    fi
+    echo "$file downloaded successfully"
 }
 
 # Download .env.example
@@ -31,8 +40,6 @@ if [ ! -f ".env.example" ]; then
     echo -e "${RED}Failed to download .env.example. Exiting.${NC}"
     exit 1
 fi
-
-echo ".env.example downloaded successfully"
 
 # Default values
 DEFAULT_BASE_DIR="/home/cdelalama/docker_temp_setup"
@@ -94,39 +101,33 @@ echo ".env file created"
 # Create BASE_DIR
 echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}"
 mkdir -p "$BASE_DIR"
-echo "BASE_DIR created"
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to create BASE_DIR. Exiting.${NC}"
+    exit 1
+fi
+echo "BASE_DIR created successfully"
 
 # Copy .env to BASE_DIR
 echo -e "${BLUE}Copying .env to $BASE_DIR${NC}"
 cp .env "$BASE_DIR/"
-echo ".env copied to BASE_DIR"
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to copy .env to BASE_DIR. Exiting.${NC}"
+    exit 1
+fi
+echo ".env copied to BASE_DIR successfully"
 
 # Change to BASE_DIR
-echo "Changing to BASE_DIR"
-cd "$BASE_DIR" || { echo "Failed to change to BASE_DIR"; exit 1; }
+echo "Changing to BASE_DIR: $BASE_DIR"
+cd "$BASE_DIR" || { echo -e "${RED}Failed to change to BASE_DIR. Exiting.${NC}"; exit 1; }
 echo "Changed to BASE_DIR successfully"
 
 # Download PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Downloading PiHA-Deployer-NodeRED.sh...${NC}"
 download_from_github "PiHA-Deployer-NodeRED.sh"
 
-if [ ! -f "PiHA-Deployer-NodeRED.sh" ]; then
-    echo -e "${RED}Failed to download PiHA-Deployer-NodeRED.sh. Exiting.${NC}"
-    exit 1
-fi
-
-echo "PiHA-Deployer-NodeRED.sh downloaded successfully"
-
 # Download docker-compose.yml
 echo -e "${BLUE}Downloading docker-compose.yml...${NC}"
 download_from_github "docker-compose.yml"
-
-if [ ! -f "docker-compose.yml" ]; then
-    echo -e "${RED}Failed to download docker-compose.yml. Exiting.${NC}"
-    exit 1
-fi
-
-echo "docker-compose.yml downloaded successfully"
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
