@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.2"
+VERSION="1.0.4"
 
 set -e  # Exit immediately if a command exits with a non-zero status.
 
@@ -89,7 +89,7 @@ echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC
 
 echo ".env file created"
 
-# Create BASE_DIR
+# Now we can create the BASE_DIR
 echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}"
 mkdir -p "$BASE_DIR"
 if [ $? -ne 0 ]; then
