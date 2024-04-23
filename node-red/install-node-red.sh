@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.9"
+VERSION="1.0.10"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -30,10 +30,10 @@ prompt_variable() {
     local is_password=$3
 
     if [ "$is_password" = true ]; then
-        read -s -p "$var_name: " value
-        echo
+        read -s -p "$var_name: " value </dev/tty
+        echo >&2
     else
-        read -p "$var_name [$default_value]: " value
+        read -p "$var_name [$default_value]: " value </dev/tty
         value=${value:-$default_value}
     fi
     echo "$var_name=$value"
@@ -54,11 +54,11 @@ echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC
     prompt_variable "IP" "$DEFAULT_IP"
 } > .env
 
-echo -e "${GREEN}.env file created successfully${NC}"
+echo -e "${GREEN}.env file created successfully${NC}" >&2
 
 # Display the contents of the .env file (excluding the password)
-echo -e "${BLUE}Contents of .env file:${NC}"
-grep -v SAMBA_PASS .env
+echo -e "${BLUE}Contents of .env file:${NC}" >&2
+grep -v SAMBA_PASS .env >&2
 
-echo -e "${GREEN}Installation setup complete. .env file has been created.${NC}"
-echo -e "${BLUE}You can now proceed with the rest of the installation process.${NC}"
+echo -e "${GREEN}Installation setup complete. .env file has been created.${NC}" >&2
+echo -e "${BLUE}You can now proceed with the rest of the installation process.${NC}" >&2
