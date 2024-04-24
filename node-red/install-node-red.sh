@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.10"
+VERSION="1.0.11"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -9,8 +9,8 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}"
-echo -e "${BLUE}Script started${NC}"
+echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}" >&2
+echo -e "${BLUE}Script started${NC}" >&2
 
 # Default values
 DEFAULT_BASE_DIR="/home/cdelalama/docker_temp_setup"
@@ -40,7 +40,7 @@ prompt_variable() {
 }
 
 # Create .env file interactively
-echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC}"
+echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC}" >&2
 {
     prompt_variable "BASE_DIR" "$DEFAULT_BASE_DIR"
     prompt_variable "USERNAME" "$DEFAULT_USERNAME"
@@ -60,5 +60,26 @@ echo -e "${GREEN}.env file created successfully${NC}" >&2
 echo -e "${BLUE}Contents of .env file:${NC}" >&2
 grep -v SAMBA_PASS .env >&2
 
-echo -e "${GREEN}Installation setup complete. .env file has been created.${NC}" >&2
+# Source the .env file to use its variables
+source .env
+
+# Create BASE_DIR
+echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}" >&2
+mkdir -p "$BASE_DIR"
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to create BASE_DIR. Exiting.${NC}" >&2
+    exit 1
+fi
+echo -e "${GREEN}BASE_DIR created successfully${NC}" >&2
+
+# Copy .env to BASE_DIR
+echo -e "${BLUE}Copying .env to $BASE_DIR${NC}" >&2
+cp .env "$BASE_DIR/.env"
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to copy .env to BASE_DIR. Exiting.${NC}" >&2
+    exit 1
+fi
+echo -e "${GREEN}.env copied to BASE_DIR successfully${NC}" >&2
+
+echo -e "${GREEN}Installation setup complete. .env file has been created and copied to $BASE_DIR.${NC}" >&2
 echo -e "${BLUE}You can now proceed with the rest of the installation process.${NC}" >&2
