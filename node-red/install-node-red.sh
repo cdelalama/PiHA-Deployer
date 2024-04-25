@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.11"
+VERSION="1.0.13"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -11,6 +11,24 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}" >&2
 echo -e "${BLUE}Script started${NC}" >&2
+
+# GitHub repository details
+REPO_OWNER="cdelalama"
+REPO_NAME="PiHA-Deployer"
+BRANCH="main"
+
+# Function to download a file from GitHub
+download_from_github() {
+    local file=$1
+    local url="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"
+    echo -e "${BLUE}Downloading $file from GitHub...${NC}" >&2
+    curl -sSL -o "$file" "$url"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to download $file. Exiting.${NC}" >&2
+        exit 1
+    fi
+    echo -e "${GREEN}$file downloaded successfully${NC}" >&2
+}
 
 # Default values
 DEFAULT_BASE_DIR="/home/cdelalama/docker_temp_setup"
@@ -81,5 +99,17 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}.env copied to BASE_DIR successfully${NC}" >&2
 
-echo -e "${GREEN}Installation setup complete. .env file has been created and copied to $BASE_DIR.${NC}" >&2
-echo -e "${BLUE}You can now proceed with the rest of the installation process.${NC}" >&2
+# Change to BASE_DIR
+cd "$BASE_DIR" || { echo -e "${RED}Failed to change to BASE_DIR. Exiting.${NC}" >&2; exit 1; }
+
+# Download PiHA-Deployer-NodeRED.sh
+download_from_github "PiHA-Deployer-NodeRED.sh"
+
+# Make PiHA-Deployer-NodeRED.sh executable
+chmod +x PiHA-Deployer-NodeRED.sh
+
+# Execute PiHA-Deployer-NodeRED.sh
+echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
+./PiHA-Deployer-NodeRED.sh
+
+echo -e "${GREEN}Installation complete!${NC}" >&2
