@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define colors
-BLUE='\033[1;34m'
+BLUE='\033[0;36m'  # Lighter blue (cyan)
 RED='\033[1;31m'
 NC='\033[0m' # No Color
 
