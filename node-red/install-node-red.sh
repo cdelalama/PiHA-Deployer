@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.15"
+VERSION="1.0.16"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -48,8 +48,15 @@ prompt_variable() {
     local is_password=$3
 
     if [ "$is_password" = true ]; then
-        read -s -p "$var_name: " value </dev/tty
-        echo >&2
+        while true; do
+            read -s -p "$var_name: " value </dev/tty
+            echo >&2
+            if [ -z "$value" ]; then
+                echo -e "${RED}Error: Samba password cannot be empty. Please try again.${NC}" >&2
+            else
+                break
+            fi
+        done
     else
         read -p "$var_name [$default_value]: " value </dev/tty
         value=${value:-$default_value}
