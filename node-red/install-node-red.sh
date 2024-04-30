@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.16"
+VERSION="1.0.17"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -121,5 +121,11 @@ chmod +x PiHA-Deployer-NodeRED.sh
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
 ./PiHA-Deployer-NodeRED.sh
+
+# Cleanup
+echo -e "${BLUE}Cleaning up temporary files...${NC}" >&2
+rm -f "$HOME/.env"
+rm -f "$BASE_DIR/PiHA-Deployer-NodeRED.sh"
+echo -e "${GREEN}Cleanup complete${NC}" >&2
 
 echo -e "${GREEN}Installation complete!${NC}" >&2
