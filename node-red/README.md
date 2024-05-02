@@ -59,7 +59,10 @@ Feel free to fork this repository and submit pull requests for any enhancements.
 
 ## License
 
-[Insert your license information here]
+MIT License
+
+Copyright (c) 2024 cdelalama
+
 ```
 
 ```ini {"id":"01J4AKZ32QN4JV2G1AVYS7DY12"}
