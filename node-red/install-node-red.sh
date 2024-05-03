@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.17"
+VERSION="1.0.18"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -40,6 +40,10 @@ DEFAULT_NODE_RED_DATA_DIR="/srv/docker/node-red"
 DEFAULT_PORTAINER_PORT="9000"
 DEFAULT_NODE_RED_PORT="1880"
 DEFAULT_IP="auto"
+DEFAULT_NAS_IP=""
+DEFAULT_NAS_SHARE_NAME=""
+DEFAULT_NAS_USERNAME=""
+DEFAULT_SYNC_INTERVAL="hourly"
 
 # Function to prompt for a variable
 prompt_variable() {
@@ -52,7 +56,7 @@ prompt_variable() {
             read -s -p "$var_name: " value </dev/tty
             echo >&2
             if [ -z "$value" ]; then
-                echo -e "${RED}Error: Samba password cannot be empty. Please try again.${NC}" >&2
+                echo -e "${RED}Error: Password cannot be empty. Please try again.${NC}" >&2
             else
                 break
             fi
@@ -77,13 +81,18 @@ echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC
     prompt_variable "PORTAINER_PORT" "$DEFAULT_PORTAINER_PORT"
     prompt_variable "NODE_RED_PORT" "$DEFAULT_NODE_RED_PORT"
     prompt_variable "IP" "$DEFAULT_IP"
+    prompt_variable "NAS_IP" "$DEFAULT_NAS_IP"
+    prompt_variable "NAS_SHARE_NAME" "$DEFAULT_NAS_SHARE_NAME"
+    prompt_variable "NAS_USERNAME" "$DEFAULT_NAS_USERNAME"
+    prompt_variable "NAS_PASSWORD" "" true
+    prompt_variable "SYNC_INTERVAL" "$DEFAULT_SYNC_INTERVAL"
 } > .env
 
 echo -e "${GREEN}.env file created successfully${NC}" >&2
 
-# Display the contents of the .env file (excluding the password)
+# Display the contents of the .env file (excluding the passwords)
 echo -e "${BLUE}Contents of .env file:${NC}" >&2
-grep -v SAMBA_PASS .env >&2
+grep -vE 'SAMBA_PASS|NAS_PASSWORD' .env >&2
 
 # Source the .env file to use its variables
 source .env
