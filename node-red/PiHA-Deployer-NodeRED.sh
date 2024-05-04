@@ -41,10 +41,16 @@ NODE_RED_DATA_DIR=$(echo "$NODE_RED_DATA_DIR" | tr -d '\r')
 PORTAINER_PORT=$(echo "$PORTAINER_PORT" | tr -d '\r')
 NODE_RED_PORT=$(echo "$NODE_RED_PORT" | tr -d '\r')
 IP=$(echo "$IP" | tr -d '\r')
+NAS_IP=$(echo "$NAS_IP" | tr -d '\r')
+NAS_SHARE_NAME=$(echo "$NAS_SHARE_NAME" | tr -d '\r')
+NAS_USERNAME=$(echo "$NAS_USERNAME" | tr -d '\r')
+NAS_PASSWORD=$(echo "$NAS_PASSWORD" | tr -d '\r')
+NAS_MOUNT_DIR=$(echo "$NAS_MOUNT_DIR" | tr -d '\r')
+SYNC_INTERVAL=$(echo "$SYNC_INTERVAL" | tr -d '\r')
 
 # Check if required variables are set
 confirm_step "Check if all required variables are set in the .env file"
-required_vars=(BASE_DIR USERNAME SAMBA_USER SAMBA_PASS DOCKER_COMPOSE_DIR PORTAINER_DATA_DIR NODE_RED_DATA_DIR PORTAINER_PORT NODE_RED_PORT IP)
+required_vars=(BASE_DIR USERNAME SAMBA_USER SAMBA_PASS DOCKER_COMPOSE_DIR PORTAINER_DATA_DIR NODE_RED_DATA_DIR PORTAINER_PORT NODE_RED_PORT IP NAS_IP NAS_SHARE_NAME NAS_USERNAME NAS_PASSWORD NAS_MOUNT_DIR SYNC_INTERVAL)
 for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
         echo -e "${RED}❌ $var is not set in .env file${NC}"
@@ -123,15 +129,24 @@ sudo usermod -aG docker $USERNAME
 
 # Install necessary packages for Samba
 confirm_step "Install Samba packages"
-sudo apt install -y samba samba-common-bin
+sudo apt install -y samba samba-common-bin cifs-utils
 
 # Create directories
 confirm_step "Create necessary directories"
-sudo mkdir -p "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR"
+sudo mkdir -p "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$NAS_MOUNT_DIR"
 
 # Ensure DOCKER_COMPOSE_DIR exists and has correct permissions
 sudo mkdir -p "$DOCKER_COMPOSE_DIR"
 sudo chown "$USERNAME:$USERNAME" "$DOCKER_COMPOSE_DIR"
+
+# Mount NAS share
+confirm_step "Mount NAS share"
+echo "//${NAS_IP}/${NAS_SHARE_NAME} ${NAS_MOUNT_DIR} cifs username=${NAS_USERNAME},password=${NAS_PASSWORD},iocharset=utf8,file_mode=0777,dir_mode=0777 0 0" | sudo tee -a /etc/fstab
+sudo mount -a
+
+# Create NAS directories
+confirm_step "Create NAS directories"
+sudo mkdir -p "${NAS_MOUNT_DIR}/PiHA-Deployer/node-red" "${NAS_MOUNT_DIR}/PiHA-Deployer/portainer"
 
 # Copy docker-compose.yml to the Docker Compose directory
 confirm_step "Copy and modify docker-compose.yml"
@@ -148,6 +163,7 @@ sed -i "s|\${PORTAINER_DATA_DIR}|$PORTAINER_DATA_DIR|g" "$DOCKER_COMPOSE_DIR/doc
 sed -i "s|\${PORTAINER_PORT}|$PORTAINER_PORT|g" "$DOCKER_COMPOSE_DIR/docker-compose.yml"
 sed -i "s|\${NODE_RED_DATA_DIR}|$NODE_RED_DATA_DIR|g" "$DOCKER_COMPOSE_DIR/docker-compose.yml"
 sed -i "s|\${NODE_RED_PORT}|$NODE_RED_PORT|g" "$DOCKER_COMPOSE_DIR/docker-compose.yml"
+sed -i "s|\${NAS_MOUNT_DIR}|$NAS_MOUNT_DIR|g" "$DOCKER_COMPOSE_DIR/docker-compose.yml"
 
 # Print the modified docker-compose.yml
 echo -e "${BLUE}📄 Content of modified $DOCKER_COMPOSE_DIR/docker-compose.yml:${NC}"
@@ -183,6 +199,26 @@ echo -e "$SAMBA_PASS\n$SAMBA_PASS" | sudo smbpasswd -s -a $SAMBA_USER
 confirm_step "Restart Samba service"
 sudo systemctl restart smbd
 
+# Set up rsync script
+confirm_step "Set up rsync script"
+cat << EOF > /home/${USERNAME}/sync_data.sh
+#!/bin/bash
+rsync -avz ${NODE_RED_DATA_DIR}/ ${NAS_MOUNT_DIR}/PiHA-Deployer/node-red/
+rsync -avz ${PORTAINER_DATA_DIR}/ ${NAS_MOUNT_DIR}/PiHA-Deployer/portainer/
+EOF
+
+chmod +x /home/${USERNAME}/sync_data.sh
+
+# Set up cron job
+confirm_step "Set up cron job"
+if [ "$SYNC_INTERVAL" = "hourly" ]; then
+    (crontab -l 2>/dev/null; echo "0 * * * * /home/${USERNAME}/sync_data.sh") | crontab -
+elif [ "$SYNC_INTERVAL" = "daily" ]; then
+    (crontab -l 2>/dev/null; echo "0 0 * * * /home/${USERNAME}/sync_data.sh") | crontab -
+elif [ "$SYNC_INTERVAL" = "weekly" ]; then
+    (crontab -l 2>/dev/null; echo "0 0 * * 0 /home/${USERNAME}/sync_data.sh") | crontab -
+fi
+
 # Verify Docker containers are running
 confirm_step "Verify Docker containers are running"
 if ! docker ps | grep -q 'portainer'; then
@@ -192,12 +228,25 @@ if ! docker ps | grep -q 'node-red'; then
     echo -e "${RED}❌ Node-RED container is not running. Check Docker logs for more information.${NC}"
 fi
 
+# Check and restore data from NAS if it exists
+confirm_step "Check and restore data from NAS"
+if [ -d "${NAS_MOUNT_DIR}/PiHA-Deployer/node-red" ] && [ "$(ls -A ${NAS_MOUNT_DIR}/PiHA-Deployer/node-red)" ]; then
+    echo "Existing Node-RED data found on NAS. Restoring..."
+    rsync -avz ${NAS_MOUNT_DIR}/PiHA-Deployer/node-red/ ${NODE_RED_DATA_DIR}/
+fi
+
+if [ -d "${NAS_MOUNT_DIR}/PiHA-Deployer/portainer" ] && [ "$(ls -A ${NAS_MOUNT_DIR}/PiHA-Deployer/portainer)" ]; then
+    echo "Existing Portainer data found on NAS. Restoring..."
+    rsync -avz ${NAS_MOUNT_DIR}/PiHA-Deployer/portainer/ ${PORTAINER_DATA_DIR}/
+fi
+
 echo -e "${BLUE}✅ Installation complete!${NC}"
 echo -e "${BLUE}🌐 Portainer is accessible at http://$IP:$PORTAINER_PORT${NC}"
 echo -e "${BLUE}🔴 Node-RED is accessible at http://$IP:$NODE_RED_PORT${NC}"
 echo -e "${BLUE}📁 Docker folders are shared via Samba at \\\\$IP\\docker${NC}"
 echo -e "${BLUE}👤 Please use your Samba username ($SAMBA_USER) and the password you set in the .env file to access the share.${NC}"
 echo -e "${BLUE}🔄 You may need to log out and log back in for Docker permissions to take effect.${NC}"
+echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals.${NC}"
 
 # Clean up sensitive files
 confirm_step "Clean up temporary files for security"

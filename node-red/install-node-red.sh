@@ -43,6 +43,7 @@ DEFAULT_IP="auto"
 DEFAULT_NAS_IP=""
 DEFAULT_NAS_SHARE_NAME=""
 DEFAULT_NAS_USERNAME=""
+DEFAULT_NAS_MOUNT_DIR="/mnt/nas_share"
 DEFAULT_SYNC_INTERVAL="hourly"
 
 # Function to prompt for a variable
@@ -85,6 +86,7 @@ echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC
     prompt_variable "NAS_SHARE_NAME" "$DEFAULT_NAS_SHARE_NAME"
     prompt_variable "NAS_USERNAME" "$DEFAULT_NAS_USERNAME"
     prompt_variable "NAS_PASSWORD" "" true
+    prompt_variable "NAS_MOUNT_DIR" "$DEFAULT_NAS_MOUNT_DIR"
     prompt_variable "SYNC_INTERVAL" "$DEFAULT_SYNC_INTERVAL"
 } > .env
 
