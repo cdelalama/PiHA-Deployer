@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.18"
+VERSION="1.0.19"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -69,28 +69,32 @@ prompt_variable() {
     echo "$var_name=$value"
 }
 
-# Create .env file interactively
-echo -e "${BLUE}Creating .env file. Please provide values for each variable:${NC}" >&2
-{
-    prompt_variable "BASE_DIR" "$DEFAULT_BASE_DIR"
-    prompt_variable "USERNAME" "$DEFAULT_USERNAME"
-    prompt_variable "SAMBA_USER" "$DEFAULT_SAMBA_USER"
-    prompt_variable "SAMBA_PASS" "" true
-    prompt_variable "DOCKER_COMPOSE_DIR" "$DEFAULT_DOCKER_COMPOSE_DIR"
-    prompt_variable "PORTAINER_DATA_DIR" "$DEFAULT_PORTAINER_DATA_DIR"
-    prompt_variable "NODE_RED_DATA_DIR" "$DEFAULT_NODE_RED_DATA_DIR"
-    prompt_variable "PORTAINER_PORT" "$DEFAULT_PORTAINER_PORT"
-    prompt_variable "NODE_RED_PORT" "$DEFAULT_NODE_RED_PORT"
-    prompt_variable "IP" "$DEFAULT_IP"
-    prompt_variable "NAS_IP" "$DEFAULT_NAS_IP"
-    prompt_variable "NAS_SHARE_NAME" "$DEFAULT_NAS_SHARE_NAME"
-    prompt_variable "NAS_USERNAME" "$DEFAULT_NAS_USERNAME"
-    prompt_variable "NAS_PASSWORD" "" true
-    prompt_variable "NAS_MOUNT_DIR" "$DEFAULT_NAS_MOUNT_DIR"
-    prompt_variable "SYNC_INTERVAL" "$DEFAULT_SYNC_INTERVAL"
-} > .env
-
-echo -e "${GREEN}.env file created successfully${NC}" >&2
+# Check if .env file already exists
+if [ -f ".env" ]; then
+    echo -e "${GREEN}Existing .env file found. Using the existing file.${NC}" >&2
+else
+    echo -e "${BLUE}No existing .env file found. Creating a new one.${NC}" >&2
+    echo -e "${BLUE}Please provide values for each variable:${NC}" >&2
+    {
+        prompt_variable "BASE_DIR" "$DEFAULT_BASE_DIR"
+        prompt_variable "USERNAME" "$DEFAULT_USERNAME"
+        prompt_variable "SAMBA_USER" "$DEFAULT_SAMBA_USER"
+        prompt_variable "SAMBA_PASS" "" true
+        prompt_variable "DOCKER_COMPOSE_DIR" "$DEFAULT_DOCKER_COMPOSE_DIR"
+        prompt_variable "PORTAINER_DATA_DIR" "$DEFAULT_PORTAINER_DATA_DIR"
+        prompt_variable "NODE_RED_DATA_DIR" "$DEFAULT_NODE_RED_DATA_DIR"
+        prompt_variable "PORTAINER_PORT" "$DEFAULT_PORTAINER_PORT"
+        prompt_variable "NODE_RED_PORT" "$DEFAULT_NODE_RED_PORT"
+        prompt_variable "IP" "$DEFAULT_IP"
+        prompt_variable "NAS_IP" "$DEFAULT_NAS_IP"
+        prompt_variable "NAS_SHARE_NAME" "$DEFAULT_NAS_SHARE_NAME"
+        prompt_variable "NAS_USERNAME" "$DEFAULT_NAS_USERNAME"
+        prompt_variable "NAS_PASSWORD" "" true
+        prompt_variable "NAS_MOUNT_DIR" "$DEFAULT_NAS_MOUNT_DIR"
+        prompt_variable "SYNC_INTERVAL" "$DEFAULT_SYNC_INTERVAL"
+    } > .env
+    echo -e "${GREEN}.env file created successfully${NC}" >&2
+fi
 
 # Display the contents of the .env file (excluding the passwords)
 echo -e "${BLUE}Contents of .env file:${NC}" >&2
