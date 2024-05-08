@@ -1,4 +1,3 @@
-sudo tee /srv/docker/docker-compose.yml << EOF
 version: "3"
 services:
     portainer:
@@ -20,8 +19,7 @@ services:
         restart: unless-stopped
         user: "1000:1000"
         volumes:
-            - \${NODE_RED_DATA_DIR}:/data
-            - \${NAS_MOUNT_DIR}/node-red:/nas_data
+            - ${NODE_RED_DATA_DIR}:/data
+            - ${NAS_MOUNT_DIR}/node-red:/nas_data
         ports:
             - 1880:1880
-EOF
