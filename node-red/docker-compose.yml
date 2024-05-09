@@ -1,25 +1,25 @@
 version: "3"
 services:
-    portainer:
-        image: portainer/portainer-ce:latest
-        container_name: portainer
-        restart: unless-stopped
-        security_opt:
-            - no-new-privileges:true
-        volumes:
-            - /etc/localtime:/etc/localtime:ro
-            - /var/run/docker.sock:/var/run/docker.sock:ro
-            - /srv/docker/portainer:/data
-            - /mnt/nas_share/portainer:/nas_data
-        ports:
-            - 9000:9000
-    node-red:
-        image: nodered/node-red:latest
-        container_name: node-red
-        restart: unless-stopped
-        user: "1000:1000"
-        volumes:
-            - ${NODE_RED_DATA_DIR}:/data
-            - ${NAS_MOUNT_DIR}/node-red:/nas_data
-        ports:
-            - 1880:1880
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/docker/portainer:/data
+      - /mnt/piha/portainer:/nas_data
+    ports:
+      - 9000:9000
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - ${NODE_RED_DATA_DIR}:/data
+      - ${NAS_MOUNT_DIR}/node-red:/nas_data
+    ports:
+      - 1880:1880
