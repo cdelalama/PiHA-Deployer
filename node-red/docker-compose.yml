@@ -10,7 +10,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /srv/docker/portainer:/data
-      - /mnt/piha/portainer:/nas_data
+      - /mnt/nas_share/portainer:/nas_data
     ports:
       - 9000:9000
   node-red:
