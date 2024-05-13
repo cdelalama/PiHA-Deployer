@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # Version
 VERSION="1.0.19"
 
