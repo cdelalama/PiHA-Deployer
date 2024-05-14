@@ -68,12 +68,13 @@ prompt_variable() {
     fi
     echo "$var_name=$value"
 }
-
-# Check if .env file already exists
-if [ -f ".env" ]; then
-    echo -e "${GREEN}Existing .env file found. Using the existing file.${NC}" >&2
+# Check if .env file already exists and is not empty
+if [ -s ".env" ]; then
+    echo -e "${GREEN}Existing .env file found with content. Using the existing file.${NC}" >&2
+    echo -e "${BLUE}Contents of .env file:${NC}" >&2
+    grep -vE 'SAMBA_PASS|NAS_PASSWORD' .env >&2
 else
-    echo -e "${BLUE}No existing .env file found. Creating a new one.${NC}" >&2
+    echo -e "${BLUE}No existing .env file found or file is empty. Creating a new one.${NC}" >&2
     echo -e "${BLUE}Please provide values for each variable:${NC}" >&2
     {
         prompt_variable "BASE_DIR" "$DEFAULT_BASE_DIR"
@@ -95,6 +96,14 @@ else
     } > .env
     echo -e "${GREEN}.env file created successfully${NC}" >&2
 fi
+
+# Ensure .env file has correct permissions
+chmod 600 .env
+
+# Source the .env file to use its variables
+set -a
+source .env
+set +a
 
 # Display the contents of the .env file (excluding the passwords)
 echo -e "${BLUE}Contents of .env file:${NC}" >&2
