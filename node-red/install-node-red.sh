@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # Version
-VERSION="1.0.20"
+VERSION="1.0.21"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -68,6 +68,7 @@ prompt_variable() {
     fi
     echo "$var_name=$value"
 }
+
 # Check if .env file already exists and is not empty
 if [ -s ".env" ]; then
     echo -e "${GREEN}Existing .env file found with content. Using the existing file.${NC}" >&2
@@ -108,9 +109,6 @@ set +a
 # Display the contents of the .env file (excluding the passwords)
 echo -e "${BLUE}Contents of .env file:${NC}" >&2
 grep -vE 'SAMBA_PASS|NAS_PASSWORD' .env >&2
-
-# Source the .env file to use its variables
-source .env
 
 # Create BASE_DIR
 echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}" >&2
