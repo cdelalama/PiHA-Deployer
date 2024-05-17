@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # Version
-VERSION="1.0.21"
+VERSION="1.0.22"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -69,13 +69,14 @@ prompt_variable() {
     echo "$var_name=$value"
 }
 
-# Check if .env file already exists and is not empty
-if [ -s ".env" ]; then
-    echo -e "${GREEN}Existing .env file found with content. Using the existing file.${NC}" >&2
+# Check if .env file already exists and is not empty in the current directory
+if [ -s "$(pwd)/.env" ]; then
+    echo -e "${GREEN}Existing .env file found with content in $(pwd). Using the existing file.${NC}" >&2
     echo -e "${BLUE}Contents of .env file:${NC}" >&2
-    grep -vE 'SAMBA_PASS|NAS_PASSWORD' .env >&2
+    grep -vE 'SAMBA_PASS|NAS_PASSWORD' "$(pwd)/.env" >&2
+    cp "$(pwd)/.env" .env
 else
-    echo -e "${BLUE}No existing .env file found or file is empty. Creating a new one.${NC}" >&2
+    echo -e "${BLUE}No existing .env file found or file is empty in $(pwd). Creating a new one.${NC}" >&2
     echo -e "${BLUE}Please provide values for each variable:${NC}" >&2
     {
         prompt_variable "BASE_DIR" "$DEFAULT_BASE_DIR"
@@ -97,7 +98,6 @@ else
     } > .env
     echo -e "${GREEN}.env file created successfully${NC}" >&2
 fi
-
 # Ensure .env file has correct permissions
 chmod 600 .env
 
