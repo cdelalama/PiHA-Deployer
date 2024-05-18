@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # Version
-VERSION="1.0.22"
+VERSION="1.0.23"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -74,7 +74,6 @@ if [ -s "$(pwd)/.env" ]; then
     echo -e "${GREEN}Existing .env file found with content in $(pwd). Using the existing file.${NC}" >&2
     echo -e "${BLUE}Contents of .env file:${NC}" >&2
     grep -vE 'SAMBA_PASS|NAS_PASSWORD' "$(pwd)/.env" >&2
-    cp "$(pwd)/.env" .env
 else
     echo -e "${BLUE}No existing .env file found or file is empty in $(pwd). Creating a new one.${NC}" >&2
     echo -e "${BLUE}Please provide values for each variable:${NC}" >&2
