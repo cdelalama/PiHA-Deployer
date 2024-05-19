@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 # Version
-VERSION="1.0.23"
+VERSION="1.0.24"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -97,6 +97,7 @@ else
     } > .env
     echo -e "${GREEN}.env file created successfully${NC}" >&2
 fi
+
 # Ensure .env file has correct permissions
 chmod 600 .env
 

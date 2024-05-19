@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.1"
+VERSION="1.0.3"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -65,8 +65,6 @@ for var in "${required_vars[@]}"; do
     fi
 done
 
-# ... (rest of the script remains the same until the Node-RED permissions section)
-
 # Set correct permissions for Node-RED data directory
 confirm_step "Set permissions for Node-RED data directory"
 sudo mkdir -p "$NODE_RED_DATA_DIR"
@@ -82,24 +80,17 @@ fi
 sudo chown 1000:1000 "$SETTINGS_JS"
 sudo chmod 664 "$SETTINGS_JS"
 
-# Modify docker-compose.yml to ensure Node-RED has correct permissions
-confirm_step "Modify docker-compose.yml for Node-RED permissions"
-sed -i '/node-red:/,/ports:/c\
-  node-red:\
-    image: nodered/node-red:latest\
-    container_name: node-red\
-    restart: unless-stopped\
-    user: "1000:1000"\
-    volumes:\
-      - ${NODE_RED_DATA_DIR}:/data\
-      - ${NAS_MOUNT_DIR}/node-red:/nas_data\
-    ports:' "$DOCKER_COMPOSE_DIR/docker-compose.yml"
+# Create directories
+confirm_step "Create necessary directories"
+sudo mkdir -p "$DOCKER_COMPOSE_DIR" "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$NAS_MOUNT_DIR"
+
+# Copy .env to DOCKER_COMPOSE_DIR
+confirm_step "Copy .env file to Docker Compose directory"
+sudo cp .env "$DOCKER_COMPOSE_DIR/.env"
 
 # Start Docker containers
 confirm_step "Start Docker containers (Portainer and Node-RED)"
-sudo docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" up -d
-
-# ... (rest of the script remains the same)
+sudo -E docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" up -d
 
 echo -e "${BLUE}✅ Installation complete!${NC}"
 echo -e "${BLUE}🌐 Portainer is accessible at http://$IP:$PORTAINER_PORT${NC}"
