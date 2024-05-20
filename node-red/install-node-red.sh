@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
+
 # Version
-VERSION="1.0.24"
+VERSION="1.0.26"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -11,6 +12,11 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}" >&2
 echo -e "${BLUE}Script started${NC}" >&2
+
+# Install necessary packages
+echo -e "${BLUE}Installing necessary packages...${NC}" >&2
+sudo apt-get update
+sudo apt-get install -y smbclient cifs-utils
 
 # GitHub repository details
 REPO_OWNER="cdelalama"
@@ -34,17 +40,19 @@ download_from_github() {
 DEFAULT_BASE_DIR="/home/cdelalama/docker_temp_setup"
 DEFAULT_USERNAME="cdelalama"
 DEFAULT_SAMBA_USER="cdelalama"
+DEFAULT_SAMBA_PASS="portxxaser99"
 DEFAULT_DOCKER_COMPOSE_DIR="/srv/docker"
 DEFAULT_PORTAINER_DATA_DIR="/srv/docker/portainer"
 DEFAULT_NODE_RED_DATA_DIR="/srv/docker/node-red"
 DEFAULT_PORTAINER_PORT="9000"
 DEFAULT_NODE_RED_PORT="1880"
 DEFAULT_IP="auto"
-DEFAULT_NAS_IP=""
-DEFAULT_NAS_SHARE_NAME=""
-DEFAULT_NAS_USERNAME=""
-DEFAULT_NAS_MOUNT_DIR="/mnt/nas_share"
-DEFAULT_SYNC_INTERVAL="hourly"
+DEFAULT_NAS_IP="10.0.0.220"
+DEFAULT_NAS_SHARE_NAME="piha"
+DEFAULT_NAS_USERNAME="piha"
+DEFAULT_NAS_PASSWORD=""
+DEFAULT_NAS_MOUNT_DIR="/mnt/piha"
+DEFAULT_SYNC_INTERVAL="10000"
 
 # Function to prompt for a variable
 prompt_variable() {
@@ -139,6 +147,16 @@ download_from_github "docker-compose.yml"
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
+
+# Mount NAS share
+echo -e "${BLUE}Mounting NAS share...${NC}" >&2
+sudo mkdir -p "$NAS_MOUNT_DIR"
+sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="${NAS_USERNAME}",password="${NAS_PASSWORD}",vers=3.0
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to mount NAS share. Exiting.${NC}" >&2
+    exit 1
+fi
+echo -e "${GREEN}NAS share mounted successfully${NC}" >&2
 
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
