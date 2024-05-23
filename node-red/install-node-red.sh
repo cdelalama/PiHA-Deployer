@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.2.28"
+VERSION="1.0.29"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -150,6 +150,11 @@ chmod +x PiHA-Deployer-NodeRED.sh
 
 # Mount NAS share
 echo -e "${BLUE}Mounting NAS share...${NC}" >&2
+echo -e "NAS_IP: $NAS_IP"
+echo -e "NAS_SHARE_NAME: $NAS_SHARE_NAME"
+echo -e "NAS_USERNAME: $NAS_USERNAME"
+echo -e "NAS_PASSWORD: $NAS_PASSWORD"
+echo -e "NAS_MOUNT_DIR: $NAS_MOUNT_DIR"
 sudo mkdir -p "$NAS_MOUNT_DIR"
 if mountpoint -q "$NAS_MOUNT_DIR"; then
     echo -e "${BLUE}Unmounting existing mount at $NAS_MOUNT_DIR...${NC}" >&2
