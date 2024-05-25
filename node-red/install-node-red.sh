@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.31"
+VERSION="1.0.32"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -153,24 +153,48 @@ echo -e "${BLUE}Mounting NAS share...${NC}" >&2
 echo -e "NAS_IP: $NAS_IP"
 echo -e "NAS_SHARE_NAME: $NAS_SHARE_NAME"
 echo -e "NAS_USERNAME: $NAS_USERNAME"
-echo -e "NAS_PASSWORD: $NAS_PASSWORD"
 echo -e "NAS_MOUNT_DIR: $NAS_MOUNT_DIR"
+
+# Check connectivity
+echo -e "${BLUE}Checking connectivity to NAS...${NC}" >&2
+if ping -c 4 $NAS_IP > /dev/null 2>&1; then
+    echo -e "${GREEN}NAS is reachable.${NC}" >&2
+else
+    echo -e "${RED}Cannot reach NAS. Please check your network connection.${NC}" >&2
+    exit 1
+fi
+
+# List available shares
+echo -e "${BLUE}Listing available shares...${NC}" >&2
+sudo smbclient -L //$NAS_IP -U $NAS_USERNAME%$NAS_PASSWORD
+
+# Create mount point
 sudo mkdir -p "$NAS_MOUNT_DIR"
+
+# Unmount if already mounted
 if mountpoint -q "$NAS_MOUNT_DIR"; then
     echo -e "${BLUE}Unmounting existing mount at $NAS_MOUNT_DIR...${NC}" >&2
     sudo umount "$NAS_MOUNT_DIR"
 fi
+
+# Small delay
+echo -e "${BLUE}Waiting for 5 seconds before mounting...${NC}" >&2
+sleep 5
+
+# Attempt to mount
 echo -e "${BLUE}Attempting to mount //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="${NAS_USERNAME}",password="${NAS_PASSWORD}",vers=3.0 -v
-if [ $? -ne 0 ]; then
+sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
+
+# Check if mount was successful
+if mountpoint -q "$NAS_MOUNT_DIR"; then
+    echo -e "${GREEN}NAS share mounted successfully at $NAS_MOUNT_DIR${NC}" >&2
+    # Check mount directory contents
+    echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
+    ls -la "$NAS_MOUNT_DIR"
+else
     echo -e "${RED}Failed to mount NAS share. Exiting.${NC}" >&2
     exit 1
 fi
-echo -e "${GREEN}NAS share mounted successfully at $NAS_MOUNT_DIR${NC}" >&2
-
-# Check mount directory contents
-echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
-ls "$NAS_MOUNT_DIR"
 
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
