@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.32"
+VERSION="1.0.34"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -147,7 +147,6 @@ download_from_github "docker-compose.yml"
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
-
 # Mount NAS share
 echo -e "${BLUE}Mounting NAS share...${NC}" >&2
 echo -e "NAS_IP: $NAS_IP"
@@ -155,9 +154,13 @@ echo -e "NAS_SHARE_NAME: $NAS_SHARE_NAME"
 echo -e "NAS_USERNAME: $NAS_USERNAME"
 echo -e "NAS_MOUNT_DIR: $NAS_MOUNT_DIR"
 
+# Get the LAN IP address
+LAN_IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+echo -e "LAN IP: $LAN_IP"
+
 # Check connectivity
 echo -e "${BLUE}Checking connectivity to NAS...${NC}" >&2
-if ping -c 4 $NAS_IP > /dev/null 2>&1; then
+if ping -I eth0 -c 4 $NAS_IP > /dev/null 2>&1; then
     echo -e "${GREEN}NAS is reachable.${NC}" >&2
 else
     echo -e "${RED}Cannot reach NAS. Please check your network connection.${NC}" >&2
@@ -166,7 +169,7 @@ fi
 
 # List available shares
 echo -e "${BLUE}Listing available shares...${NC}" >&2
-sudo smbclient -L //$NAS_IP -U $NAS_USERNAME%$NAS_PASSWORD
+smbclient -L //$NAS_IP -U "$NAS_USERNAME%$NAS_PASSWORD"
 
 # Create mount point
 sudo mkdir -p "$NAS_MOUNT_DIR"
@@ -177,13 +180,9 @@ if mountpoint -q "$NAS_MOUNT_DIR"; then
     sudo umount "$NAS_MOUNT_DIR"
 fi
 
-# Small delay
-echo -e "${BLUE}Waiting for 5 seconds before mounting...${NC}" >&2
-sleep 5
-
 # Attempt to mount
 echo -e "${BLUE}Attempting to mount //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,uid=$(id -u),gid=$(id -g)
+sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777,addr=$LAN_IP
 
 # Check if mount was successful
 if mountpoint -q "$NAS_MOUNT_DIR"; then
@@ -192,7 +191,8 @@ if mountpoint -q "$NAS_MOUNT_DIR"; then
     echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
     ls -la "$NAS_MOUNT_DIR"
 else
-    echo -e "${RED}Failed to mount NAS share. Exiting.${NC}" >&2
+    echo -e "${RED}Failed to mount NAS share. Checking logs...${NC}" >&2
+    dmesg | tail -n 20
     exit 1
 fi
 
