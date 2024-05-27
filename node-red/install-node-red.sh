@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.34"
+VERSION="1.0.42"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -36,87 +36,44 @@ download_from_github() {
     echo -e "${GREEN}$file downloaded successfully${NC}" >&2
 }
 
-# Default values
-DEFAULT_BASE_DIR="/home/cdelalama/docker_temp_setup"
-DEFAULT_USERNAME="cdelalama"
-DEFAULT_SAMBA_USER="cdelalama"
-DEFAULT_SAMBA_PASS="portxxaser99"
-DEFAULT_DOCKER_COMPOSE_DIR="/srv/docker"
-DEFAULT_PORTAINER_DATA_DIR="/srv/docker/portainer"
-DEFAULT_NODE_RED_DATA_DIR="/srv/docker/node-red"
-DEFAULT_PORTAINER_PORT="9000"
-DEFAULT_NODE_RED_PORT="1880"
-DEFAULT_IP="auto"
-DEFAULT_NAS_IP="10.0.0.220"
-DEFAULT_NAS_SHARE_NAME="piha"
-DEFAULT_NAS_USERNAME="piha"
-DEFAULT_NAS_PASSWORD=""
-DEFAULT_NAS_MOUNT_DIR="/mnt/piha"
-DEFAULT_SYNC_INTERVAL="10000"
-
-# Function to prompt for a variable
-prompt_variable() {
-    local var_name=$1
-    local default_value=$2
-    local is_password=$3
-
-    if [ "$is_password" = true ]; then
-        while true; do
-            read -s -p "$var_name: " value </dev/tty
-            echo >&2
-            if [ -z "$value" ]; then
-                echo -e "${RED}Error: Password cannot be empty. Please try again.${NC}" >&2
-            else
-                break
-            fi
-        done
-    else
-        read -p "$var_name [$default_value]: " value </dev/tty
-        value=${value:-$default_value}
-    fi
-    echo "$var_name=$value"
+# Function to export variables from .env file
+export_env_vars() {
+    echo -e "${BLUE}Exporting environment variables from .env file...${NC}"
+    while IFS='=' read -r key value; do
+        if [[ ! -z "$key" && "$key" != \#* ]]; then
+            export "$key=$(echo $value | tr -d '"')"
+        fi
+    done < .env
 }
-
-# Check if .env file already exists and is not empty in the current directory
-if [ -s "$(pwd)/.env" ]; then
-    echo -e "${GREEN}Existing .env file found with content in $(pwd). Using the existing file.${NC}" >&2
-    echo -e "${BLUE}Contents of .env file:${NC}" >&2
-    grep -vE 'SAMBA_PASS|NAS_PASSWORD' "$(pwd)/.env" >&2
-else
-    echo -e "${BLUE}No existing .env file found or file is empty in $(pwd). Creating a new one.${NC}" >&2
-    echo -e "${BLUE}Please provide values for each variable:${NC}" >&2
-    {
-        prompt_variable "BASE_DIR" "$DEFAULT_BASE_DIR"
-        prompt_variable "USERNAME" "$DEFAULT_USERNAME"
-        prompt_variable "SAMBA_USER" "$DEFAULT_SAMBA_USER"
-        prompt_variable "SAMBA_PASS" "" true
-        prompt_variable "DOCKER_COMPOSE_DIR" "$DEFAULT_DOCKER_COMPOSE_DIR"
-        prompt_variable "PORTAINER_DATA_DIR" "$DEFAULT_PORTAINER_DATA_DIR"
-        prompt_variable "NODE_RED_DATA_DIR" "$DEFAULT_NODE_RED_DATA_DIR"
-        prompt_variable "PORTAINER_PORT" "$DEFAULT_PORTAINER_PORT"
-        prompt_variable "NODE_RED_PORT" "$DEFAULT_NODE_RED_PORT"
-        prompt_variable "IP" "$DEFAULT_IP"
-        prompt_variable "NAS_IP" "$DEFAULT_NAS_IP"
-        prompt_variable "NAS_SHARE_NAME" "$DEFAULT_NAS_SHARE_NAME"
-        prompt_variable "NAS_USERNAME" "$DEFAULT_NAS_USERNAME"
-        prompt_variable "NAS_PASSWORD" "" true
-        prompt_variable "NAS_MOUNT_DIR" "$DEFAULT_NAS_MOUNT_DIR"
-        prompt_variable "SYNC_INTERVAL" "$DEFAULT_SYNC_INTERVAL"
-    } > .env
-    echo -e "${GREEN}.env file created successfully${NC}" >&2
-fi
 
 # Ensure .env file has correct permissions
 chmod 600 .env
 
-# Source the .env file to use its variables
-set -a
-source .env
-set +a
+# Export environment variables
+export_env_vars
 
-# Display the contents of the .env file (excluding the passwords)
-echo -e "${BLUE}Contents of .env file:${NC}" >&2
-grep -vE 'SAMBA_PASS|NAS_PASSWORD' .env >&2
+# Debugging output to verify variables are sourced correctly
+echo -e "${BLUE}Checking exported variables:${NC}"
+echo -e "NAS_IP: '$NAS_IP'"
+echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
+echo -e "NAS_USERNAME: '$NAS_USERNAME'"
+echo -e "NAS_PASSWORD: '$NAS_PASSWORD'"
+echo -e "NAS_MOUNT_DIR: '$NAS_MOUNT_DIR'"
+
+# Temporary ping check
+echo "Pinging NAS directly with IP: 10.0.0.220"
+if ping -c 4 10.0.0.220 > /dev/null 2>&1; then
+    echo -e "${GREEN}Direct ping to NAS is successful.${NC}"
+else
+    echo -e "${RED}Direct ping to NAS failed.${NC}"
+fi
+
+echo "Pinging NAS with NAS_IP variable: $NAS_IP"
+if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
+    echo -e "${GREEN}Ping to NAS_IP is successful.${NC}"
+else
+    echo -e "${RED}Ping to NAS_IP failed.${NC}"
+fi
 
 # Create BASE_DIR
 echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}" >&2
@@ -147,52 +104,63 @@ download_from_github "docker-compose.yml"
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
+
 # Mount NAS share
-echo -e "${BLUE}Mounting NAS share...${NC}" >&2
-echo -e "NAS_IP: $NAS_IP"
-echo -e "NAS_SHARE_NAME: $NAS_SHARE_NAME"
-echo -e "NAS_USERNAME: $NAS_USERNAME"
-echo -e "NAS_MOUNT_DIR: $NAS_MOUNT_DIR"
+echo -e "${BLUE}Checking NAS share mount status...${NC}" >&2
+echo -e "NAS_IP: '$NAS_IP'"
+echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
+echo -e "NAS_USERNAME: '$NAS_USERNAME'"
+echo -e "NAS_MOUNT_DIR: '$NAS_MOUNT_DIR'"
 
-# Get the LAN IP address
-LAN_IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
-echo -e "LAN IP: $LAN_IP"
-
-# Check connectivity
-echo -e "${BLUE}Checking connectivity to NAS...${NC}" >&2
-if ping -I eth0 -c 4 $NAS_IP > /dev/null 2>&1; then
-    echo -e "${GREEN}NAS is reachable.${NC}" >&2
+# Check network connectivity
+echo -e "${BLUE}Checking network connectivity to NAS...${NC}" >&2
+if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
+    echo -e "${GREEN}Network connectivity to NAS is good.${NC}" >&2
 else
-    echo -e "${RED}Cannot reach NAS. Please check your network connection.${NC}" >&2
+    echo -e "${RED}Cannot reach NAS using NAS_IP. Please check your network connection.${NC}" >&2
     exit 1
 fi
 
-# List available shares
-echo -e "${BLUE}Listing available shares...${NC}" >&2
-smbclient -L //$NAS_IP -U "$NAS_USERNAME%$NAS_PASSWORD"
+# Check if already mounted
+if mount | grep -q "$NAS_MOUNT_DIR"; then
+    echo -e "${GREEN}NAS share is already mounted at $NAS_MOUNT_DIR${NC}" >&2
+else
+    echo -e "${BLUE}NAS share is not mounted. Attempting to mount...${NC}" >&2
+    
+    # Create mount point if it doesn't exist
+    echo "Executing: sudo mkdir -p $NAS_MOUNT_DIR"
+    sudo mkdir -p "$NAS_MOUNT_DIR"
 
-# Create mount point
-sudo mkdir -p "$NAS_MOUNT_DIR"
+    # Displaying variables to ensure correctness
+    echo -e "${BLUE}Mount variables:${NC}"
+    echo -e "NAS_IP: '$NAS_IP'"
+    echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
+    echo -e "NAS_USERNAME: '$NAS_USERNAME'"
+    echo -e "NAS_PASSWORD: '$NAS_PASSWORD'"
 
-# Unmount if already mounted
-if mountpoint -q "$NAS_MOUNT_DIR"; then
-    echo -e "${BLUE}Unmounting existing mount at $NAS_MOUNT_DIR...${NC}" >&2
-    sudo umount "$NAS_MOUNT_DIR"
+    # Attempt to mount
+    echo -e "${BLUE}Attempting to mount //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
+    echo "Executing: sudo mount -t cifs -o username=$NAS_USERNAME,password=$NAS_PASSWORD,vers=3.0 //${NAS_IP}/${NAS_SHARE_NAME} $NAS_MOUNT_DIR"
+    if ! sudo mount -t cifs -o username=$NAS_USERNAME,password="$NAS_PASSWORD",vers=3.0 //${NAS_IP}/${NAS_SHARE_NAME} "$NAS_MOUNT_DIR"; then
+        echo -e "${RED}Mount command failed. Trying without SMB version...${NC}" >&2
+        if ! sudo mount -t cifs -o username=$NAS_USERNAME,password="$NAS_PASSWORD" //${NAS_IP}/${NAS_SHARE_NAME} "$NAS_MOUNT_DIR"; then
+            echo -e "${RED}Both mount attempts failed. Checking logs...${NC}" >&2
+            dmesg | tail -n 20
+            echo -e "${RED}Attempting to list shares...${NC}" >&2
+            smbclient -L //$NAS_IP -U $NAS_USERNAME
+            exit 1
+        fi
+    fi
 fi
 
-# Attempt to mount
-echo -e "${BLUE}Attempting to mount //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777,addr=$LAN_IP
-
-# Check if mount was successful
-if mountpoint -q "$NAS_MOUNT_DIR"; then
-    echo -e "${GREEN}NAS share mounted successfully at $NAS_MOUNT_DIR${NC}" >&2
-    # Check mount directory contents
+# Verify the mount
+echo -e "${BLUE}Verifying NAS share mount...${NC}" >&2
+if mount | grep -q "$NAS_MOUNT_DIR"; then
+    echo -e "${GREEN}NAS share is successfully mounted at $NAS_MOUNT_DIR${NC}" >&2
     echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
     ls -la "$NAS_MOUNT_DIR"
 else
-    echo -e "${RED}Failed to mount NAS share. Checking logs...${NC}" >&2
-    dmesg | tail -n 20
+    echo -e "${RED}NAS share is not mounted. Something went wrong.${NC}" >&2
     exit 1
 fi
 
