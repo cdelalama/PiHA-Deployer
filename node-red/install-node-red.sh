@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.42"
+VERSION="1.0.43"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
