@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.43"
+VERSION="1.0.44"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -36,12 +36,14 @@ download_from_github() {
     echo -e "${GREEN}$file downloaded successfully${NC}" >&2
 }
 
-# Function to export variables from .env file
+# Function to read and export variables from .env file
 export_env_vars() {
-    echo -e "${BLUE}Exporting environment variables from .env file...${NC}"
+    echo -e "${BLUE}Reading and exporting environment variables from .env file...${NC}"
     while IFS='=' read -r key value; do
         if [[ ! -z "$key" && "$key" != \#* ]]; then
-            export "$key=$(echo $value | tr -d '"')"
+            key=$(echo "$key" | tr -d '[:space:]')
+            value=$(echo "$value" | tr -d '[:space:]' | tr -d '"')
+            export "$key=$value"
         fi
     done < .env
 }
