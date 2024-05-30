@@ -9,10 +9,10 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /srv/docker/portainer:/data
-      - /mnt/piha/portainer:/nas_data
+      - ${PORTAINER_DATA_DIR}:/data
     ports:
-      - 9000:9000
+      - ${PORTAINER_PORT}:9000
+
   node-red:
     image: nodered/node-red:latest
     container_name: node-red
@@ -20,6 +20,22 @@ services:
     user: "1000:1000"
     volumes:
       - ${NODE_RED_DATA_DIR}:/data
-      - ${NAS_MOUNT_DIR}/node-red:/nas_data
     ports:
-      - 1880:1880
+      - ${NODE_RED_PORT}:1880
+
+  syncthing:
+    image: linuxserver/syncthing
+    container_name: syncthing
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${SYNCTHING_CONFIG_DIR}:/config
+      - ${NODE_RED_DATA_DIR}:/data/node-red
+      - ${PORTAINER_DATA_DIR}:/data/portainer
+      - ${NAS_MOUNT_DIR}:/nas_data
+    ports:
+      - 8384:8384
+      - 22000:22000
+      - 21027:21027/udp
+    restart: unless-stopped
