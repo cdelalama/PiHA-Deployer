@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.44"
+VERSION="1.0.45"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -106,7 +106,6 @@ download_from_github "docker-compose.yml"
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
-
 # Mount NAS share
 echo -e "${BLUE}Checking NAS share mount status...${NC}" >&2
 echo -e "NAS_IP: '$NAS_IP'"
@@ -123,35 +122,28 @@ else
     exit 1
 fi
 
+# Create mount point if it doesn't exist
+echo -e "${BLUE}Creating mount point directory...${NC}" >&2
+sudo mkdir -p "$NAS_MOUNT_DIR"
+
 # Check if already mounted
 if mount | grep -q "$NAS_MOUNT_DIR"; then
-    echo -e "${GREEN}NAS share is already mounted at $NAS_MOUNT_DIR${NC}" >&2
-else
-    echo -e "${BLUE}NAS share is not mounted. Attempting to mount...${NC}" >&2
-    
-    # Create mount point if it doesn't exist
-    echo "Executing: sudo mkdir -p $NAS_MOUNT_DIR"
-    sudo mkdir -p "$NAS_MOUNT_DIR"
+    echo -e "${YELLOW}NAS share appears to be already mounted at $NAS_MOUNT_DIR. Unmounting...${NC}" >&2
+    sudo umount -f "$NAS_MOUNT_DIR"
+fi
 
-    # Displaying variables to ensure correctness
-    echo -e "${BLUE}Mount variables:${NC}"
-    echo -e "NAS_IP: '$NAS_IP'"
-    echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
-    echo -e "NAS_USERNAME: '$NAS_USERNAME'"
-    echo -e "NAS_PASSWORD: '$NAS_PASSWORD'"
+echo -e "${BLUE}Attempting to mount NAS share...${NC}" >&2
 
-    # Attempt to mount
-    echo -e "${BLUE}Attempting to mount //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-    echo "Executing: sudo mount -t cifs -o username=$NAS_USERNAME,password=$NAS_PASSWORD,vers=3.0 //${NAS_IP}/${NAS_SHARE_NAME} $NAS_MOUNT_DIR"
-    if ! sudo mount -t cifs -o username=$NAS_USERNAME,password="$NAS_PASSWORD",vers=3.0 //${NAS_IP}/${NAS_SHARE_NAME} "$NAS_MOUNT_DIR"; then
-        echo -e "${RED}Mount command failed. Trying without SMB version...${NC}" >&2
-        if ! sudo mount -t cifs -o username=$NAS_USERNAME,password="$NAS_PASSWORD" //${NAS_IP}/${NAS_SHARE_NAME} "$NAS_MOUNT_DIR"; then
-            echo -e "${RED}Both mount attempts failed. Checking logs...${NC}" >&2
-            dmesg | tail -n 20
-            echo -e "${RED}Attempting to list shares...${NC}" >&2
-            smbclient -L //$NAS_IP -U $NAS_USERNAME
-            exit 1
-        fi
+# Attempt to mount
+echo -e "${BLUE}Mounting //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
+if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
+    echo -e "${RED}Mount command failed. Trying without SMB version...${NC}" >&2
+    if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD" "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
+        echo -e "${RED}Both mount attempts failed. Checking logs...${NC}" >&2
+        dmesg | tail -n 20
+        echo -e "${RED}Attempting to list shares...${NC}" >&2
+        smbclient -L "//${NAS_IP}" -U "$NAS_USERNAME"
+        exit 1
     fi
 fi
 
@@ -160,7 +152,7 @@ echo -e "${BLUE}Verifying NAS share mount...${NC}" >&2
 if mount | grep -q "$NAS_MOUNT_DIR"; then
     echo -e "${GREEN}NAS share is successfully mounted at $NAS_MOUNT_DIR${NC}" >&2
     echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
-    ls -la "$NAS_MOUNT_DIR"
+    sudo ls -la "$NAS_MOUNT_DIR"
 else
     echo -e "${RED}NAS share is not mounted. Something went wrong.${NC}" >&2
     exit 1
