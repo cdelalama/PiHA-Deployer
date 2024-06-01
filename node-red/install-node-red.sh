@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.45"
+VERSION="1.0.46"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -106,6 +106,14 @@ download_from_github "docker-compose.yml"
 
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
+#!/bin/bash
+set -e
+
+# Version
+VERSION="1.0.46"
+
+# ... (previous code remains the same)
+
 # Mount NAS share
 echo -e "${BLUE}Checking NAS share mount status...${NC}" >&2
 echo -e "NAS_IP: '$NAS_IP'"
@@ -122,15 +130,16 @@ else
     exit 1
 fi
 
-# Create mount point if it doesn't exist
-echo -e "${BLUE}Creating mount point directory...${NC}" >&2
-sudo mkdir -p "$NAS_MOUNT_DIR"
-
-# Check if already mounted
+# Unmount if already mounted
 if mount | grep -q "$NAS_MOUNT_DIR"; then
     echo -e "${YELLOW}NAS share appears to be already mounted at $NAS_MOUNT_DIR. Unmounting...${NC}" >&2
-    sudo umount -f "$NAS_MOUNT_DIR"
+    sudo umount -f "$NAS_MOUNT_DIR" || true
 fi
+
+# Remove and recreate mount point
+echo -e "${BLUE}Removing and recreating mount point directory...${NC}" >&2
+sudo rm -rf "$NAS_MOUNT_DIR"
+sudo mkdir -p "$NAS_MOUNT_DIR"
 
 echo -e "${BLUE}Attempting to mount NAS share...${NC}" >&2
 
@@ -149,15 +158,20 @@ fi
 
 # Verify the mount
 echo -e "${BLUE}Verifying NAS share mount...${NC}" >&2
-if mount | grep -q "$NAS_MOUNT_DIR"; then
+if mount | grep -q "$NAS_MOUNT_DIR" && [ -d "$NAS_MOUNT_DIR" ]; then
     echo -e "${GREEN}NAS share is successfully mounted at $NAS_MOUNT_DIR${NC}" >&2
     echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
     sudo ls -la "$NAS_MOUNT_DIR"
 else
-    echo -e "${RED}NAS share is not mounted. Something went wrong.${NC}" >&2
+    echo -e "${RED}NAS share is not mounted or not accessible. Something went wrong.${NC}" >&2
+    echo -e "${RED}Mount table:${NC}" >&2
+    mount | grep cifs
+    echo -e "${RED}Directory status:${NC}" >&2
+    ls -ld "$NAS_MOUNT_DIR" || echo "Directory does not exist"
     exit 1
 fi
 
+# ... (rest of the script remains the same)
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
 ./PiHA-Deployer-NodeRED.sh
