@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.46"
+VERSION="1.0.47"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -108,9 +108,12 @@ download_from_github "docker-compose.yml"
 chmod +x PiHA-Deployer-NodeRED.sh
 #!/bin/bash
 set -e
+I apologize for the persistent issue. It seems that the mount point is still not being properly created or accessed. Let's try a different approach and add more debugging information. Here's an updated version of the script:
+bashCopy#!/bin/bash
+set -e
 
 # Version
-VERSION="1.0.46"
+VERSION="1.0.47"
 
 # ... (previous code remains the same)
 
@@ -133,45 +136,47 @@ fi
 # Unmount if already mounted
 if mount | grep -q "$NAS_MOUNT_DIR"; then
     echo -e "${YELLOW}NAS share appears to be already mounted at $NAS_MOUNT_DIR. Unmounting...${NC}" >&2
-    sudo umount -f "$NAS_MOUNT_DIR" || true
+    sudo umount -f "$NAS_MOUNT_DIR" || echo "Failed to unmount, continuing anyway..."
 fi
 
 # Remove and recreate mount point
 echo -e "${BLUE}Removing and recreating mount point directory...${NC}" >&2
 sudo rm -rf "$NAS_MOUNT_DIR"
 sudo mkdir -p "$NAS_MOUNT_DIR"
+sudo chmod 755 "$NAS_MOUNT_DIR"
 
 echo -e "${BLUE}Attempting to mount NAS share...${NC}" >&2
 
 # Attempt to mount
 echo -e "${BLUE}Mounting //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
-    echo -e "${RED}Mount command failed. Trying without SMB version...${NC}" >&2
-    if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD" "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
-        echo -e "${RED}Both mount attempts failed. Checking logs...${NC}" >&2
-        dmesg | tail -n 20
-        echo -e "${RED}Attempting to list shares...${NC}" >&2
-        smbclient -L "//${NAS_IP}" -U "$NAS_USERNAME"
-        exit 1
-    fi
-fi
+MOUNT_CMD="sudo mount -t cifs -o username=\"$NAS_USERNAME\",password=\"$NAS_PASSWORD\",vers=3.0 \"//${NAS_IP}/${NAS_SHARE_NAME}\" \"$NAS_MOUNT_DIR\""
+echo "Executing: $MOUNT_CMD"
+eval $MOUNT_CMD
 
 # Verify the mount
 echo -e "${BLUE}Verifying NAS share mount...${NC}" >&2
-if mount | grep -q "$NAS_MOUNT_DIR" && [ -d "$NAS_MOUNT_DIR" ]; then
-    echo -e "${GREEN}NAS share is successfully mounted at $NAS_MOUNT_DIR${NC}" >&2
-    echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
-    sudo ls -la "$NAS_MOUNT_DIR"
+if mount | grep -q "$NAS_MOUNT_DIR"; then
+    echo -e "${GREEN}NAS share is listed in mount table${NC}" >&2
+    if [ -d "$NAS_MOUNT_DIR" ]; then
+        echo -e "${GREEN}Mount point directory exists${NC}" >&2
+        echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
+        sudo ls -la "$NAS_MOUNT_DIR" || echo "Failed to list directory contents"
+    else
+        echo -e "${RED}Mount point directory does not exist${NC}" >&2
+    fi
 else
-    echo -e "${RED}NAS share is not mounted or not accessible. Something went wrong.${NC}" >&2
-    echo -e "${RED}Mount table:${NC}" >&2
-    mount | grep cifs
-    echo -e "${RED}Directory status:${NC}" >&2
-    ls -ld "$NAS_MOUNT_DIR" || echo "Directory does not exist"
-    exit 1
+    echo -e "${RED}NAS share is not mounted. Something went wrong.${NC}" >&2
 fi
 
-# ... (rest of the script remains the same)
+echo -e "${BLUE}Current mounts:${NC}" >&2
+mount | grep cifs
+
+echo -e "${BLUE}Permissions of mount point:${NC}" >&2
+ls -ld "$NAS_MOUNT_DIR" || echo "Failed to get mount point permissions"
+
+echo -e "${BLUE}Attempting to access a file in the mount:${NC}" >&2
+sudo touch "$NAS_MOUNT_DIR/test_file" && echo "Successfully created test file" || echo "Failed to create test file"
+
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
 ./PiHA-Deployer-NodeRED.sh
