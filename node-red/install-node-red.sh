@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.49"
+VERSION="1.0.50"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -107,6 +107,8 @@ download_from_github "docker-compose.yml"
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
 
+
+
 # Mount NAS share
 echo -e "${BLUE}Checking NAS share mount status...${NC}" >&2
 echo -e "NAS_IP: '$NAS_IP'"
@@ -123,9 +125,11 @@ else
     exit 1
 fi
 
-# Unmount any existing mounts
-echo -e "${BLUE}Unmounting any existing CIFS mounts...${NC}" >&2
-sudo umount -a -t cifs -f || true
+# Unmount if already mounted
+if mount | grep -q "$NAS_MOUNT_DIR"; then
+    echo -e "${YELLOW}NAS share appears to be already mounted at $NAS_MOUNT_DIR. Unmounting...${NC}" >&2
+    sudo umount -f "$NAS_MOUNT_DIR" || echo "Failed to unmount, continuing anyway..."
+fi
 
 # Remove and recreate mount point
 echo -e "${BLUE}Removing and recreating mount point directory...${NC}" >&2
@@ -137,8 +141,14 @@ echo -e "${BLUE}Attempting to mount NAS share...${NC}" >&2
 
 # Attempt to mount
 echo -e "${BLUE}Mounting //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-sudo mount -a
-sudo mount -t cifs "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR" -o username="$NAS_USERNAME",password="$NAS_PASSWORD",iocharset=utf8,file_mode=0777,dir_mode=0777,vers=3.0
+if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
+    echo -e "${RED}Mount failed. Trying without SMB version...${NC}" >&2
+    if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
+        echo -e "${RED}Both mount attempts failed. Checking logs...${NC}" >&2
+        dmesg | tail -n 20
+        exit 1
+    fi
+fi
 
 # Verify the mount
 echo -e "${BLUE}Verifying NAS share mount...${NC}" >&2
