@@ -5,12 +5,20 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# NAS details
-NAS_IP="10.0.0.220"
-NAS_SHARE="piha"
-NAS_USER="piha"
-NAS_PASS="2BO*MdkYQ%z7x0yjgN\$5"
-MOUNT_POINT="/mnt/piha"
+# Load variables from .env file
+if [ -f .env ]; then
+    export $(cat .env | xargs)
+else
+    echo -e "${RED}❌ .env file not found. Please create it with all required variables.${NC}"
+    exit 1
+fi
+
+# Clean up variables (remove carriage returns)
+NAS_IP=$(echo "$NAS_IP" | tr -d '\r')
+NAS_SHARE_NAME=$(echo "$NAS_SHARE_NAME" | tr -d '\r')
+NAS_USERNAME=$(echo "$NAS_USERNAME" | tr -d '\r')
+NAS_PASSWORD=$(echo "$NAS_PASSWORD" | tr -d '\r')
+NAS_MOUNT_DIR=$(echo "$NAS_MOUNT_DIR" | tr -d '\r')
 
 echo -e "${GREEN}Starting NAS mount diagnosis...${NC}"
 
@@ -25,21 +33,21 @@ fi
 
 # List available shares
 echo "Listing available shares..."
-smbclient -L //$NAS_IP -U $NAS_USER%$NAS_PASS
+smbclient -L //$NAS_IP -U $NAS_USERNAME%$NAS_PASSWORD
 
 # Try to connect to the specific share
 echo "Attempting to connect to the share..."
-smbclient //$NAS_IP/$NAS_SHARE -U $NAS_USER%$NAS_PASS -c "exit"
+smbclient //$NAS_IP/$NAS_SHARE_NAME -U $NAS_USERNAME%$NAS_PASSWORD -c "exit"
 
 # Create mount point if it doesn't exist
-sudo mkdir -p $MOUNT_POINT
+sudo mkdir -p $NAS_MOUNT_DIR
 
 # Attempt to mount
 echo "Attempting to mount..."
-sudo mount -t cifs //$NAS_IP/$NAS_SHARE $MOUNT_POINT -o username=$NAS_USER,password=$NAS_PASS,vers=3.0
+sudo mount -t cifs //$NAS_IP/$NAS_SHARE_NAME $NAS_MOUNT_DIR -o username=$NAS_USERNAME,password=$NAS_PASSWORD,vers=3.0
 
 # Check if mount was successful
-if mount | grep $MOUNT_POINT > /dev/null; then
+if mount | grep $NAS_MOUNT_DIR > /dev/null; then
     echo -e "${GREEN}Mount successful!${NC}"
 else
     echo -e "${RED}Mount failed. Checking error logs...${NC}"
