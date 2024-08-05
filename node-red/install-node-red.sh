@@ -62,19 +62,14 @@ echo -e "NAS_USERNAME: '$NAS_USERNAME'"
 echo -e "NAS_PASSWORD: '$NAS_PASSWORD'"
 echo -e "NAS_MOUNT_DIR: '$NAS_MOUNT_DIR'"
 
-# Temporary ping check
-echo "Pinging NAS directly with IP: 10.0.0.220"
-if ping -c 4 10.0.0.220 > /dev/null 2>&1; then
-    echo -e "${GREEN}Direct ping to NAS is successful.${NC}"
-else
-    echo -e "${RED}Direct ping to NAS failed.${NC}"
-fi
-
-echo "Pinging NAS with NAS_IP variable: $NAS_IP"
+# Check NAS connectivity
+echo -e "${BLUE}Checking NAS connectivity...${NC}"
+echo "Pinging NAS with IP: $NAS_IP"
 if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
-    echo -e "${GREEN}Ping to NAS_IP is successful.${NC}"
+    echo -e "${GREEN}Ping to NAS is successful.${NC}"
 else
-    echo -e "${RED}Ping to NAS_IP failed.${NC}"
+    echo -e "${RED}Ping to NAS failed. Please check your network connection and NAS_IP in .env${NC}"
+    exit 1
 fi
 
 # Create BASE_DIR
