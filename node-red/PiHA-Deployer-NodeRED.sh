@@ -90,7 +90,37 @@ sudo cp .env "$DOCKER_COMPOSE_DIR/.env"
 
 # Start Docker containers
 confirm_step "Start Docker containers (Portainer and Node-RED)"
-sudo -E docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" up -d
+echo -e "${BLUE}Starting Docker containers...${NC}"
+
+# Check if docker-compose exists
+if ! command -v docker-compose &> /dev/null; then
+    echo -e "${RED}❌ docker-compose not found. Please install Docker Compose first.${NC}"
+    exit 1
+fi
+
+# Check if docker is running
+if ! docker info &> /dev/null; then
+    echo -e "${RED}❌ Docker daemon is not running. Please start Docker first.${NC}"
+    exit 1
+fi
+
+# Attempt to start containers
+if ! sudo -E docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" up -d; then
+    echo -e "${RED}❌ Failed to start Docker containers. Checking logs...${NC}"
+    sudo docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" logs
+    echo -e "${RED}❌ Please check the logs above for errors.${NC}"
+    exit 1
+fi
+
+# Verify containers are running
+echo -e "${BLUE}Verifying containers status...${NC}"
+if ! docker ps | grep -q "portainer" || ! docker ps | grep -q "node-red"; then
+    echo -e "${RED}❌ One or more containers failed to start. Container status:${NC}"
+    docker ps -a
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Docker containers started successfully${NC}"
 
 echo -e "${BLUE}✅ Installation complete!${NC}"
 echo -e "${BLUE}🌐 Portainer is accessible at http://$IP:$PORTAINER_PORT${NC}"
