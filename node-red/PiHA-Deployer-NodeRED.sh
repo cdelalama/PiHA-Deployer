@@ -68,7 +68,7 @@ done
 # Set correct permissions for Node-RED data directory
 confirm_step "Set permissions for Node-RED data directory"
 sudo mkdir -p "$NODE_RED_DATA_DIR"
-sudo chown -R 1000:1000 "$NODE_RED_DATA_DIR"
+sudo chown -R ${DOCKER_USER_ID}:${DOCKER_GROUP_ID} "$NODE_RED_DATA_DIR"
 sudo chmod -R 775 "$NODE_RED_DATA_DIR"
 
 # Ensure settings.js exists and has correct permissions

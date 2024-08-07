@@ -17,7 +17,7 @@ services:
     image: nodered/node-red:latest
     container_name: node-red
     restart: unless-stopped
-    user: "1000:1000"
+    user: "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}"
     volumes:
       - ${NODE_RED_DATA_DIR}:/data
     ports:
@@ -27,8 +27,8 @@ services:
     image: linuxserver/syncthing
     container_name: syncthing
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${DOCKER_USER_ID}
+      - PGID=${DOCKER_GROUP_ID}
     volumes:
       - ${SYNCTHING_CONFIG_DIR}:/config
       - ${NODE_RED_DATA_DIR}:/data/node-red
