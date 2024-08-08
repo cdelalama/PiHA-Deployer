@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.53"
+VERSION="1.0.55"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -46,7 +46,7 @@ echo "Script started"
 
 # Ask for cleanup
 read -p "Do you want to clean up any existing installations? (y/N) " -n 1 -r
-printf "\n"
+/usr/bin/printf "\n"
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     cleanup_existing
 fi
