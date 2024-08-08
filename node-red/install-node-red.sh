@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.50"
+VERSION="1.0.51"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -10,8 +10,46 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}" >&2
-echo -e "${BLUE}Script started${NC}" >&2
+# Function to clean up existing installations
+cleanup_existing() {
+    echo -e "${BLUE}Cleaning up existing installations...${NC}"
+    
+    # Check if Docker is installed and running
+    if command -v docker &> /dev/null && docker info &> /dev/null; then
+        echo "Stopping and removing existing containers..."
+        docker-compose down 2>/dev/null || true
+        docker rm -f portainer node-red syncthing 2>/dev/null || true
+        
+        echo "Pruning Docker system..."
+        docker system prune -f 2>/dev/null || true
+    fi
+    
+    # Clean up directories if they exist
+    if [ -d "/srv/docker" ]; then
+        echo "Cleaning up /srv/docker directory..."
+        sudo rm -rf /srv/docker/* 2>/dev/null || true
+    fi
+    
+    # Recreate directories with proper permissions
+    echo "Creating fresh directories..."
+    sudo mkdir -p /srv/docker/portainer /srv/docker/node-red /srv/docker/syncthing
+    sudo chown -R 1000:1000 /srv/docker/node-red
+    sudo chown -R 1000:1000 /srv/docker/portainer
+    sudo chown -R 1000:1000 /srv/docker/syncthing
+    
+    echo -e "${GREEN}Cleanup completed successfully${NC}"
+}
+
+# Add this after version and before starting the main script
+echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}"
+echo "Script started"
+
+# Ask for cleanup
+read -p "Do you want to clean up any existing installations? (y/N) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    cleanup_existing
+fi
 
 # Install necessary packages
 echo -e "${BLUE}Installing necessary packages...${NC}" >&2

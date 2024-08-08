@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.4"
+VERSION="1.0.5"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -31,7 +31,18 @@ confirm_step() {
 # Load variables from .env file
 confirm_step "Load environment variables from .env file"
 if [ -f .env ]; then
-    export $(cat .env | xargs)
+    while IFS='=' read -r key value; do
+        # Skip empty lines and comments
+        if [[ ! -z "$key" && "$key" != \#* ]]; then
+            # Remove carriage returns, spaces, and quotes
+            key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
+            value=$(echo "$value" | tr -d '\r' | tr -d '"')
+            # Only export if key is valid
+            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                export "$key=$value"
+            fi
+        fi
+    done < .env
 else
     echo -e "${RED}❌ .env file not found. Please create it with all required variables.${NC}"
     exit 1
@@ -57,32 +68,59 @@ SYNC_INTERVAL=$(echo "$SYNC_INTERVAL" | tr -d '\r')
 
 # Check if required variables are set
 confirm_step "Check if all required variables are set in the .env file"
-required_vars=(BASE_DIR USERNAME SAMBA_USER SAMBA_PASS DOCKER_COMPOSE_DIR PORTAINER_DATA_DIR NODE_RED_DATA_DIR PORTAINER_PORT NODE_RED_PORT IP NAS_IP NAS_SHARE_NAME NAS_USERNAME NAS_PASSWORD NAS_MOUNT_DIR SYNC_INTERVAL)
+required_vars=(
+    BASE_DIR 
+    USERNAME 
+    DOCKER_USER_ID 
+    DOCKER_GROUP_ID 
+    SAMBA_USER 
+    SAMBA_PASS 
+    DOCKER_COMPOSE_DIR 
+    PORTAINER_DATA_DIR 
+    NODE_RED_DATA_DIR 
+    SYNCTHING_CONFIG_DIR 
+    PORTAINER_PORT 
+    NODE_RED_PORT 
+    IP 
+    NAS_IP 
+    NAS_SHARE_NAME 
+    NAS_USERNAME 
+    NAS_PASSWORD 
+    NAS_MOUNT_DIR 
+    SYNC_INTERVAL
+)
+
+# Verify all required variables are set
 for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
-        echo -e "${RED}❌ $var is not set in .env file${NC}"
+        echo -e "${RED}❌ Required variable $var is not set in .env${NC}"
         exit 1
     fi
 done
+echo -e "${GREEN}✅ All required variables are set${NC}"
 
-# Set correct permissions for Node-RED data directory
-confirm_step "Set permissions for Node-RED data directory"
-sudo mkdir -p "$NODE_RED_DATA_DIR"
-sudo chown -R ${DOCKER_USER_ID}:${DOCKER_GROUP_ID} "$NODE_RED_DATA_DIR"
+# Create directories and set permissions
+confirm_step "Create necessary directories and set permissions"
+echo -e "${BLUE}Creating directories and setting permissions...${NC}"
+
+# Create all required directories
+sudo mkdir -p "$DOCKER_COMPOSE_DIR" \
+             "$PORTAINER_DATA_DIR" \
+             "$NODE_RED_DATA_DIR" \
+             "$SYNCTHING_CONFIG_DIR" \
+             "$NAS_MOUNT_DIR"
+
+# Set correct permissions using variables from .env
+sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$PORTAINER_DATA_DIR"
+sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$NODE_RED_DATA_DIR"
+sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
+
+# Set directory permissions
+sudo chmod -R 775 "$PORTAINER_DATA_DIR"
 sudo chmod -R 775 "$NODE_RED_DATA_DIR"
+sudo chmod -R 775 "$SYNCTHING_CONFIG_DIR"
 
-# Ensure settings.js exists and has correct permissions
-confirm_step "Ensure Node-RED settings.js exists with correct permissions"
-SETTINGS_JS="$NODE_RED_DATA_DIR/settings.js"
-if [ ! -f "$SETTINGS_JS" ]; then
-    sudo touch "$SETTINGS_JS"
-fi
-sudo chown 1000:1000 "$SETTINGS_JS"
-sudo chmod 664 "$SETTINGS_JS"
-
-# Create directories
-confirm_step "Create necessary directories"
-sudo mkdir -p "$DOCKER_COMPOSE_DIR" "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$NAS_MOUNT_DIR"
+echo -e "${GREEN}Directories created and permissions set successfully${NC}"
 
 # Copy .env to DOCKER_COMPOSE_DIR
 confirm_step "Copy .env file to Docker Compose directory"

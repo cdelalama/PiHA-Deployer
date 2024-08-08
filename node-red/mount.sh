@@ -7,9 +7,20 @@ NC='\033[0m' # No Color
 
 # Load variables from .env file
 if [ -f .env ]; then
-    export $(cat .env | xargs)
+    while IFS='=' read -r key value; do
+        # Skip empty lines and comments
+        if [[ ! -z "$key" && "$key" != \#* ]]; then
+            # Remove carriage returns, spaces, and quotes
+            key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
+            value=$(echo "$value" | tr -d '\r' | tr -d '"')
+            # Only export if key is valid
+            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                export "$key=$value"
+            fi
+        fi
+    done < .env
 else
-    echo -e "${RED}❌ .env file not found. Please create it with all required variables.${NC}"
+    echo -e "${RED}❌ .env file not found${NC}"
     exit 1
 fi
 
