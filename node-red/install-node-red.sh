@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.56"
+VERSION="1.0.58"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -79,14 +79,12 @@ export_env_vars() {
     echo -e "${BLUE}Reading and exporting environment variables from .env file...${NC}"
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
-        if [[ ! -z "$key" && "$key" != \#* ]]; then
-            # Remove carriage returns, spaces, and quotes
-            key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
-            value=$(echo "$value" | tr -d '\r' | tr -d '"')
-            # Only export if key is valid
-            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-                export "$key=$value"
-            fi
+        if [[ ! -z "$key" && ! "$key" =~ ^[[:space:]]*# ]]; then
+            # Remove leading/trailing whitespace and quotes
+            key=$(echo "$key" | tr -d '\r' | xargs)
+            value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
+            export "$key=$value"
+            echo "Exported: $key=${value}"
         fi
     done < .env
 }
@@ -124,14 +122,18 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}BASE_DIR created successfully${NC}" >&2
 
-# Copy .env to BASE_DIR
-echo -e "${BLUE}Copying .env to $BASE_DIR${NC}" >&2
-cp .env "$BASE_DIR/.env"
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Failed to copy .env to BASE_DIR. Exiting.${NC}" >&2
-    exit 1
+# Copy .env to BASE_DIR (only if not already in BASE_DIR)
+if [ "$(pwd)" != "$BASE_DIR" ]; then
+    echo -e "${BLUE}Copying .env to $BASE_DIR${NC}" >&2
+    cp .env "$BASE_DIR/.env"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to copy .env to BASE_DIR. Exiting.${NC}" >&2
+        exit 1
+    fi
+    echo -e "${GREEN}.env copied to BASE_DIR successfully${NC}" >&2
+else
+    echo -e "${GREEN}.env already in correct directory${NC}" >&2
 fi
-echo -e "${GREEN}.env copied to BASE_DIR successfully${NC}" >&2
 
 # Change to BASE_DIR
 cd "$BASE_DIR" || { echo -e "${RED}Failed to change to BASE_DIR. Exiting.${NC}" >&2; exit 1; }
