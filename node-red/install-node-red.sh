@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.58"
+VERSION="1.0.59"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -83,10 +83,15 @@ export_env_vars() {
             # Remove leading/trailing whitespace and quotes
             key=$(echo "$key" | tr -d '\r' | xargs)
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
+            # Export and verify
             export "$key=$value"
-            echo "Exported: $key=${value}"
+            echo "Exported: $key=$value"
         fi
     done < .env
+
+    # Debug: show all exported variables
+    echo -e "${BLUE}All environment variables:${NC}"
+    env | sort
 }
 
 # Ensure .env file has correct permissions

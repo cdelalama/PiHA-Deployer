@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.5"
+VERSION="1.0.6"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -31,15 +31,21 @@ confirm_step() {
 # Load variables from .env file
 confirm_step "Load environment variables from .env file"
 if [ -f .env ]; then
+    # First, show all current environment variables
+    echo "Current environment variables:"
+    env | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
+
+    # Now load any missing variables
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
         if [[ ! -z "$key" && "$key" != \#* ]]; then
             # Remove carriage returns, spaces, and quotes
             key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
             value=$(echo "$value" | tr -d '\r' | tr -d '"')
-            # Only export if key is valid
-            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+            # Only export if key is valid and not already set
+            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && [ -z "${!key}" ]; then
                 export "$key=$value"
+                echo "Exported new variable: $key=$value"
             fi
         fi
     done < .env
