@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.6"
+VERSION="1.0.7"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -35,7 +35,7 @@ if [ -f .env ]; then
     echo "Current environment variables:"
     env | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
 
-    # Now load any missing variables
+    # Only load variables that aren't already set
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
         if [[ ! -z "$key" && "$key" != \#* ]]; then
@@ -43,14 +43,22 @@ if [ -f .env ]; then
             key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
             value=$(echo "$value" | tr -d '\r' | tr -d '"')
             # Only export if key is valid and not already set
-            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && [ -z "${!key}" ]; then
-                export "$key=$value"
-                echo "Exported new variable: $key=$value"
+            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                # Check if variable is not already set
+                if [ -z "${!key}" ]; then
+                    export "$key=$value"
+                    echo "Exported new variable: $key=$value"
+                else
+                    echo "Variable already set: $key=${!key}"
+                fi
             fi
         fi
     done < .env
+
+    # Debug output
+    echo "After loading .env, SAMBA_PASS is: ${SAMBA_PASS:-(not set)}"
 else
-    echo -e "${RED}❌ .env file not found. Please create it with all required variables.${NC}"
+    echo -e "${RED}❌ .env file not found${NC}"
     exit 1
 fi
 
