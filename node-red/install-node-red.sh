@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.62"
+VERSION="1.0.63"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -260,12 +260,18 @@ sudo touch "$NAS_MOUNT_DIR/test_file" && echo "Successfully created test file" |
 
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
+chmod +x PiHA-Deployer-NodeRED.sh
 ./PiHA-Deployer-NodeRED.sh
 
-# Cleanup
-echo -e "${BLUE}Cleaning up temporary files...${NC}" >&2
-rm -f "$HOME/.env"
-rm -f "$BASE_DIR/PiHA-Deployer-NodeRED.sh"
-echo -e "${GREEN}Cleanup complete${NC}" >&2
+# Only clean up if the deployment was successful
+if [ $? -eq 0 ]; then
+    echo -e "${BLUE}Cleaning up temporary files...${NC}" >&2
+    rm -f "$HOME/.env"
+    rm -f "$BASE_DIR/PiHA-Deployer-NodeRED.sh"
+    echo -e "${GREEN}Cleanup complete${NC}" >&2
+else
+    echo -e "${RED}Deployment failed, keeping files for troubleshooting${NC}" >&2
+    exit 1
+fi
 
 echo -e "${GREEN}Installation complete!${NC}" >&2
