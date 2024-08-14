@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -35,7 +35,25 @@ if [ -f .env ]; then
     echo "Current environment variables:"
     env | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
 
-    # Only load variables that aren't already set
+    # Clean up variables (remove carriage returns) FIRST
+    USERNAME=$(echo "$USERNAME" | tr -d '\r')
+    SAMBA_USER=$(echo "$SAMBA_USER" | tr -d '\r')
+    SAMBA_PASS=$(echo "$SAMBA_PASS" | tr -d '\r')
+    BASE_DIR=$(echo "$BASE_DIR" | tr -d '\r')
+    DOCKER_COMPOSE_DIR=$(echo "$DOCKER_COMPOSE_DIR" | tr -d '\r')
+    PORTAINER_DATA_DIR=$(echo "$PORTAINER_DATA_DIR" | tr -d '\r')
+    NODE_RED_DATA_DIR=$(echo "$NODE_RED_DATA_DIR" | tr -d '\r')
+    PORTAINER_PORT=$(echo "$PORTAINER_PORT" | tr -d '\r')
+    NODE_RED_PORT=$(echo "$NODE_RED_PORT" | tr -d '\r')
+    IP=$(echo "$IP" | tr -d '\r')
+    NAS_IP=$(echo "$NAS_IP" | tr -d '\r')
+    NAS_SHARE_NAME=$(echo "$NAS_SHARE_NAME" | tr -d '\r')
+    NAS_USERNAME=$(echo "$NAS_USERNAME" | tr -d '\r')
+    NAS_PASSWORD=$(echo "$NAS_PASSWORD" | tr -d '\r')
+    NAS_MOUNT_DIR=$(echo "$NAS_MOUNT_DIR" | tr -d '\r')
+    SYNC_INTERVAL=$(echo "$SYNC_INTERVAL" | tr -d '\r')
+
+    # Only then load variables that aren't already set
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
         if [[ ! -z "$key" && "$key" != \#* ]]; then
@@ -61,24 +79,6 @@ else
     echo -e "${RED}❌ .env file not found${NC}"
     exit 1
 fi
-
-# Clean up variables (remove carriage returns)
-USERNAME=$(echo "$USERNAME" | tr -d '\r')
-SAMBA_USER=$(echo "$SAMBA_USER" | tr -d '\r')
-SAMBA_PASS=$(echo "$SAMBA_PASS" | tr -d '\r')
-BASE_DIR=$(echo "$BASE_DIR" | tr -d '\r')
-DOCKER_COMPOSE_DIR=$(echo "$DOCKER_COMPOSE_DIR" | tr -d '\r')
-PORTAINER_DATA_DIR=$(echo "$PORTAINER_DATA_DIR" | tr -d '\r')
-NODE_RED_DATA_DIR=$(echo "$NODE_RED_DATA_DIR" | tr -d '\r')
-PORTAINER_PORT=$(echo "$PORTAINER_PORT" | tr -d '\r')
-NODE_RED_PORT=$(echo "$NODE_RED_PORT" | tr -d '\r')
-IP=$(echo "$IP" | tr -d '\r')
-NAS_IP=$(echo "$NAS_IP" | tr -d '\r')
-NAS_SHARE_NAME=$(echo "$NAS_SHARE_NAME" | tr -d '\r')
-NAS_USERNAME=$(echo "$NAS_USERNAME" | tr -d '\r')
-NAS_PASSWORD=$(echo "$NAS_PASSWORD" | tr -d '\r')
-NAS_MOUNT_DIR=$(echo "$NAS_MOUNT_DIR" | tr -d '\r')
-SYNC_INTERVAL=$(echo "$SYNC_INTERVAL" | tr -d '\r')
 
 # Check if required variables are set
 confirm_step "Check if all required variables are set in the .env file"
