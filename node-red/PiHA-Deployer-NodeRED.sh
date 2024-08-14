@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.8"
+VERSION="1.0.9"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -35,46 +35,34 @@ if [ -f .env ]; then
     echo "Current environment variables:"
     env | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
 
-    # Clean up variables (remove carriage returns) FIRST
-    USERNAME=$(echo "$USERNAME" | tr -d '\r')
-    SAMBA_USER=$(echo "$SAMBA_USER" | tr -d '\r')
-    SAMBA_PASS=$(echo "$SAMBA_PASS" | tr -d '\r')
-    BASE_DIR=$(echo "$BASE_DIR" | tr -d '\r')
-    DOCKER_COMPOSE_DIR=$(echo "$DOCKER_COMPOSE_DIR" | tr -d '\r')
-    PORTAINER_DATA_DIR=$(echo "$PORTAINER_DATA_DIR" | tr -d '\r')
-    NODE_RED_DATA_DIR=$(echo "$NODE_RED_DATA_DIR" | tr -d '\r')
-    PORTAINER_PORT=$(echo "$PORTAINER_PORT" | tr -d '\r')
-    NODE_RED_PORT=$(echo "$NODE_RED_PORT" | tr -d '\r')
-    IP=$(echo "$IP" | tr -d '\r')
-    NAS_IP=$(echo "$NAS_IP" | tr -d '\r')
-    NAS_SHARE_NAME=$(echo "$NAS_SHARE_NAME" | tr -d '\r')
-    NAS_USERNAME=$(echo "$NAS_USERNAME" | tr -d '\r')
-    NAS_PASSWORD=$(echo "$NAS_PASSWORD" | tr -d '\r')
-    NAS_MOUNT_DIR=$(echo "$NAS_MOUNT_DIR" | tr -d '\r')
-    SYNC_INTERVAL=$(echo "$SYNC_INTERVAL" | tr -d '\r')
-
-    # Only then load variables that aren't already set
+    # Load all variables from .env first
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
         if [[ ! -z "$key" && "$key" != \#* ]]; then
             # Remove carriage returns, spaces, and quotes
             key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
             value=$(echo "$value" | tr -d '\r' | tr -d '"')
-            # Only export if key is valid and not already set
+            # Export all valid variables, overwriting existing ones
             if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-                # Check if variable is not already set
-                if [ -z "${!key}" ]; then
-                    export "$key=$value"
-                    echo "Exported new variable: $key=$value"
-                else
-                    echo "Variable already set: $key=${!key}"
-                fi
+                export "$key=$value"
+                echo "Exported variable: $key=$value"
             fi
         fi
     done < .env
 
+    # Then clean up all variables
+    for var in USERNAME SAMBA_USER SAMBA_PASS BASE_DIR DOCKER_COMPOSE_DIR \
+               PORTAINER_DATA_DIR NODE_RED_DATA_DIR PORTAINER_PORT NODE_RED_PORT \
+               IP NAS_IP NAS_SHARE_NAME NAS_USERNAME NAS_PASSWORD NAS_MOUNT_DIR \
+               SYNC_INTERVAL DOCKER_USER_ID DOCKER_GROUP_ID; do
+        if [ ! -z "${!var}" ]; then
+            export "$var=$(echo "${!var}" | tr -d '\r')"
+            echo "Cleaned variable: $var=${!var}"
+        fi
+    done
+
     # Debug output
-    echo "After loading .env, SAMBA_PASS is: ${SAMBA_PASS:-(not set)}"
+    echo "After loading and cleaning, SAMBA_PASS is: ${SAMBA_PASS:-(not set)}"
 else
     echo -e "${RED}❌ .env file not found${NC}"
     exit 1
