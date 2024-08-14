@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.59"
+VERSION="1.0.62"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -61,17 +61,54 @@ REPO_OWNER="cdelalama"
 REPO_NAME="PiHA-Deployer"
 BRANCH="main"
 
+# Function to get version from file
+get_version() {
+    local file=$1
+    local version=$(grep "^VERSION=" "$file" | cut -d'"' -f2)
+    echo "$version"
+}
+
 # Function to download a file from GitHub
 download_from_github() {
     local file=$1
-    local url="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"
-    echo -e "${BLUE}Downloading $file from GitHub...${NC}" >&2
-    curl -sSL -o "$file" "$url"
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to download $file. Exiting.${NC}" >&2
-        exit 1
+    local temp_file="/tmp/${file}"
+    
+    # If file exists locally
+    if [ -f "$file" ]; then
+        # Get local version
+        local local_version=$(get_version "$file")
+        
+        # Download to temp file to compare
+        curl -sSL -o "$temp_file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file" || {
+            echo -e "${GREEN}Using existing local file (version $local_version): $file${NC}" >&2
+            rm -f "$temp_file"
+            return 0
+        }
+        
+        # Get remote version
+        local remote_version=$(get_version "$temp_file")
+        
+        # Compare versions
+        if [[ "$(printf '%s\n' "$remote_version" "$local_version" | sort -V | tail -n1)" == "$local_version" ]]; then
+            echo -e "${GREEN}Local version ($local_version) is newer than or equal to remote ($remote_version), using local${NC}" >&2
+            rm -f "$temp_file"
+            return 0
+        else
+            mv "$temp_file" "$file"
+            echo -e "${BLUE}Downloaded newer version ($remote_version) of $file${NC}" >&2
+        fi
+    else
+        # File doesn't exist locally, download it
+        local url="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"
+        echo -e "${BLUE}Downloading $file from GitHub...${NC}" >&2
+        curl -sSL -o "$file" "$url"
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Failed to download $file. Exiting.${NC}" >&2
+            exit 1
+        fi
+        local version=$(get_version "$file")
+        echo -e "${GREEN}$file downloaded successfully (version $version)${NC}" >&2
     fi
-    echo -e "${GREEN}$file downloaded successfully${NC}" >&2
 }
 
 # Function to read and export variables from .env file
