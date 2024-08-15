@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.9"
+VERSION="1.0.11"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -31,38 +31,39 @@ confirm_step() {
 # Load variables from .env file
 confirm_step "Load environment variables from .env file"
 if [ -f .env ]; then
-    # First, show all current environment variables
+    # First, show all current environment variables (except SAMBA_PASS)
     echo "Current environment variables:"
-    env | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
+    env | grep -Ev "SAMBA_PASS" | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
 
-    # Load all variables from .env first
+    # Only load variables that aren't already set
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
         if [[ ! -z "$key" && "$key" != \#* ]]; then
             # Remove carriage returns, spaces, and quotes
             key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
             value=$(echo "$value" | tr -d '\r' | tr -d '"')
-            # Export all valid variables, overwriting existing ones
+            # Only export if key is valid and not already set
             if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-                export "$key=$value"
-                echo "Exported variable: $key=$value"
+                if [ -z "${!key}" ]; then
+                    export "$key=$value"
+                    if [ "$key" = "SAMBA_PASS" ]; then
+                        echo "Exported SAMBA_PASS with length: ${#value} characters"
+                    else
+                        echo "Exported: $key=$value"
+                    fi
+                else
+                    echo "Keeping existing value for: $key"
+                fi
             fi
         fi
     done < .env
 
-    # Then clean up all variables
-    for var in USERNAME SAMBA_USER SAMBA_PASS BASE_DIR DOCKER_COMPOSE_DIR \
-               PORTAINER_DATA_DIR NODE_RED_DATA_DIR PORTAINER_PORT NODE_RED_PORT \
-               IP NAS_IP NAS_SHARE_NAME NAS_USERNAME NAS_PASSWORD NAS_MOUNT_DIR \
-               SYNC_INTERVAL DOCKER_USER_ID DOCKER_GROUP_ID; do
-        if [ ! -z "${!var}" ]; then
-            export "$var=$(echo "${!var}" | tr -d '\r')"
-            echo "Cleaned variable: $var=${!var}"
-        fi
-    done
-
-    # Debug output
-    echo "After loading and cleaning, SAMBA_PASS is: ${SAMBA_PASS:-(not set)}"
+    # Debug output (without showing the actual password)
+    if [ -n "$SAMBA_PASS" ]; then
+        echo "SAMBA_PASS is set with length: ${#SAMBA_PASS} characters"
+    else
+        echo "SAMBA_PASS is not set"
+    fi
 else
     echo -e "${RED}❌ .env file not found${NC}"
     exit 1

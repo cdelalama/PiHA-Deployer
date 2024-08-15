@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.63"
+VERSION="1.0.64"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -122,13 +122,18 @@ export_env_vars() {
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
             # Export and verify
             export "$key=$value"
-            echo "Exported: $key=$value"
+            # Special handling for SAMBA_PASS
+            if [ "$key" = "SAMBA_PASS" ]; then
+                echo "Exported SAMBA_PASS with length: ${#value} characters"
+            else
+                echo "Exported: $key=$value"
+            fi
         fi
     done < .env
 
     # Debug: show all exported variables
     echo -e "${BLUE}All environment variables:${NC}"
-    env | sort
+    env | grep -v "SAMBA_PASS" | sort
 }
 
 # Ensure .env file has correct permissions
