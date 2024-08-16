@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.11"
+VERSION="1.0.12"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -35,28 +35,10 @@ if [ -f .env ]; then
     echo "Current environment variables:"
     env | grep -Ev "SAMBA_PASS" | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
 
-    # Only load variables that aren't already set
-    while IFS='=' read -r key value; do
-        # Skip empty lines and comments
-        if [[ ! -z "$key" && "$key" != \#* ]]; then
-            # Remove carriage returns, spaces, and quotes
-            key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
-            value=$(echo "$value" | tr -d '\r' | tr -d '"')
-            # Only export if key is valid and not already set
-            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
-                if [ -z "${!key}" ]; then
-                    export "$key=$value"
-                    if [ "$key" = "SAMBA_PASS" ]; then
-                        echo "Exported SAMBA_PASS with length: ${#value} characters"
-                    else
-                        echo "Exported: $key=$value"
-                    fi
-                else
-                    echo "Keeping existing value for: $key"
-                fi
-            fi
-        fi
-    done < .env
+    # Load all variables from .env
+    set -a  # Automatically export all variables
+    source .env
+    set +a
 
     # Debug output (without showing the actual password)
     if [ -n "$SAMBA_PASS" ]; then
@@ -146,9 +128,9 @@ if ! docker info &> /dev/null; then
 fi
 
 # Attempt to start containers
-if ! sudo -E docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" up -d; then
+if ! sudo -E docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d; then
     echo -e "${RED}❌ Failed to start Docker containers. Checking logs...${NC}"
-    sudo docker-compose -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" logs
+    sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" logs
     echo -e "${RED}❌ Please check the logs above for errors.${NC}"
     exit 1
 fi
