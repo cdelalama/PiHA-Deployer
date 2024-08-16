@@ -72,7 +72,9 @@ required_vars=(
     NAS_USERNAME 
     NAS_PASSWORD 
     NAS_MOUNT_DIR 
-    SYNC_INTERVAL
+    SYNC_INTERVAL 
+    SYNCTHING_USER 
+    SYNCTHING_PASS
 )
 
 # Verify all required variables are set
@@ -135,8 +137,8 @@ cat << EOF > "$SYNCTHING_CONFIG_DIR/config.xml"
     </folder>
     <gui>
         <address>0.0.0.0:8384</address>
-        <user>${SAMBA_USER}</user>
-        <password>${SAMBA_PASS}</password>
+        <user>${SYNCTHING_USER}</user>
+        <password>${SYNCTHING_PASS}</password>
         <theme>default</theme>
     </gui>
     <options>
