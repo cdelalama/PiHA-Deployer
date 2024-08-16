@@ -111,6 +111,45 @@ echo -e "${GREEN}Directories created and permissions set successfully${NC}"
 confirm_step "Copy .env file to Docker Compose directory"
 sudo cp .env "$DOCKER_COMPOSE_DIR/.env"
 
+# Create Syncthing initial config
+cat << EOF > "$SYNCTHING_CONFIG_DIR/config.xml"
+<configuration version="30">
+    <folder id="node-red" label="Node-RED Data" path="/data/node-red" type="sendreceive">
+        <device id="default" introducedBy=""></device>
+        <minDiskFree unit="%">1</minDiskFree>
+        <versioning></versioning>
+        <copiers>0</copiers>
+        <pullerMaxPendingKiB>0</pullerMaxPendingKiB>
+        <hashers>0</hashers>
+        <order>random</order>
+        <ignoreDelete>false</ignoreDelete>
+        <scanProgressIntervalS>0</scanProgressIntervalS>
+        <pullerPauseS>0</pullerPauseS>
+        <maxConflicts>10</maxConflicts>
+        <disableSparseFiles>false</disableSparseFiles>
+        <disableTempIndexes>false</disableTempIndexes>
+        <paused>false</paused>
+        <weakHashThresholdPct>25</weakHashThresholdPct>
+        <markerName>.stfolder</markerName>
+        <useLargeBlocks>true</useLargeBlocks>
+    </folder>
+    <gui>
+        <address>0.0.0.0:8384</address>
+        <user>${SAMBA_USER}</user>
+        <password>${SAMBA_PASS}</password>
+        <theme>default</theme>
+    </gui>
+    <options>
+        <globalAnnounceEnabled>false</globalAnnounceEnabled>
+        <localAnnounceEnabled>true</localAnnounceEnabled>
+        <reconnectionIntervalS>${SYNC_INTERVAL}</reconnectionIntervalS>
+    </options>
+</configuration>
+EOF
+
+# Set proper permissions
+sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
+
 # Start Docker containers
 confirm_step "Start Docker containers (Portainer and Node-RED)"
 echo -e "${BLUE}Starting Docker containers...${NC}"

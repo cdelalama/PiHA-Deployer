@@ -29,6 +29,10 @@ services:
     environment:
       - PUID=${DOCKER_USER_ID}
       - PGID=${DOCKER_GROUP_ID}
+      - TZ=Europe/Madrid
+      - STGUIADDRESS=0.0.0.0:8384
+      - STGUIUSER=${SAMBA_USER}
+      - STGUIPASSWORD=${SAMBA_PASS}
     volumes:
       - ${SYNCTHING_CONFIG_DIR}:/config
       - ${NODE_RED_DATA_DIR}:/data/node-red
