@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.20"
+VERSION="1.0.21"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -216,7 +216,7 @@ else
     exit 1
 fi
 
-# Modifica el archivo config.xml con la contraseña hasheada
+# Modifica el archivo config.xml con la contraseña hasheada y deshabilita los reportes
 sed -i '/<gui.*>/,/<\/gui>/ c\
 <gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="true" insecureAdminAccess="true">\
     <address>0.0.0.0:8384</address>\
@@ -225,7 +225,12 @@ sed -i '/<gui.*>/,/<\/gui>/ c\
     <theme>default</theme>\
     <insecureSkipHostcheck>true</insecureSkipHostcheck>\
     <insecureAllowFrameLoading>true</insecureAllowFrameLoading>\
-</gui>' "$SYNCTHING_CONFIG_DIR/config.xml"
+</gui>\
+<options>\
+    <urAccepted>-1</urAccepted>\
+    <startBrowser>false</startBrowser>\
+    <natEnabled>true</natEnabled>\
+</options>' "$SYNCTHING_CONFIG_DIR/config.xml"
 
 # Reinicia Syncthing con la configuración actualizada
 sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
