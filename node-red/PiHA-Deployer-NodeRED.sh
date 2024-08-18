@@ -94,7 +94,7 @@ echo -e "${BLUE}Creating directories and setting permissions...${NC}"
 sudo mkdir -p "$DOCKER_COMPOSE_DIR" \
              "$PORTAINER_DATA_DIR" \
              "$NODE_RED_DATA_DIR" \
-             "$SYNCTHING_CONFIG_DIR" \
+             "$SYNCTHING_CONFIG_DIR/data" \
              "$NAS_MOUNT_DIR"
 
 # Set correct permissions using variables from .env
@@ -102,7 +102,7 @@ sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$PORTAINER_DATA_DIR"
 sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$NODE_RED_DATA_DIR"
 sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
 
-# Set directory permissions
+# Set directory permissions (using 775 instead of 777 for better security)
 sudo chmod -R 775 "$PORTAINER_DATA_DIR"
 sudo chmod -R 775 "$NODE_RED_DATA_DIR"
 sudo chmod -R 775 "$SYNCTHING_CONFIG_DIR"

@@ -34,6 +34,7 @@ curl -sSL "https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/node-r
 
 - Access Node-RED at `http://<Your-Pi-IP>:<NODE_RED_PORT>`
 - Access Portainer at `http://<Your-Pi-IP>:<PORTAINER_PORT>`
+- Access Syncthing at `http://<Your-Pi-IP>:8384`
 - Access shared Docker folders via Samba at `\\<Your-Pi-IP>\docker`
 
 ## Notes
@@ -52,6 +53,13 @@ docker logs node-red
 
 - The script sets up a Samba share. Ensure you use a strong password when prompted.
 - The .env file containing sensitive information is deleted after setup for security reasons.
+- Each service (Node-RED, Portainer, Syncthing, Samba) uses its own set of credentials
+- Default ports:
+  - Node-RED: 1880
+  - Portainer: 9000
+  - Syncthing: 8384
+  - Syncthing Transfer: 22000
+  - Syncthing Discovery: 21027/udp
 
 ## Contributing
 
