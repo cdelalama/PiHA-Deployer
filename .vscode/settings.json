@@ -1,5 +1,8 @@
 {
 	"editor.defaultFormatter": null,
 	"files.eol": "\n",
-	"files.encoding": "utf8"
+	"files.encoding": "utf8",
+	"[yaml]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
 }

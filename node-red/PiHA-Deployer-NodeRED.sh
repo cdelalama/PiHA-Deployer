@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.13"
+VERSION="1.0.20"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -158,28 +158,102 @@ echo -e "${BLUE}👤 Please use your Samba username ($SAMBA_USER) and the passwo
 echo -e "${BLUE}🔄 You may need to log out and log back in for Docker permissions to take effect.${NC}"
 echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals.${NC}"
 
-# Asegúrate de que el directorio de configuración esté vacío
-sudo rm -rf "$SYNCTHING_CONFIG_DIR/*"
+# Configuración de Syncthing
 
-# Inicia Syncthing para que genere el archivo config.xml
+confirm_step "Configure Syncthing with authentication"
+
+# Asegúrate de que el directorio de configuración esté vacío
+sudo rm -rf "$SYNCTHING_CONFIG_DIR"/*
+
+# Inicia Syncthing
 sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
 
-# Espera un momento para asegurarte de que Syncthing haya generado el archivo
+# Espera a que Syncthing esté en funcionamiento
+echo "Waiting for Syncthing to start..."
 sleep 10
 
-# Detén Syncthing para modificar el archivo config.xml
-sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" down syncthing
+# Espera a que se genere el archivo config.xml con timeout
+echo "Waiting for config.xml to be generated..."
+TIMEOUT=60
+COUNTER=0
+while [ ! -f "$SYNCTHING_CONFIG_DIR/config.xml" ]; do
+    sleep 1
+    COUNTER=$((COUNTER + 1))
+    if [ $COUNTER -ge $TIMEOUT ]; then
+        echo -e "${RED}❌ Timeout waiting for config.xml to be generated${NC}"
+        echo -e "${RED}❌ Please check Syncthing logs: docker logs syncthing${NC}"
+        exit 1
+    fi
+    echo -n "."
+done
+echo # Nueva línea después de los puntos
 
-# Modifica el archivo config.xml para incluir el usuario, la contraseña y permitir acceso desde cualquier IP
-sed -i 's|<gui>|<gui>\n<address>0.0.0.0:8384</address>\n<user>'"$SYNCTHING_USER"'</user>\n<password>'"$SYNCTHING_PASS"'</password>|' "$SYNCTHING_CONFIG_DIR/config.xml"
+# Espera adicional para asegurar que el archivo está completamente escrito
+sleep 5
+
+# Detén Syncthing para modificar el archivo config.xml
+echo "Stopping Syncthing to modify config..."
+sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" stop syncthing || {
+    echo -e "${RED}❌ Failed to stop Syncthing${NC}"
+    exit 1
+}
+
+# Instalar apache2-utils si no está instalado
+if ! command -v htpasswd &> /dev/null; then
+    echo "Installing apache2-utils for password hashing..."
+    sudo apt-get update && sudo apt-get install -y apache2-utils
+fi
+
+# Generar hash bcrypt de la contraseña
+HASHED_PASSWORD=$(htpasswd -bnBC 10 "" "$SYNCTHING_PASS" | tr -d ':\n')
+
+# Debug - Verificar que el hash tiene el formato correcto
+echo "Debug - Password hash format check:"
+if [[ $HASHED_PASSWORD == '$2a$'* ]] || [[ $HASHED_PASSWORD == '$2y$'* ]]; then
+    echo "✅ Hash format is correct"
+else
+    echo "❌ Hash format is incorrect"
+    exit 1
+fi
+
+# Modifica el archivo config.xml con la contraseña hasheada
+sed -i '/<gui.*>/,/<\/gui>/ c\
+<gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="true" insecureAdminAccess="true">\
+    <address>0.0.0.0:8384</address>\
+    <user>'"$SYNCTHING_USER"'</user>\
+    <password>'"$HASHED_PASSWORD"'</password>\
+    <theme>default</theme>\
+    <insecureSkipHostcheck>true</insecureSkipHostcheck>\
+    <insecureAllowFrameLoading>true</insecureAllowFrameLoading>\
+</gui>' "$SYNCTHING_CONFIG_DIR/config.xml"
 
 # Reinicia Syncthing con la configuración actualizada
 sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
 
-# Limpieza de archivos temporales, pero no elimines el directorio de configuración de Syncthing
+# Muestra la información de acceso
+echo -e "${GREEN}✅ Syncthing configured successfully with authentication${NC}"
+echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
+echo -e "${BLUE}🔑 Syncthing credentials:${NC}"
+echo -e "${BLUE}   Username: ${GREEN}$SYNCTHING_USER${NC}"
+echo -e "${BLUE}   Password: ${GREEN}$SYNCTHING_PASS${NC}"
+
+# Limpieza de archivos temporales
 confirm_step "Clean up temporary files for security"
 cd ~
 sudo rm -rf $BASE_DIR
 
 echo -e "${GREEN}🎉 Setup complete. Temporary files have been removed for security.${NC}"
 echo -e "${GREEN}🔍 If you encounter any issues, please check the Docker logs using 'docker logs portainer' or 'docker logs node-red'${NC}"
+
+# Obtener IP real del sistema
+if [ "$IP" = "auto" ]; then
+    IP=$(hostname -I | awk '{print $1}')
+fi
+
+# Verificar que tenemos una IP válida
+if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo -e "${RED}❌ Could not determine valid IP address. Got: $IP${NC}"
+    exit 1
+fi
+
+echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
