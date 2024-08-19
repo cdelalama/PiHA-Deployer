@@ -12,9 +12,23 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}PiHA-Deployer Node-RED Installation Script v$VERSION${NC}"
 echo -e "${BLUE}===============================================${NC}"
 
-# Ask user if they want to be prompted for each step
-echo -e "${BLUE}🤔 Do you want to be prompted for each step? (y/n)${NC}"
-read -r prompt_choice
+# Ask user if they want to be prompted for each step with countdown
+echo -e "${BLUE}🤔 Do you want to be prompted for each step? (y/N)${NC}"
+echo -n "Automatically continuing with 'N' in "
+for i in {5..1}; do
+    echo -n "$i... "
+    sleep 1
+done
+
+# Read with timeout and default to "n"
+read -t 0 -n 1 prompt_choice || true
+echo # New line after countdown
+
+# If no input or invalid input, default to "n"
+if [[ ! "$prompt_choice" =~ ^[YyNn]$ ]]; then
+    prompt_choice="n"
+    echo "No input received, using default: No"
+fi
 
 # Function for confirmation prompts
 confirm_step() {
