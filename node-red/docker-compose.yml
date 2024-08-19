@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    user: "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -36,8 +37,8 @@ services:
       - STGUIPASSWORD=${SYNCTHING_PASS}
     volumes:
       - ${SYNCTHING_CONFIG_DIR}:/config
-      - ${NODE_RED_DATA_DIR}:/data/node-red
-      - ${PORTAINER_DATA_DIR}:/data/portainer
-      - ${NAS_MOUNT_DIR}:/nas_data
+      - ${NODE_RED_DATA_DIR}:/data/node-red:rw
+      - ${PORTAINER_DATA_DIR}:/data/portainer:rw
+      - ${NAS_MOUNT_DIR}:/data/nas_data:rw
     restart: unless-stopped
     network_mode: "host"

@@ -94,18 +94,22 @@ echo -e "${BLUE}Creating directories and setting permissions...${NC}"
 sudo mkdir -p "$DOCKER_COMPOSE_DIR" \
              "$PORTAINER_DATA_DIR" \
              "$NODE_RED_DATA_DIR" \
-             "$SYNCTHING_CONFIG_DIR/data" \
+             "$SYNCTHING_CONFIG_DIR/config" \
+             "$SYNCTHING_CONFIG_DIR/data/node-red" \
+             "$SYNCTHING_CONFIG_DIR/data/portainer" \
+             "$SYNCTHING_CONFIG_DIR/data/nas_data" \
              "$NAS_MOUNT_DIR"
 
+# Create .stfolder in each synced directory
+sudo touch "$SYNCTHING_CONFIG_DIR/data/node-red/.stfolder" \
+          "$SYNCTHING_CONFIG_DIR/data/portainer/.stfolder" \
+          "$SYNCTHING_CONFIG_DIR/data/nas_data/.stfolder"
+
 # Set correct permissions using variables from .env
-sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$PORTAINER_DATA_DIR"
-sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$NODE_RED_DATA_DIR"
-sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
+sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$SYNCTHING_CONFIG_DIR" "$NAS_MOUNT_DIR"
 
 # Set directory permissions (using 775 instead of 777 for better security)
-sudo chmod -R 775 "$PORTAINER_DATA_DIR"
-sudo chmod -R 775 "$NODE_RED_DATA_DIR"
-sudo chmod -R 775 "$SYNCTHING_CONFIG_DIR"
+sudo chmod -R 775 "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$SYNCTHING_CONFIG_DIR" "$NAS_MOUNT_DIR"
 
 echo -e "${GREEN}Directories created and permissions set successfully${NC}"
 
@@ -216,8 +220,51 @@ else
     exit 1
 fi
 
-# Modifica el archivo config.xml con la contraseña hasheada y deshabilita los reportes
-sed -i '/<gui.*>/,/<\/gui>/ c\
+# Crear directorios necesarios con permisos correctos
+sudo mkdir -p "$SYNCTHING_CONFIG_DIR/config"
+sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data"
+sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/node-red/.stfolder"
+sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/portainer/.stfolder"
+sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/nas_data/.stfolder"
+
+# Establecer permisos correctos
+sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
+sudo chmod -R 775 "$SYNCTHING_CONFIG_DIR"
+
+# Modificar el archivo config.xml
+sed -i '/<configuration/,/<\/configuration>/ c\
+<configuration version="37">\
+<folder id="default" label="Default Folder" path="/data/node-red" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
+    <filesystemType>basic</filesystemType>\
+    <device id="'"$DEVICE_ID"'" introducedBy="">\
+        <encryptionPassword/>\
+    </device>\
+    <minDiskFree unit="%">1</minDiskFree>\
+    <versioning>\
+        <cleanupIntervalS>3600</cleanupIntervalS>\
+        <fsPath/>\
+        <fsType>basic</fsType>\
+    </versioning>\
+</folder>\
+<folder id="portainer" label="Portainer Data" path="/data/portainer" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
+    <filesystemType>basic</filesystemType>\
+    <device id="'"$DEVICE_ID"'" introducedBy="">\
+        <encryptionPassword/>\
+    </device>\
+    <minDiskFree unit="%">1</minDiskFree>\
+</folder>\
+<folder id="nas" label="NAS Data" path="/data/nas_data" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
+    <filesystemType>basic</filesystemType>\
+    <device id="'"$DEVICE_ID"'" introducedBy="">\
+        <encryptionPassword/>\
+    </device>\
+    <minDiskFree unit="%">1</minDiskFree>\
+</folder>\
+<device id="'"$DEVICE_ID"'" name="syncthing" compression="metadata" introducer="false" skipIntroductionRemovals="false" introducedBy="">\
+    <address>dynamic</address>\
+    <paused>false</paused>\
+    <autoAcceptFolders>false</autoAcceptFolders>\
+</device>\
 <gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="true" insecureAdminAccess="true">\
     <address>0.0.0.0:8384</address>\
     <user>'"$SYNCTHING_USER"'</user>\
@@ -227,10 +274,20 @@ sed -i '/<gui.*>/,/<\/gui>/ c\
     <insecureAllowFrameLoading>true</insecureAllowFrameLoading>\
 </gui>\
 <options>\
-    <urAccepted>-1</urAccepted>\
+    <listenAddress>default</listenAddress>\
+    <globalAnnounceEnabled>false</globalAnnounceEnabled>\
+    <localAnnounceEnabled>true</localAnnounceEnabled>\
+    <relaysEnabled>false</relaysEnabled>\
     <startBrowser>false</startBrowser>\
     <natEnabled>true</natEnabled>\
-</options>' "$SYNCTHING_CONFIG_DIR/config.xml"
+    <urAccepted>-1</urAccepted>\
+    <urSeen>-1</urSeen>\
+    <crashReportingEnabled>false</crashReportingEnabled>\
+    <usageReportingEnabled>false</usageReportingEnabled>\
+    <autoUpgradeIntervalH>0</autoUpgradeIntervalH>\
+    <upgradeToPreReleases>false</upgradeToPreReleases>\
+</options>\
+</configuration>' "$SYNCTHING_CONFIG_DIR/config.xml"
 
 # Reinicia Syncthing con la configuración actualizada
 sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
