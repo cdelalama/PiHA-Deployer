@@ -44,10 +44,26 @@ cleanup_existing() {
 echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}"
 echo "Script started"
 
-# Ask for cleanup
-read -p "Do you want to clean up any existing installations? (y/N) " -n 1 -r
-/usr/bin/printf "\n"
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+# Ask for cleanup with countdown and default to "Y"
+echo -e "${BLUE}🤔 Do you want to clean up any existing installations? (Y/n)${NC}"
+echo -n "Automatically continuing with 'Y' in "
+for i in {5..1}; do
+    echo -n "$i... "
+    sleep 1
+done
+
+# Read with timeout and default to "y"
+read -t 0 -n 1 cleanup_choice || true
+echo # New line after countdown
+
+# If no input or invalid input, default to "y"
+if [[ ! "$cleanup_choice" =~ ^[YyNn]$ ]]; then
+    cleanup_choice="y"
+    echo "No input received, using default: Yes"
+fi
+
+# Perform cleanup if choice is "y"
+if [[ "$cleanup_choice" =~ ^[Yy]$ ]]; then
     cleanup_existing
 fi
 
