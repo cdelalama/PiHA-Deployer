@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.12"
+VERSION="1.0.13"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -113,42 +113,6 @@ echo -e "${GREEN}Directories created and permissions set successfully${NC}"
 confirm_step "Copy .env file to Docker Compose directory"
 sudo cp .env "$DOCKER_COMPOSE_DIR/.env"
 
-# Create Syncthing initial config
-cat << EOF > "$SYNCTHING_CONFIG_DIR/config.xml"
-<configuration version="30">
-    <folder id="node-red" label="Node-RED Data" path="/data/node-red" type="sendreceive">
-        <device id="default" introducedBy=""></device>
-        <minDiskFree unit="%">1</minDiskFree>
-        <versioning></versioning>
-        <copiers>0</copiers>
-        <pullerMaxPendingKiB>0</pullerMaxPendingKiB>
-        <hashers>0</hashers>
-        <order>random</order>
-        <ignoreDelete>false</ignoreDelete>
-        <scanProgressIntervalS>0</scanProgressIntervalS>
-        <pullerPauseS>0</pullerPauseS>
-        <maxConflicts>10</maxConflicts>
-        <disableSparseFiles>false</disableSparseFiles>
-        <disableTempIndexes>false</disableTempIndexes>
-        <paused>false</paused>
-        <weakHashThresholdPct>25</weakHashThresholdPct>
-        <markerName>.stfolder</markerName>
-        <useLargeBlocks>true</useLargeBlocks>
-    </folder>
-    <gui>
-        <address>0.0.0.0:8384</address>
-        <user>${SYNCTHING_USER}</user>
-        <password>${SYNCTHING_PASS}</password>
-        <theme>default</theme>
-    </gui>
-    <options>
-        <globalAnnounceEnabled>false</globalAnnounceEnabled>
-        <localAnnounceEnabled>true</localAnnounceEnabled>
-        <reconnectionIntervalS>${SYNC_INTERVAL}</reconnectionIntervalS>
-    </options>
-</configuration>
-EOF
-
 # Set proper permissions
 sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
 
@@ -194,7 +158,25 @@ echo -e "${BLUE}👤 Please use your Samba username ($SAMBA_USER) and the passwo
 echo -e "${BLUE}🔄 You may need to log out and log back in for Docker permissions to take effect.${NC}"
 echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals.${NC}"
 
-# Clean up sensitive files
+# Asegúrate de que el directorio de configuración esté vacío
+sudo rm -rf "$SYNCTHING_CONFIG_DIR/*"
+
+# Inicia Syncthing para que genere el archivo config.xml
+sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
+
+# Espera un momento para asegurarte de que Syncthing haya generado el archivo
+sleep 10
+
+# Detén Syncthing para modificar el archivo config.xml
+sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" down syncthing
+
+# Modifica el archivo config.xml para incluir el usuario, la contraseña y permitir acceso desde cualquier IP
+sed -i 's|<gui>|<gui>\n<address>0.0.0.0:8384</address>\n<user>'"$SYNCTHING_USER"'</user>\n<password>'"$SYNCTHING_PASS"'</password>|' "$SYNCTHING_CONFIG_DIR/config.xml"
+
+# Reinicia Syncthing con la configuración actualizada
+sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
+
+# Limpieza de archivos temporales, pero no elimines el directorio de configuración de Syncthing
 confirm_step "Clean up temporary files for security"
 cd ~
 sudo rm -rf $BASE_DIR
