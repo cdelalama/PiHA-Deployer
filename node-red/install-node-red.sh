@@ -40,10 +40,15 @@ download_from_github() {
 export_env_vars() {
     echo -e "${BLUE}Reading and exporting environment variables from .env file...${NC}"
     while IFS='=' read -r key value; do
+        # Skip empty lines and comments
         if [[ ! -z "$key" && "$key" != \#* ]]; then
-            key=$(echo "$key" | tr -d '[:space:]')
-            value=$(echo "$value" | tr -d '[:space:]' | tr -d '"')
-            export "$key=$value"
+            # Remove carriage returns, spaces, and quotes
+            key=$(echo "$key" | tr -d '\r' | tr -d '[:space:]')
+            value=$(echo "$value" | tr -d '\r' | tr -d '"')
+            # Only export if key is valid
+            if [[ $key =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                export "$key=$value"
+            fi
         fi
     done < .env
 }

@@ -1,3 +1,5 @@
 {
-	"editor.defaultFormatter": null
+	"editor.defaultFormatter": null,
+	"files.eol": "\n",
+	"files.encoding": "utf8"
 }

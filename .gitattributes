@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Force shell scripts to use LF
+*.sh text eol=lf
+.env text eol=lf
