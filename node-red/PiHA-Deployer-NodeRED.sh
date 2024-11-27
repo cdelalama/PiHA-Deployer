@@ -100,6 +100,14 @@ for var in "${required_vars[@]}"; do
 done
 echo -e "${GREEN}✅ All required variables are set${NC}"
 
+# Create Portainer password file
+echo -e "${BLUE}Creating Portainer password file...${NC}"
+PORTAINER_PASS_FILE="${DOCKER_COMPOSE_DIR}/portainer_password.txt"
+sudo mkdir -p "${DOCKER_COMPOSE_DIR}"
+echo "${PORTAINER_PASS}" | sudo tee "${PORTAINER_PASS_FILE}" > /dev/null
+sudo chmod 600 "${PORTAINER_PASS_FILE}"
+sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "${PORTAINER_PASS_FILE}"
+
 # Create directories and set permissions
 confirm_step "Create necessary directories and set permissions"
 echo -e "${BLUE}Creating directories and setting permissions...${NC}"

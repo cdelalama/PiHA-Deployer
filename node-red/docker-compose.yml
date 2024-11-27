@@ -7,10 +7,12 @@ services:
     security_opt:
       - no-new-privileges:true
     user: "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}"
+    command: --admin-password-file=/run/secrets/portainer_password
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${PORTAINER_DATA_DIR}:/data
+      - ${DOCKER_COMPOSE_DIR}/portainer_password.txt:/run/secrets/portainer_password:ro
     ports:
       - "${PORTAINER_PORT}:9000"
 
