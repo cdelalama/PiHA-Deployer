@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.65"
+VERSION="1.0.66"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -47,19 +47,27 @@ echo "Script started"
 # Ask for cleanup with countdown and default to "Y"
 echo -e "${BLUE}🤔 Do you want to clean up any existing installations? (Y/n)${NC}"
 echo -n "Automatically continuing with 'Y' in "
+
+# Initialize cleanup_choice
+cleanup_choice=""
+
+# Start countdown with input check
 for i in {5..1}; do
     echo -n "$i... "
-    sleep 1
+    if read -t 1 -n 1 input; then
+        if [[ "$input" =~ ^[YyNn]$ ]]; then
+            cleanup_choice="$input"
+            echo # New line after input
+            break
+        fi
+    fi
 done
 
-# Read with timeout and default to "y"
-read -t 0 -n 1 cleanup_choice || true
-echo # New line after countdown
-
-# If no input or invalid input, default to "y"
+# If no valid input received, default to "y"
 if [[ ! "$cleanup_choice" =~ ^[YyNn]$ ]]; then
     cleanup_choice="y"
-    echo "No input received, using default: Yes"
+    echo # New line after countdown
+    echo "No valid input received, using default: Yes"
 fi
 
 # Perform cleanup if choice is "y"
@@ -210,8 +218,6 @@ download_from_github "docker-compose.yml"
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
 
-
-
 # Mount NAS share
 echo -e "${BLUE}Checking NAS share mount status...${NC}" >&2
 echo -e "NAS_IP: '$NAS_IP'"
@@ -276,8 +282,6 @@ ls -ld "$NAS_MOUNT_DIR" || echo "Failed to get mount point permissions"
 
 echo -e "${BLUE}Attempting to access a file in the mount:${NC}" >&2
 sudo touch "$NAS_MOUNT_DIR/test_file" && echo "Successfully created test file" || echo "Failed to create test file"
-
-
 
 # Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
