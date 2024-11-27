@@ -96,7 +96,7 @@ for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
         echo -e "${RED}❌ Required variable $var is not set in .env${NC}"
         exit 1
-    fi
+    fi  
 done
 echo -e "${GREEN}✅ All required variables are set${NC}"
 
