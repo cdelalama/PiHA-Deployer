@@ -55,8 +55,9 @@ cleanup_choice=""
 for i in {5..1}; do
     echo -n "$i... "
     if read -t 1 -n 1 input; then
-        if [[ "$input" =~ ^[YyNn]$ ]]; then
-            cleanup_choice="$input"
+        # Accept Enter (empty input) or Y/y/N/n
+        if [[ -z "$input" || "$input" =~ ^[YyNn]$ ]]; then
+            cleanup_choice="${input:-y}"  # Use 'y' if input is empty (Enter key)
             echo # New line after input
             break
         fi
