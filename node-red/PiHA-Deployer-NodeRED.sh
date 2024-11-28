@@ -165,9 +165,6 @@ echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals${
 # Configuración de Syncthing
 confirm_step "Configure Syncthing with authentication"
 
-# Limpiar configuración anterior
-sudo rm -rf "$SYNCTHING_CONFIG_DIR"/*
-
 # Iniciar Syncthing
 echo "Starting Syncthing container..."
 sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
@@ -176,7 +173,6 @@ sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up
 check_syncthing_ready() {
     local config_file="$SYNCTHING_CONFIG_DIR/config.xml"
     
-    # Debug info
     echo -e "\nChecking Syncthing status:"
     echo "- Config file: $config_file"
     
@@ -184,10 +180,8 @@ check_syncthing_ready() {
         echo "- Config file exists"
         if [ -s "$config_file" ]; then
             echo "- Config file has content"
-            # Verificar que el archivo tiene la estructura básica de XML
             if grep -q "<configuration" "$config_file" 2>/dev/null; then
                 echo "- Config file is valid XML"
-                # Verificar que el puerto está respondiendo
                 if nc -z localhost 8384; then
                     echo "- Port 8384 is responding"
                     return 0
@@ -208,7 +202,7 @@ check_syncthing_ready() {
 
 # Esperar a que Syncthing esté listo
 echo "Waiting for Syncthing to be ready..."
-MAX_ATTEMPTS=30  # 60 segundos total
+MAX_ATTEMPTS=30
 ATTEMPT=0
 
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
@@ -216,7 +210,6 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
         echo -e "${GREEN}✅ Syncthing is ready${NC}"
         break
     fi
-    echo -n "."
     sleep 2
     ATTEMPT=$((ATTEMPT + 1))
 done
@@ -224,9 +217,7 @@ done
 if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
     echo -e "\n${RED}❌ Timeout waiting for Syncthing${NC}"
     echo -e "${BLUE}📋 Debugging information:${NC}"
-    echo -e "- Latest logs:"
     docker logs --tail 20 syncthing
-    echo -e "- Config directory status:"
     ls -la "$SYNCTHING_CONFIG_DIR"
     exit 1
 fi
@@ -383,9 +374,9 @@ echo -e "${GREEN}✅ Syncthing configured successfully${NC}"
 echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
 echo -e "${BLUE}🔑 Use your configured Syncthing credentials to access the interface${NC}"
 
-# Mensaje final de instalación
+# Mensaje final unificado (solo al final del script)
 echo -e "\n${GREEN}🎉 Setup complete!${NC}"
-echo -e "${BLUE}📝 Summary of services:${NC}"
+echo -e "\n${BLUE}📝 Summary of services:${NC}"
 echo -e "${BLUE}🌐 Portainer: http://$IP:$PORTAINER_PORT${NC}"
 echo -e "${BLUE}🔴 Node-RED: http://$IP:$NODE_RED_PORT${NC}"
 echo -e "${BLUE}🔄 Syncthing: http://$IP:8384${NC}"
