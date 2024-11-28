@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.29"
+VERSION="1.0.30"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -36,7 +36,6 @@ fi
 confirm_step "Check if all required variables are set in the .env file"
 required_vars=(
     BASE_DIR 
-    USERNAME 
     DOCKER_USER_ID 
     DOCKER_GROUP_ID 
     SAMBA_USER 
@@ -56,6 +55,8 @@ required_vars=(
     SYNC_INTERVAL 
     SYNCTHING_USER 
     SYNCTHING_PASS
+    DEVICE_ID
+    PORTAINER_PASS
 )
 
 # Verify all required variables are set
