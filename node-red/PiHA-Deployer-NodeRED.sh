@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.27"
+VERSION="1.0.29"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -137,9 +137,9 @@ if ! docker info &> /dev/null; then
 fi
 
 # Attempt to start containers
-if ! sudo -E docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d; then
+if ! sudo -E docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d; then
     echo -e "${RED}❌ Failed to start Docker containers. Checking logs...${NC}"
-    sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" logs
+    sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" logs
     echo -e "${RED}❌ Please check the logs above for errors.${NC}"
     exit 1
 fi
@@ -152,22 +152,12 @@ if ! docker ps | grep -q "portainer" || ! docker ps | grep -q "node-red"; then
     exit 1
 fi
 
-echo -e "${GREEN}✅ Docker containers started successfully${NC}"
-
-echo -e "${BLUE}✅ Installation complete!${NC}"
-echo -e "${BLUE}🌐 Portainer is accessible at http://$IP:$PORTAINER_PORT${NC}"
-echo -e "${BLUE}🔴 Node-RED is accessible at http://$IP:$NODE_RED_PORT${NC}"
-echo -e "${BLUE}📁 Docker folders are shared via Samba at \\\\$IP\\docker${NC}"
-echo -e "${BLUE}👤 Please use your Samba username ($SAMBA_USER) to access the share${NC}"
-echo -e "${BLUE}🔄 You may need to log out and log back in for Docker permissions to take effect${NC}"
-echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals${NC}"
-
 # Configuración de Syncthing
 confirm_step "Configure Syncthing with authentication"
 
 # Iniciar Syncthing
 echo "Starting Syncthing container..."
-sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
+sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
 
 # Función para verificar si Syncthing está listo
 check_syncthing_ready() {
@@ -246,7 +236,7 @@ sleep 5
 
 # Detén Syncthing para modificar el archivo config.xml
 echo "Stopping Syncthing to modify config..."
-sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" stop syncthing || {
+sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" stop syncthing || {
     echo -e "${RED}❌ Failed to stop Syncthing${NC}"
     exit 1
 }
@@ -328,22 +318,12 @@ sed -i '/<configuration/,/<\/configuration>/ c\
 </configuration>' "$SYNCTHING_CONFIG_DIR/config.xml"
 
 # Reinicia Syncthing con la configuración actualizada
-sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
-
-# Muestra la información de acceso
-echo -e "${GREEN}✅ Syncthing configured successfully with authentication${NC}"
-echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
-echo -e "${BLUE}🔑 Syncthing credentials:${NC}"
-echo -e "${BLUE}   Username: ${GREEN}$SYNCTHING_USER${NC}"
-echo -e "${BLUE}   Password: ${GREEN}$SYNCTHING_PASS${NC}"
+sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
 
 # Limpieza de archivos temporales
 confirm_step "Clean up temporary files for security"
 cd ~
 sudo rm -rf $BASE_DIR
-
-echo -e "${GREEN}🎉 Setup complete. Temporary files have been removed for security.${NC}"
-echo -e "${GREEN}🔍 If you encounter any issues, please check the Docker logs using 'docker logs portainer' or 'docker logs node-red'${NC}"
 
 # Mensaje final unificado (único lugar con todos los mensajes de estado)
 echo -e "\n${GREEN}🎉 Setup complete!${NC}"
