@@ -89,10 +89,13 @@ sudo mkdir -p "$DOCKER_COMPOSE_DIR" \
              "$SYNCTHING_CONFIG_DIR/data/nas_data" \
              "$NAS_MOUNT_DIR"
 
-# Create .stfolder in each synced directory
-sudo touch "$SYNCTHING_CONFIG_DIR/data/node-red/.stfolder" \
-          "$SYNCTHING_CONFIG_DIR/data/portainer/.stfolder" \
-          "$SYNCTHING_CONFIG_DIR/data/nas_data/.stfolder"
+# Crear directorios .stfolder con los permisos correctos
+for dir in "node-red" "portainer" "nas_data"; do
+    if [ ! -d "/srv/docker/syncthing/data/$dir/.stfolder" ]; then
+        sudo mkdir -p "/srv/docker/syncthing/data/$dir/.stfolder"
+        sudo chown -R 1000:1000 "/srv/docker/syncthing/data/$dir"
+    fi
+done
 
 # Set correct permissions using variables from .env
 sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$SYNCTHING_CONFIG_DIR" "$NAS_MOUNT_DIR"
