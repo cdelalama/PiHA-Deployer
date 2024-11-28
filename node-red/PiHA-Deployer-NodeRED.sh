@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.30"
+VERSION="1.0.33"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -55,7 +55,6 @@ required_vars=(
     SYNC_INTERVAL 
     SYNCTHING_USER 
     SYNCTHING_PASS
-    DEVICE_ID
     PORTAINER_PASS
 )
 
