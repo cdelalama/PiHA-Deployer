@@ -20,21 +20,13 @@ confirm_step() {
 # Load variables from .env file
 confirm_step "Load environment variables from .env file"
 if [ -f .env ]; then
-    # First, show all current environment variables (except SAMBA_PASS)
-    echo "Current environment variables:"
-    env | grep -Ev "SAMBA_PASS" | grep -E "SAMBA_|DOCKER_|NAS_|PORT|IP|USERNAME|BASE_DIR|SYNC"
-
     # Load all variables from .env
     set -a  # Automatically export all variables
     source .env
     set +a
 
-    # Debug output (without showing the actual password)
-    if [ -n "$SAMBA_PASS" ]; then
-        echo "SAMBA_PASS is set with length: ${#SAMBA_PASS} characters"
-    else
-        echo "SAMBA_PASS is not set"
-    fi
+    # Only show confirmation without values
+    echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
 else
     echo -e "${RED}❌ .env file not found${NC}"
     exit 1
@@ -149,18 +141,28 @@ if ! docker ps | grep -q "portainer" || ! docker ps | grep -q "node-red"; then
     exit 1
 fi
 
+# Obtener IP real del sistema antes de mostrar los mensajes finales
+if [ "$IP" = "auto" ]; then
+    IP=$(hostname -I | awk '{print $1}')
+fi
+
+# Verificar que tenemos una IP válida
+if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo -e "${RED}❌ Could not determine valid IP address. Got: $IP${NC}"
+    exit 1
+fi
+
 echo -e "${GREEN}✅ Docker containers started successfully${NC}"
 
 echo -e "${BLUE}✅ Installation complete!${NC}"
 echo -e "${BLUE}🌐 Portainer is accessible at http://$IP:$PORTAINER_PORT${NC}"
 echo -e "${BLUE}🔴 Node-RED is accessible at http://$IP:$NODE_RED_PORT${NC}"
 echo -e "${BLUE}📁 Docker folders are shared via Samba at \\\\$IP\\docker${NC}"
-echo -e "${BLUE}👤 Please use your Samba username ($SAMBA_USER) and the password you set in the .env file to access the share.${NC}"
-echo -e "${BLUE}🔄 You may need to log out and log back in for Docker permissions to take effect.${NC}"
-echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals.${NC}"
+echo -e "${BLUE}👤 Please use your Samba username ($SAMBA_USER) to access the share${NC}"
+echo -e "${BLUE}🔄 You may need to log out and log back in for Docker permissions to take effect${NC}"
+echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals${NC}"
 
 # Configuración de Syncthing
-
 confirm_step "Configure Syncthing with authentication"
 
 # Asegúrate de que el directorio de configuración esté vacío
@@ -316,3 +318,21 @@ if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
+
+# Configuración final de Syncthing
+echo -e "${GREEN}✅ Syncthing configured successfully${NC}"
+echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
+echo -e "${BLUE}🔑 Use your configured Syncthing credentials to access the interface${NC}"
+
+# Mensaje final de instalación
+echo -e "\n${GREEN}🎉 Setup complete!${NC}"
+echo -e "${BLUE}📝 Summary of services:${NC}"
+echo -e "${BLUE}🌐 Portainer: http://$IP:$PORTAINER_PORT${NC}"
+echo -e "${BLUE}🔴 Node-RED: http://$IP:$NODE_RED_PORT${NC}"
+echo -e "${BLUE}🔄 Syncthing: http://$IP:8384${NC}"
+echo -e "${BLUE}📁 Samba share: \\\\$IP\\docker${NC}"
+
+echo -e "\n${BLUE}🔍 If you encounter any issues:${NC}"
+echo -e "${BLUE}- Check Docker logs: 'docker logs portainer' or 'docker logs node-red'${NC}"
+echo -e "${BLUE}- You may need to log out and log back in for permissions to take effect${NC}"
+echo -e "${BLUE}- Data is being synced to NAS at ${SYNC_INTERVAL} intervals${NC}"

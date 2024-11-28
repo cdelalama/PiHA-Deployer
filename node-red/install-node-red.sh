@@ -145,20 +145,15 @@ export_env_vars() {
             # Remove leading/trailing whitespace and quotes
             key=$(echo "$key" | tr -d '\r' | xargs)
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
-            # Export and verify
+            # Export variable
             export "$key=$value"
-            # Special handling for SAMBA_PASS
-            if [ "$key" = "SAMBA_PASS" ]; then
-                echo "Exported SAMBA_PASS with length: ${#value} characters"
-            else
-                echo "Exported: $key=$value"
+            # Only show confirmation for sensitive variables without their values
+            if [[ "$key" =~ PASS|PASSWORD|CREDENTIALS|SECRET|KEY ]]; then
+                echo "Exported $key (value hidden)"
             fi
         fi
     done < .env
-
-    # Debug: show all exported variables
-    echo -e "${BLUE}All environment variables:${NC}"
-    env | grep -v "SAMBA_PASS" | sort
+    echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
 }
 
 # Ensure .env file has correct permissions
@@ -167,13 +162,11 @@ chmod 600 .env
 # Export environment variables
 export_env_vars
 
-# Debugging output to verify variables are sourced correctly
-echo -e "${BLUE}Checking exported variables:${NC}"
-echo -e "NAS_IP: '$NAS_IP'"
-echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
-echo -e "NAS_USERNAME: '$NAS_USERNAME'"
-echo -e "NAS_PASSWORD: '$NAS_PASSWORD'"
-echo -e "NAS_MOUNT_DIR: '$NAS_MOUNT_DIR'"
+# Debugging output - solo mostrar variables relevantes para la conexión NAS
+echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
+echo -e "NAS IP: $NAS_IP"
+echo -e "NAS Share: $NAS_SHARE_NAME"
+echo -e "Mount Point: $NAS_MOUNT_DIR"
 
 # Check NAS connectivity
 echo -e "${BLUE}Checking NAS connectivity...${NC}"
@@ -251,53 +244,45 @@ echo -e "${BLUE}Attempting to mount NAS share...${NC}" >&2
 
 # Attempt to mount
 echo -e "${BLUE}Mounting //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
+
+# Reload systemd to recognize fstab changes
+sudo systemctl daemon-reload
+
+# Try mounting with SMB 3.0 first
 if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
-    echo -e "${RED}Mount failed. Trying without SMB version...${NC}" >&2
+    echo -e "${RED}Mount with SMB 3.0 failed. Trying without version specification...${NC}" >&2
+    
+    # If SMB 3.0 fails, try without version
     if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
-        echo -e "${RED}Both mount attempts failed. Checking logs...${NC}" >&2
+        echo -e "${RED}Both mount attempts failed. Checking system logs...${NC}" >&2
         dmesg | tail -n 20
         exit 1
     fi
 fi
 
-# Verify the mount
-echo -e "${BLUE}Verifying NAS share mount...${NC}" >&2
-if mount | grep -q "$NAS_MOUNT_DIR"; then
-    echo -e "${GREEN}NAS share is listed in mount table${NC}" >&2
-    if [ -d "$NAS_MOUNT_DIR" ]; then
-        echo -e "${GREEN}Mount point directory exists${NC}" >&2
-        echo -e "${BLUE}Contents of $NAS_MOUNT_DIR:${NC}" >&2
-        sudo ls -la "$NAS_MOUNT_DIR" || echo "Failed to list directory contents"
-    else
-        echo -e "${RED}Mount point directory does not exist${NC}" >&2
-    fi
-else
-    echo -e "${RED}NAS share is not mounted. Something went wrong.${NC}" >&2
+# Verify mount was successful
+if ! mountpoint -q "$NAS_MOUNT_DIR"; then
+    echo -e "${RED}Mount verification failed. Share is not mounted.${NC}" >&2
+    exit 1
 fi
 
-echo -e "${BLUE}Current mounts:${NC}" >&2
-mount | grep cifs
+echo -e "${GREEN}✅ NAS share mounted successfully${NC}" >&2
 
-echo -e "${BLUE}Permissions of mount point:${NC}" >&2
-ls -ld "$NAS_MOUNT_DIR" || echo "Failed to get mount point permissions"
+# Starting second phase of installation
+echo -e "\n${BLUE}=========================================${NC}"
+echo -e "${BLUE} Starting PiHA-Deployer deployment phase${NC}"
+echo -e "${BLUE}This will:${NC}"
+echo -e "${BLUE}1. Configure Docker containers${NC}"
+echo -e "${BLUE}2. Set up Node-RED and Portainer${NC}"
+echo -e "${BLUE}3. Configure Syncthing for data sync${NC}"
+echo -e "${BLUE}4. Set up Samba sharing${NC}"
+echo -e "${BLUE}=========================================${NC}\n"
 
-echo -e "${BLUE}Attempting to access a file in the mount:${NC}" >&2
-sudo touch "$NAS_MOUNT_DIR/test_file" && echo "Successfully created test file" || echo "Failed to create test file"
-
-# Execute PiHA-Deployer-NodeRED.sh
 echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
 chmod +x PiHA-Deployer-NodeRED.sh
 ./PiHA-Deployer-NodeRED.sh
 
-# Only clean up if the deployment was successful
-if [ $? -eq 0 ]; then
-    echo -e "${BLUE}Cleaning up temporary files...${NC}" >&2
-    rm -f "$HOME/.env"
-    rm -f "$BASE_DIR/PiHA-Deployer-NodeRED.sh"
-    echo -e "${GREEN}Cleanup complete${NC}" >&2
-else
-    echo -e "${RED}Deployment failed, keeping files for troubleshooting${NC}" >&2
-    exit 1
-fi
+# Clean up silently
+rm -f "$HOME/.env" >/dev/null 2>&1
 
 echo -e "${GREEN}Installation complete!${NC}" >&2
