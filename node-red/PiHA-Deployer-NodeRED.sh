@@ -165,15 +165,74 @@ echo -e "${BLUE}🔄 Data is being synced to NAS at ${SYNC_INTERVAL} intervals${
 # Configuración de Syncthing
 confirm_step "Configure Syncthing with authentication"
 
-# Asegúrate de que el directorio de configuración esté vacío
+# Limpiar configuración anterior
 sudo rm -rf "$SYNCTHING_CONFIG_DIR"/*
 
-# Inicia Syncthing
+# Iniciar Syncthing
+echo "Starting Syncthing container..."
 sudo docker-compose -f "/home/cdelalama/docker_temp_setup/docker-compose.yml" up -d syncthing
 
-# Espera a que Syncthing esté en funcionamiento
-echo "Waiting for Syncthing to start..."
-sleep 10
+# Función para verificar si Syncthing está listo
+check_syncthing_ready() {
+    local config_file="$SYNCTHING_CONFIG_DIR/config.xml"
+    
+    # Debug info
+    echo -e "\nChecking Syncthing status:"
+    echo "- Config file: $config_file"
+    
+    if [ -f "$config_file" ]; then
+        echo "- Config file exists"
+        if [ -s "$config_file" ]; then
+            echo "- Config file has content"
+            # Verificar que el archivo tiene la estructura básica de XML
+            if grep -q "<configuration" "$config_file" 2>/dev/null; then
+                echo "- Config file is valid XML"
+                # Verificar que el puerto está respondiendo
+                if nc -z localhost 8384; then
+                    echo "- Port 8384 is responding"
+                    return 0
+                else
+                    echo "- Port 8384 is not responding"
+                fi
+            else
+                echo "- Config file is not valid XML"
+            fi
+        else
+            echo "- Config file is empty"
+        fi
+    else
+        echo "- Config file does not exist"
+    fi
+    return 1
+}
+
+# Esperar a que Syncthing esté listo
+echo "Waiting for Syncthing to be ready..."
+MAX_ATTEMPTS=30  # 60 segundos total
+ATTEMPT=0
+
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+    if check_syncthing_ready; then
+        echo -e "${GREEN}✅ Syncthing is ready${NC}"
+        break
+    fi
+    echo -n "."
+    sleep 2
+    ATTEMPT=$((ATTEMPT + 1))
+done
+
+if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+    echo -e "\n${RED}❌ Timeout waiting for Syncthing${NC}"
+    echo -e "${BLUE}📋 Debugging information:${NC}"
+    echo -e "- Latest logs:"
+    docker logs --tail 20 syncthing
+    echo -e "- Config directory status:"
+    ls -la "$SYNCTHING_CONFIG_DIR"
+    exit 1
+fi
+
+# Dar un pequeño tiempo adicional para asegurar estabilidad
+sleep 5
 
 # Espera a que se genere el archivo config.xml con timeout
 echo "Waiting for config.xml to be generated..."
@@ -331,8 +390,9 @@ echo -e "${BLUE}🌐 Portainer: http://$IP:$PORTAINER_PORT${NC}"
 echo -e "${BLUE}🔴 Node-RED: http://$IP:$NODE_RED_PORT${NC}"
 echo -e "${BLUE}🔄 Syncthing: http://$IP:8384${NC}"
 echo -e "${BLUE}📁 Samba share: \\\\$IP\\docker${NC}"
+echo -e "${BLUE}👤 Samba username: $SAMBA_USER${NC}"
 
-echo -e "\n${BLUE}🔍 If you encounter any issues:${NC}"
-echo -e "${BLUE}- Check Docker logs: 'docker logs portainer' or 'docker logs node-red'${NC}"
-echo -e "${BLUE}- You may need to log out and log back in for permissions to take effect${NC}"
-echo -e "${BLUE}- Data is being synced to NAS at ${SYNC_INTERVAL} intervals${NC}"
+echo -e "\n${BLUE}ℹ️  Additional Information:${NC}"
+echo -e "${BLUE}- Data sync interval: ${SYNC_INTERVAL}${NC}"
+echo -e "${BLUE}- Docker logs: 'docker logs portainer' or 'docker logs node-red'${NC}"
+echo -e "${BLUE}- Log out and log back in if you experience permission issues${NC}"
