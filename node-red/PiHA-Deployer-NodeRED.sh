@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.21"
+VERSION="1.0.22"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -12,34 +12,9 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}PiHA-Deployer Node-RED Installation Script v$VERSION${NC}"
 echo -e "${BLUE}===============================================${NC}"
 
-# Ask user if they want to be prompted for each step with countdown
-echo -e "${BLUE}🤔 Do you want to be prompted for each step? (y/N)${NC}"
-echo -n "Automatically continuing with 'N' in "
-for i in {5..1}; do
-    echo -n "$i... "
-    sleep 1
-done
-
-# Read with timeout and default to "n"
-read -t 0 -n 1 prompt_choice || true
-echo # New line after countdown
-
-# If no input or invalid input, default to "n"
-if [[ ! "$prompt_choice" =~ ^[YyNn]$ ]]; then
-    prompt_choice="n"
-    echo "No input received, using default: No"
-fi
-
 # Function for confirmation prompts
 confirm_step() {
-    if [ "$prompt_choice" = "y" ] || [ "$prompt_choice" = "Y" ]; then
-        echo -e "${BLUE}📌 Next step: $1${NC}"
-        echo -n "Press ENTER to continue or wait 10 seconds for automatic continuation..."
-        read -t 10
-        echo
-    else
-        echo -e "${BLUE}🚀 Executing: $1${NC}"
-    fi
+    echo -e "${BLUE}🚀 Executing: $1${NC}"
 }
 
 # Load variables from .env file
