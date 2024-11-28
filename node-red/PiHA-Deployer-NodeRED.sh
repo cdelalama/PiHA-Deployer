@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.22"
+VERSION="1.0.27"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -67,6 +67,19 @@ for var in "${required_vars[@]}"; do
 done
 echo -e "${GREEN}✅ All required variables are set${NC}"
 
+# Verificar y obtener IP (mover aquí)
+echo -e "${BLUE}Verifying IP address...${NC}"
+if [ "$IP" = "auto" ]; then
+    IP=$(hostname -I | awk '{print $1}')
+    echo -e "${BLUE}Auto-detected IP: $IP${NC}"
+fi
+
+if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo -e "${RED}❌ Could not determine valid IP address. Got: $IP${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ IP address verified: $IP${NC}"
+
 # Create Portainer password file
 echo -e "${BLUE}Creating Portainer password file...${NC}"
 PORTAINER_PASS_FILE="${DOCKER_COMPOSE_DIR}/portainer_password.txt"
@@ -89,18 +102,13 @@ sudo mkdir -p "$DOCKER_COMPOSE_DIR" \
              "$SYNCTHING_CONFIG_DIR/data/nas_data" \
              "$NAS_MOUNT_DIR"
 
-# Crear directorios .stfolder con los permisos correctos
+# Create .stfolder directories with correct permissions (solo una vez)
 for dir in "node-red" "portainer" "nas_data"; do
-    if [ ! -d "/srv/docker/syncthing/data/$dir/.stfolder" ]; then
-        sudo mkdir -p "/srv/docker/syncthing/data/$dir/.stfolder"
-        sudo chown -R 1000:1000 "/srv/docker/syncthing/data/$dir"
-    fi
+    sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/$dir/.stfolder"
 done
 
-# Set correct permissions using variables from .env
+# Set permissions once
 sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$SYNCTHING_CONFIG_DIR" "$NAS_MOUNT_DIR"
-
-# Set directory permissions (using 775 instead of 777 for better security)
 sudo chmod -R 775 "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$SYNCTHING_CONFIG_DIR" "$NAS_MOUNT_DIR"
 
 echo -e "${GREEN}Directories created and permissions set successfully${NC}"
@@ -141,17 +149,6 @@ echo -e "${BLUE}Verifying containers status...${NC}"
 if ! docker ps | grep -q "portainer" || ! docker ps | grep -q "node-red"; then
     echo -e "${RED}❌ One or more containers failed to start. Container status:${NC}"
     docker ps -a
-    exit 1
-fi
-
-# Obtener IP real del sistema antes de mostrar los mensajes finales
-if [ "$IP" = "auto" ]; then
-    IP=$(hostname -I | awk '{print $1}')
-fi
-
-# Verificar que tenemos una IP válida
-if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo -e "${RED}❌ Could not determine valid IP address. Got: $IP${NC}"
     exit 1
 fi
 
@@ -272,17 +269,6 @@ else
     exit 1
 fi
 
-# Crear directorios necesarios con permisos correctos
-sudo mkdir -p "$SYNCTHING_CONFIG_DIR/config"
-sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data"
-sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/node-red/.stfolder"
-sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/portainer/.stfolder"
-sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/nas_data/.stfolder"
-
-# Establecer permisos correctos
-sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
-sudo chmod -R 775 "$SYNCTHING_CONFIG_DIR"
-
 # Modificar el archivo config.xml
 sed -i '/<configuration/,/<\/configuration>/ c\
 <configuration version="37">\
@@ -359,25 +345,7 @@ sudo rm -rf $BASE_DIR
 echo -e "${GREEN}🎉 Setup complete. Temporary files have been removed for security.${NC}"
 echo -e "${GREEN}🔍 If you encounter any issues, please check the Docker logs using 'docker logs portainer' or 'docker logs node-red'${NC}"
 
-# Obtener IP real del sistema
-if [ "$IP" = "auto" ]; then
-    IP=$(hostname -I | awk '{print $1}')
-fi
-
-# Verificar que tenemos una IP válida
-if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo -e "${RED}❌ Could not determine valid IP address. Got: $IP${NC}"
-    exit 1
-fi
-
-echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
-
-# Configuración final de Syncthing
-echo -e "${GREEN}✅ Syncthing configured successfully${NC}"
-echo -e "${BLUE}🔄 Syncthing is accessible at http://$IP:8384${NC}"
-echo -e "${BLUE}🔑 Use your configured Syncthing credentials to access the interface${NC}"
-
-# Mensaje final unificado (solo al final del script)
+# Mensaje final unificado (único lugar con todos los mensajes de estado)
 echo -e "\n${GREEN}🎉 Setup complete!${NC}"
 echo -e "\n${BLUE}📝 Summary of services:${NC}"
 echo -e "${BLUE}🌐 Portainer: http://$IP:$PORTAINER_PORT${NC}"
@@ -385,6 +353,7 @@ echo -e "${BLUE}🔴 Node-RED: http://$IP:$NODE_RED_PORT${NC}"
 echo -e "${BLUE}🔄 Syncthing: http://$IP:8384${NC}"
 echo -e "${BLUE}📁 Samba share: \\\\$IP\\docker${NC}"
 echo -e "${BLUE}👤 Samba username: $SAMBA_USER${NC}"
+echo -e "${BLUE}🔑 Syncthing credentials: ${SYNCTHING_USER}${NC}"
 
 echo -e "\n${BLUE}ℹ️  Additional Information:${NC}"
 echo -e "${BLUE}- Data sync interval: ${SYNC_INTERVAL}${NC}"
