@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.66"
+VERSION="1.0.67"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -147,6 +147,10 @@ export_env_vars() {
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
             # Export variable
             export "$key=$value"
+            # Only show confirmation for sensitive variables without their values
+            if [[ "$key" =~ PASS|PASSWORD|CREDENTIALS|SECRET|KEY ]]; then
+                echo "Exported $key (value hidden)"
+            fi
         fi
     done < .env
     echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
@@ -164,13 +168,18 @@ echo -e "NAS IP: $NAS_IP"
 echo -e "NAS Share: $NAS_SHARE_NAME"
 echo -e "Mount Point: $NAS_MOUNT_DIR"
 
-# Check NAS connectivity
+# Verify NAS connectivity and parameters
+echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
+echo -e "NAS IP: '$NAS_IP'"
+echo -e "NAS Share: '$NAS_SHARE_NAME'"
+echo -e "NAS Username: '$NAS_USERNAME'"
+echo -e "Mount Point: '$NAS_MOUNT_DIR'"
+
 echo -e "${BLUE}Checking NAS connectivity...${NC}"
-echo "Pinging NAS with IP: $NAS_IP"
 if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
-    echo -e "${GREEN}Ping to NAS is successful.${NC}"
+    echo -e "${GREEN}✅ Network connectivity to NAS is good${NC}"
 else
-    echo -e "${RED}Ping to NAS failed. Please check your network connection and NAS_IP in .env${NC}"
+    echo -e "${RED}❌ Cannot reach NAS using NAS_IP. Please check your network connection${NC}"
     exit 1
 fi
 
@@ -214,15 +223,6 @@ echo -e "NAS_IP: '$NAS_IP'"
 echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
 echo -e "NAS_USERNAME: '$NAS_USERNAME'"
 echo -e "NAS_MOUNT_DIR: '$NAS_MOUNT_DIR'"
-
-# Check network connectivity
-echo -e "${BLUE}Checking network connectivity to NAS...${NC}" >&2
-if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
-    echo -e "${GREEN}Network connectivity to NAS is good.${NC}" >&2
-else
-    echo -e "${RED}Cannot reach NAS using NAS_IP. Please check your network connection.${NC}" >&2
-    exit 1
-fi
 
 # Unmount if already mounted
 if mount | grep -q "$NAS_MOUNT_DIR"; then
