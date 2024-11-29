@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.33"
+VERSION="1.0.34"
 
 # Define colors
 BLUE='\033[0;36m'  # Lighter blue (cyan)
@@ -66,6 +66,12 @@ for var in "${required_vars[@]}"; do
     fi  
 done
 echo -e "${GREEN}✅ All required variables are set${NC}"
+
+# Validar SYNC_INTERVAL
+if ! [[ "$SYNC_INTERVAL" =~ ^[0-9]+$ ]] || [ "$SYNC_INTERVAL" -lt 60 ]; then
+    echo -e "${RED}❌ SYNC_INTERVAL must be a number greater than 60 seconds${NC}"
+    exit 1
+fi
 
 # Verificar y obtener IP (mover aquí)
 echo -e "${BLUE}Verifying IP address...${NC}"
@@ -154,6 +160,8 @@ fi
 
 # Configuración de Syncthing
 confirm_step "Configure Syncthing with authentication"
+
+
 
 # Iniciar Syncthing
 echo "Starting Syncthing container..."
@@ -253,9 +261,9 @@ HASHED_PASSWORD=$(htpasswd -bnBC 10 "" "$SYNCTHING_PASS" | tr -d ':\n')
 # Debug - Verificar que el hash tiene el formato correcto
 echo "Debug - Password hash format check:"
 if [[ $HASHED_PASSWORD == '$2a$'* ]] || [[ $HASHED_PASSWORD == '$2y$'* ]]; then
-    echo "✅ Hash format is correct"
+    echo -e "${GREEN}✅ Hash format is correct${NC}"
 else
-    echo "❌ Hash format is incorrect"
+    echo -e "${RED}❌ Hash format is incorrect${NC}"
     exit 1
 fi
 
@@ -264,9 +272,6 @@ sed -i '/<configuration/,/<\/configuration>/ c\
 <configuration version="37">\
 <folder id="default" label="Default Folder" path="/data/node-red" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
     <filesystemType>basic</filesystemType>\
-    <device id="'"$DEVICE_ID"'" introducedBy="">\
-        <encryptionPassword/>\
-    </device>\
     <minDiskFree unit="%">1</minDiskFree>\
     <versioning>\
         <cleanupIntervalS>3600</cleanupIntervalS>\
@@ -276,23 +281,12 @@ sed -i '/<configuration/,/<\/configuration>/ c\
 </folder>\
 <folder id="portainer" label="Portainer Data" path="/data/portainer" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
     <filesystemType>basic</filesystemType>\
-    <device id="'"$DEVICE_ID"'" introducedBy="">\
-        <encryptionPassword/>\
-    </device>\
     <minDiskFree unit="%">1</minDiskFree>\
 </folder>\
 <folder id="nas" label="NAS Data" path="/data/nas_data" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
     <filesystemType>basic</filesystemType>\
-    <device id="'"$DEVICE_ID"'" introducedBy="">\
-        <encryptionPassword/>\
-    </device>\
     <minDiskFree unit="%">1</minDiskFree>\
 </folder>\
-<device id="'"$DEVICE_ID"'" name="syncthing" compression="metadata" introducer="false" skipIntroductionRemovals="false" introducedBy="">\
-    <address>dynamic</address>\
-    <paused>false</paused>\
-    <autoAcceptFolders>false</autoAcceptFolders>\
-</device>\
 <gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="true" insecureAdminAccess="true">\
     <address>0.0.0.0:8384</address>\
     <user>'"$SYNCTHING_USER"'</user>\
@@ -325,7 +319,23 @@ confirm_step "Clean up temporary files for security"
 cd ~
 sudo rm -rf $BASE_DIR
 
-# Mensaje final unificado (único lugar con todos los mensajes de estado)
+# Justo antes del mensaje final, extraer el ID y guardarlo
+echo -e "${BLUE}Extracting Syncthing ID...${NC}"
+# Dar tiempo a que los logs se generen
+sleep 5
+SYNCTHING_INFO=$(docker logs syncthing 2>&1 | grep -oP "My ID: \K[A-Z0-9-]+" | head -n 1)
+if [ ! -z "$SYNCTHING_INFO" ]; then
+    # Guardar una única línea en cada archivo
+    printf "%s" "$SYNCTHING_INFO" | sudo tee "${SYNCTHING_CONFIG_DIR}/syncthing_id.txt" > /dev/null
+    printf "%s" "$SYNCTHING_INFO" | sudo tee "${DOCKER_COMPOSE_DIR}/syncthing_id.txt" > /dev/null
+    echo -e "${GREEN}✅ Syncthing ID saved to configuration files${NC}"
+else
+    SYNCTHING_INFO="Check logs for ID"
+    echo -e "${RED}❌ Could not extract Syncthing ID${NC}"
+    echo -e "${RED}❌ Please check: docker logs syncthing | grep 'My ID:'${NC}"
+fi
+
+# Mensaje final unificado
 echo -e "\n${GREEN}🎉 Setup complete!${NC}"
 echo -e "\n${BLUE}📝 Summary of services:${NC}"
 echo -e "${BLUE}🌐 Portainer: http://$IP:$PORTAINER_PORT${NC}"
@@ -334,8 +344,13 @@ echo -e "${BLUE}🔄 Syncthing: http://$IP:8384${NC}"
 echo -e "${BLUE}📁 Samba share: \\\\$IP\\docker${NC}"
 echo -e "${BLUE}👤 Samba username: $SAMBA_USER${NC}"
 echo -e "${BLUE}🔑 Syncthing credentials: ${SYNCTHING_USER}${NC}"
+echo -e "${BLUE}🔑 Syncthing ID: ${SYNCTHING_INFO}${NC}"
+
+# Convertir SYNC_INTERVAL a un formato más legible
+SYNC_INTERVAL_MINUTES=$((SYNC_INTERVAL / 60))
+SYNC_INTERVAL_HOURS=$(printf "%.1f" $(echo "$SYNC_INTERVAL_MINUTES / 60" | bc -l))
 
 echo -e "\n${BLUE}ℹ️  Additional Information:${NC}"
-echo -e "${BLUE}- Data sync interval: ${SYNC_INTERVAL}${NC}"
+echo -e "${BLUE}- Data sync interval: ${SYNC_INTERVAL} seconds (${SYNC_INTERVAL_HOURS} hours)${NC}"
 echo -e "${BLUE}- Docker logs: 'docker logs portainer' or 'docker logs node-red'${NC}"
 echo -e "${BLUE}- Log out and log back in if you experience permission issues${NC}"
