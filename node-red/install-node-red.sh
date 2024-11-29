@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 
 # Function to announce major steps
 announce_step() {
-    echo -e "${BLUE}� Executing: $1${NC}"
+    echo -e "${BLUE} Executing: $1${NC}"
 }
 export -f announce_step
 
@@ -106,19 +106,44 @@ download_from_github() {
 
     echo -e "${BLUE}Checking for updates to $file...${NC}" >&2
 
-    # If file exists locally
-    if [ -f "$file" ]; then
-        local local_version=$(get_version "$file")
-
-        # Try to get GitHub version
-        if ! curl -sSL -o "$temp_file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"; then
+    # Try to get GitHub version
+    if ! curl -sSL -o "$temp_file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"; then
+        # If file exists locally
+        if [ -f "$file" ]; then
+            local local_version=$(get_version "$file")
             echo -e "${GREEN}✓ Using local $file${NC}" >&2
             [ ! -z "$local_version" ] && echo -e "${BLUE}Version: $local_version${NC}" >&2
             rm -f "$temp_file"
             return 0
+        else
+            echo -e "${RED}✗ File not found locally or on GitHub${NC}" >&2
+            rm -f "$temp_file"
+            return 1
         fi
+    fi
 
-        local remote_version=$(get_version "$temp_file")
+    # Check if the downloaded file is valid
+    if head -n 1 "$temp_file" | grep -q "404:"; then
+        echo -e "${RED}✗ Invalid file downloaded from GitHub${NC}" >&2
+        rm -f "$temp_file"
+
+        # If file exists locally
+        if [ -f "$file" ]; then
+            local local_version=$(get_version "$file")
+            echo -e "${GREEN}✓ Using local $file instead${NC}" >&2
+            [ ! -z "$local_version" ] && echo -e "${BLUE}Version: $local_version${NC}" >&2
+            return 0
+        else
+            echo -e "${RED}✗ Valid file not found locally or on GitHub${NC}" >&2
+            return 1
+        fi
+    fi
+
+    local remote_version=$(get_version "$temp_file")
+
+    # If file exists locally
+    if [ -f "$file" ]; then
+        local local_version=$(get_version "$file")
 
         # Compare versions if both exist
         if [ ! -z "$local_version" ] && [ ! -z "$remote_version" ]; then
@@ -136,58 +161,45 @@ download_from_github() {
         fi
     else
         echo -e "${BLUE}⤓ Downloading $file...${NC}" >&2
-        if ! curl -sSL -o "$file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"; then
-            echo -e "${RED}✗ Download failed${NC}" >&2
-            exit 1
-        fi
+        mv "$temp_file" "$file"
         echo -e "${GREEN}✓ Download complete${NC}" >&2
     fi
 }
 
-# Function to read and export variables from .env file
-export_env_vars() {
-    echo -e "${BLUE}Reading and exporting environment variables from .env file...${NC}"
+# Check if load_env_vars.sh exists in the current directory
+if [ -f "load_env_vars.sh" ]; then
+    echo -e "${GREEN}load_env_vars.sh already exists in the current directory${NC}"
+fi
 
-    # Verificar que el archivo existe
-    if [ ! -f .env ]; then
-        echo -e "${RED}❌ .env file not found${NC}"
-        echo -e "${RED}Please create a .env file with the required variables${NC}"
-        exit 1
+# Check for a newer version on GitHub
+if download_from_github "load_env_vars.sh"; then
+    # If download_from_github returned 0, it means the file was downloaded from GitHub
+    # or the local version is up to date. In either case, we can proceed.
+
+    # Make load_env_vars.sh executable
+    chmod +x load_env_vars.sh
+
+    # Source load_env_vars.sh
+    source load_env_vars.sh
+else
+    # If download_from_github returned non-zero, it means the file doesn't exist on GitHub
+    # or there was an error during the download.
+    echo -e "${YELLOW}⚠ load_env_vars.sh not found on GitHub${NC}" >&2
+
+    # Check if the file exists locally
+    if [ -f "load_env_vars.sh" ]; then
+        echo -e "${BLUE}Using local version of load_env_vars.sh${NC}"
+
+        # Make load_env_vars.sh executable
+        chmod +x load_env_vars.sh
+
+        # Source load_env_vars.sh
+        source load_env_vars.sh
+    else
+        echo -e "${RED}✗ load_env_vars.sh not found locally or on GitHub${NC}" >&2
+        echo -e "${YELLOW}Continuing without load_env_vars.sh...${NC}"
     fi
-
-    # Ensure .env file has correct permissions
-    chmod 600 .env
-
-    # Activar el modo de exportación automática
-    set -a
-
-    while IFS='=' read -r key value; do
-        # Skip empty lines and comments
-        if [[ ! -z "$key" && ! "$key" =~ ^[[:space:]]*# ]]; then
-            # Remove leading/trailing whitespace and quotes
-            key=$(echo "$key" | tr -d '\r' | xargs)
-            value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
-
-            # Export variable
-            export "${key}=${value}"
-
-            # Debug: Verificar que la variable se exportó correctamente
-            if [ -z "${!key}" ]; then
-                echo -e "${RED}Warning: Variable $key might not be set correctly${NC}"
-            fi
-        fi
-    done < .env
-
-    # Desactivar el modo de exportación automática
-    set +a
-
-    echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
-
-
-}
-
-# Export environment variables
-export_env_vars
+fi
 
 # Verify NAS connectivity and parameters
   echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
