@@ -141,21 +141,48 @@ download_from_github() {
 # Function to read and export variables from .env file
 export_env_vars() {
     echo -e "${BLUE}Reading and exporting environment variables from .env file...${NC}"
+
+    # Verificar que el archivo existe
+    if [ ! -f .env ]; then
+        echo -e "${RED}❌ .env file not found${NC}"
+        echo -e "${RED}Please create a .env file with the required variables${NC}"
+        exit 1
+    fi
+
+    # Ensure .env file has correct permissions
+    chmod 600 .env
+
+    # Activar el modo de exportación automática
+    set -a
+
     while IFS='=' read -r key value; do
         # Skip empty lines and comments
         if [[ ! -z "$key" && ! "$key" =~ ^[[:space:]]*# ]]; then
             # Remove leading/trailing whitespace and quotes
             key=$(echo "$key" | tr -d '\r' | xargs)
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
+
             # Export variable
-            export "$key=$value"
+            export "${key}=${value}"
+
+            # Debug: Verificar que la variable se exportó correctamente
+            if [ -z "${!key}" ]; then
+                echo -e "${RED}Warning: Variable $key might not be set correctly${NC}"
+            fi
         fi
     done < .env
-    echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
-}
 
-# Ensure .env file has correct permissions
-chmod 600 .env
+    # Desactivar el modo de exportación automática
+    set +a
+
+    echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
+
+    # Debug: Mostrar todas las variables requeridas
+    echo -e "${BLUE}Debugging environment variables:${NC}"
+    for var in "${required_vars[@]}"; do
+        echo "$var = ${!var}"
+    done
+}
 
 # Export environment variables
 export_env_vars
