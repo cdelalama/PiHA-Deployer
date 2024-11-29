@@ -10,11 +10,6 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Function to announce major steps
-announce_step() {
-    echo -e "${BLUE} Executing: $1${NC}"
-}
-export -f announce_step
 
 # Function to clean up existing installations
 cleanup_existing() {

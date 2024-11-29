@@ -12,7 +12,10 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}PiHA-Deployer Node-RED Installation Script v$VERSION${NC}"
 echo -e "${BLUE}===============================================${NC}"
 
-
+# Function to announce major steps
+announce_step() {
+    echo -e "${BLUE} Executing: $1${NC}"
+}
 
 # Load variables from .env file
 announce_step "Load environment variables from .env file"
