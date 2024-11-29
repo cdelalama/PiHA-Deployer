@@ -98,41 +98,43 @@ download_from_github() {
     local file=$1
     local temp_file="/tmp/${file}"
 
+    echo -e "${BLUE}Checking for updates to $file...${NC}" >&2
+
     # If file exists locally
     if [ -f "$file" ]; then
-        # Get local version
         local local_version=$(get_version "$file")
 
-        # Download to temp file to compare
-        curl -sSL -o "$temp_file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file" || {
-            echo -e "${GREEN}Using existing local file (version $local_version): $file${NC}" >&2
+        # Try to get GitHub version
+        if ! curl -sSL -o "$temp_file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"; then
+            echo -e "${GREEN}✓ Using local $file${NC}" >&2
+            [ ! -z "$local_version" ] && echo -e "${BLUE}Version: $local_version${NC}" >&2
             rm -f "$temp_file"
             return 0
-        }
+        fi
 
-        # Get remote version
         local remote_version=$(get_version "$temp_file")
 
-        # Compare versions
-        if [[ "$(printf '%s\n' "$remote_version" "$local_version" | sort -V | tail -n1)" == "$local_version" ]]; then
-            echo -e "${GREEN}Local version ($local_version) is newer than or equal to remote ($remote_version), using local${NC}" >&2
-            rm -f "$temp_file"
-            return 0
+        # Compare versions if both exist
+        if [ ! -z "$local_version" ] && [ ! -z "$remote_version" ]; then
+            if [[ "$(printf '%s\n' "$remote_version" "$local_version" | sort -V | tail -n1)" == "$local_version" ]]; then
+                echo -e "${GREEN}✓ Local version is up to date ($local_version)${NC}" >&2
+                rm -f "$temp_file"
+                return 0
+            else
+                echo -e "${BLUE}↑ Updating from $local_version to $remote_version${NC}" >&2
+                mv "$temp_file" "$file"
+            fi
         else
+            echo -e "${BLUE}↑ Updating to latest version${NC}" >&2
             mv "$temp_file" "$file"
-            echo -e "${BLUE}Downloaded newer version ($remote_version) of $file${NC}" >&2
         fi
     else
-        # File doesn't exist locally, download it
-        local url="https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"
-        echo -e "${BLUE}Downloading $file from GitHub...${NC}" >&2
-        curl -sSL -o "$file" "$url"
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to download $file. Exiting.${NC}" >&2
+        echo -e "${BLUE}⤓ Downloading $file...${NC}" >&2
+        if ! curl -sSL -o "$file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file"; then
+            echo -e "${RED}✗ Download failed${NC}" >&2
             exit 1
         fi
-        local version=$(get_version "$file")
-        echo -e "${GREEN}$file downloaded successfully (version $version)${NC}" >&2
+        echo -e "${GREEN}✓ Download complete${NC}" >&2
     fi
 }
 
@@ -147,10 +149,6 @@ export_env_vars() {
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
             # Export variable
             export "$key=$value"
-            # Only show confirmation for sensitive variables without their values
-            if [[ "$key" =~ PASS|PASSWORD|CREDENTIALS|SECRET|KEY ]]; then
-                echo "Exported $key (value hidden)"
-            fi
         fi
     done < .env
     echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
@@ -162,14 +160,8 @@ chmod 600 .env
 # Export environment variables
 export_env_vars
 
-# Debugging output - solo mostrar variables relevantes para la conexión NAS
-echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
-echo -e "NAS IP: $NAS_IP"
-echo -e "NAS Share: $NAS_SHARE_NAME"
-echo -e "Mount Point: $NAS_MOUNT_DIR"
-
 # Verify NAS connectivity and parameters
-echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
+  echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
 echo -e "NAS IP: '$NAS_IP'"
 echo -e "NAS Share: '$NAS_SHARE_NAME'"
 echo -e "NAS Username: '$NAS_USERNAME'"
@@ -217,31 +209,23 @@ download_from_github "docker-compose.yml"
 # Make PiHA-Deployer-NodeRED.sh executable
 chmod +x PiHA-Deployer-NodeRED.sh
 
-# Mount NAS share
-echo -e "${BLUE}Checking NAS share mount status...${NC}" >&2
-echo -e "NAS_IP: '$NAS_IP'"
-echo -e "NAS_SHARE_NAME: '$NAS_SHARE_NAME'"
-echo -e "NAS_USERNAME: '$NAS_USERNAME'"
-echo -e "NAS_MOUNT_DIR: '$NAS_MOUNT_DIR'"
+# Handle NAS mount
+echo -e "${BLUE}Handling NAS mount...${NC}" >&2
 
 # Unmount if already mounted
 if mount | grep -q "$NAS_MOUNT_DIR"; then
-    echo -e "${YELLOW}NAS share appears to be already mounted at $NAS_MOUNT_DIR. Unmounting...${NC}" >&2
+    echo -e "${YELLOW}NAS share appears to be already mounted. Unmounting...${NC}" >&2
     sudo umount -f "$NAS_MOUNT_DIR" || echo "Failed to unmount, continuing anyway..."
 fi
 
 # Remove and recreate mount point
-echo -e "${BLUE}Removing and recreating mount point directory...${NC}" >&2
+echo -e "${BLUE}Preparing mount point...${NC}" >&2
 sudo rm -rf "$NAS_MOUNT_DIR"
 sudo mkdir -p "$NAS_MOUNT_DIR"
 sudo chmod 755 "$NAS_MOUNT_DIR"
 
-echo -e "${BLUE}Attempting to mount NAS share...${NC}" >&2
-
-# Attempt to mount
-echo -e "${BLUE}Mounting //${NAS_IP}/${NAS_SHARE_NAME} at $NAS_MOUNT_DIR...${NC}" >&2
-
-# Reload systemd to recognize fstab changes
+# Mount NAS share
+echo -e "${BLUE}Mounting NAS share...${NC}" >&2
 sudo systemctl daemon-reload
 
 # Try mounting with SMB 3.0 first
