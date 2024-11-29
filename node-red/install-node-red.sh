@@ -183,11 +183,7 @@ export_env_vars() {
 
     echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
 
-    # Debug: Mostrar todas las variables requeridas
-    echo -e "${BLUE}Debugging environment variables:${NC}"
-    for var in "${required_vars[@]}"; do
-        echo "$var = ${!var}"
-    done
+
 }
 
 # Export environment variables
