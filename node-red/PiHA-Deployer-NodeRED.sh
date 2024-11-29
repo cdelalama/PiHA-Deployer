@@ -12,13 +12,10 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}PiHA-Deployer Node-RED Installation Script v$VERSION${NC}"
 echo -e "${BLUE}===============================================${NC}"
 
-# Function for confirmation prompts
-confirm_step() {
-    echo -e "${BLUE}🚀 Executing: $1${NC}"
-}
+
 
 # Load variables from .env file
-confirm_step "Load environment variables from .env file"
+announce_step "Load environment variables from .env file"
 if [ -f .env ]; then
     # Load all variables from .env
     set -a  # Automatically export all variables
@@ -33,27 +30,27 @@ else
 fi
 
 # Check if required variables are set
-confirm_step "Check if all required variables are set in the .env file"
+announce_step "Check if all required variables are set in the .env file"
 required_vars=(
-    BASE_DIR 
-    DOCKER_USER_ID 
-    DOCKER_GROUP_ID 
-    SAMBA_USER 
-    SAMBA_PASS 
-    DOCKER_COMPOSE_DIR 
-    PORTAINER_DATA_DIR 
-    NODE_RED_DATA_DIR 
-    SYNCTHING_CONFIG_DIR 
-    PORTAINER_PORT 
-    NODE_RED_PORT 
-    IP 
-    NAS_IP 
-    NAS_SHARE_NAME 
-    NAS_USERNAME 
-    NAS_PASSWORD 
-    NAS_MOUNT_DIR 
-    SYNC_INTERVAL 
-    SYNCTHING_USER 
+    BASE_DIR
+    DOCKER_USER_ID
+    DOCKER_GROUP_ID
+    SAMBA_USER
+    SAMBA_PASS
+    DOCKER_COMPOSE_DIR
+    PORTAINER_DATA_DIR
+    NODE_RED_DATA_DIR
+    SYNCTHING_CONFIG_DIR
+    PORTAINER_PORT
+    NODE_RED_PORT
+    IP
+    NAS_IP
+    NAS_SHARE_NAME
+    NAS_USERNAME
+    NAS_PASSWORD
+    NAS_MOUNT_DIR
+    SYNC_INTERVAL
+    SYNCTHING_USER
     SYNCTHING_PASS
     PORTAINER_PASS
 )
@@ -63,7 +60,7 @@ for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
         echo -e "${RED}❌ Required variable $var is not set in .env${NC}"
         exit 1
-    fi  
+    fi
 done
 echo -e "${GREEN}✅ All required variables are set${NC}"
 
@@ -95,7 +92,7 @@ sudo chmod 600 "${PORTAINER_PASS_FILE}"
 sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "${PORTAINER_PASS_FILE}"
 
 # Create directories and set permissions
-confirm_step "Create necessary directories and set permissions"
+announce_step "Create necessary directories and set permissions"
 echo -e "${BLUE}Creating directories and setting permissions...${NC}"
 
 # Create all required directories
@@ -120,14 +117,14 @@ sudo chmod -R 775 "$PORTAINER_DATA_DIR" "$NODE_RED_DATA_DIR" "$SYNCTHING_CONFIG_
 echo -e "${GREEN}Directories created and permissions set successfully${NC}"
 
 # Copy .env to DOCKER_COMPOSE_DIR
-confirm_step "Copy .env file to Docker Compose directory"
+announce_step "Copy .env file to Docker Compose directory"
 sudo cp .env "$DOCKER_COMPOSE_DIR/.env"
 
 # Set proper permissions
 sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$SYNCTHING_CONFIG_DIR"
 
 # Start Docker containers
-confirm_step "Start Docker containers (Portainer and Node-RED)"
+announce_step "Start Docker containers (Portainer and Node-RED)"
 echo -e "${BLUE}Starting Docker containers...${NC}"
 
 # Check if docker-compose exists
@@ -159,7 +156,7 @@ if ! docker ps | grep -q "portainer" || ! docker ps | grep -q "node-red"; then
 fi
 
 # Configuración de Syncthing
-confirm_step "Configure Syncthing with authentication"
+announce_step "Configure Syncthing with authentication"
 
 
 
@@ -170,10 +167,10 @@ sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
 # Función para verificar si Syncthing está listo
 check_syncthing_ready() {
     local config_file="$SYNCTHING_CONFIG_DIR/config.xml"
-    
+
     echo -e "\nChecking Syncthing status:"
     echo "- Config file: $config_file"
-    
+
     if [ -f "$config_file" ]; then
         echo "- Config file exists"
         if [ -s "$config_file" ]; then
@@ -315,7 +312,7 @@ sed -i '/<configuration/,/<\/configuration>/ c\
 sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
 
 # Limpieza de archivos temporales
-confirm_step "Clean up temporary files for security"
+announce_step "Clean up temporary files for security"
 cd ~
 sudo rm -rf $BASE_DIR
 
