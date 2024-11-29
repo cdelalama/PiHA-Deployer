@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-VERSION="1.0.0"
+VERSION="1.0.4"
 
 echo -e "${BLUE}Reading and exporting environment variables from .env file...${NC}"
 
@@ -23,15 +23,10 @@ while IFS='=' read -r key value; do
     if [[ ! -z "$key" && ! "$key" =~ ^[[:space:]]*# ]]; then
         # Remove leading/trailing whitespace and quotes
         key=$(echo "$key" | tr -d '\r' | xargs)
-        value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
+        value=$(echo "$value" | tr -d '\r' | tr -d '"' | tr -d "'" | xargs)
 
         # Export variable
         export "${key}=${value}"
-
-        # Debug: Verificar que la variable se exportó correctamente
-        if [ -z "${!key}" ]; then
-            echo -e "${RED}Warning: Variable $key might not be set correctly${NC}"
-        fi
     fi
 done < .env
 
