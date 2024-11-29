@@ -13,30 +13,30 @@ NC='\033[0m' # No Color
 # Function to clean up existing installations
 cleanup_existing() {
     echo -e "${BLUE}Cleaning up existing installations...${NC}"
-    
+
     # Check if Docker is installed and running
     if command -v docker &> /dev/null && docker info &> /dev/null; then
         echo "Stopping and removing existing containers..."
         docker-compose down 2>/dev/null || true
         docker rm -f portainer node-red syncthing 2>/dev/null || true
-        
+
         echo "Pruning Docker system..."
         docker system prune -f 2>/dev/null || true
     fi
-    
+
     # Clean up directories if they exist
     if [ -d "/srv/docker" ]; then
         echo "Cleaning up /srv/docker directory..."
         sudo rm -rf /srv/docker/* 2>/dev/null || true
     fi
-    
+
     # Recreate directories with proper permissions
     echo "Creating fresh directories..."
     sudo mkdir -p /srv/docker/portainer /srv/docker/node-red /srv/docker/syncthing
     sudo chown -R 1000:1000 /srv/docker/node-red
     sudo chown -R 1000:1000 /srv/docker/portainer
     sudo chown -R 1000:1000 /srv/docker/syncthing
-    
+
     echo -e "${GREEN}Cleanup completed successfully${NC}"
 }
 
@@ -97,22 +97,22 @@ get_version() {
 download_from_github() {
     local file=$1
     local temp_file="/tmp/${file}"
-    
+
     # If file exists locally
     if [ -f "$file" ]; then
         # Get local version
         local local_version=$(get_version "$file")
-        
+
         # Download to temp file to compare
         curl -sSL -o "$temp_file" "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH/node-red/$file" || {
             echo -e "${GREEN}Using existing local file (version $local_version): $file${NC}" >&2
             rm -f "$temp_file"
             return 0
         }
-        
+
         # Get remote version
         local remote_version=$(get_version "$temp_file")
-        
+
         # Compare versions
         if [[ "$(printf '%s\n' "$remote_version" "$local_version" | sort -V | tail -n1)" == "$local_version" ]]; then
             echo -e "${GREEN}Local version ($local_version) is newer than or equal to remote ($remote_version), using local${NC}" >&2
@@ -147,10 +147,6 @@ export_env_vars() {
             value=$(echo "$value" | tr -d '\r' | tr -d '"' | xargs)
             # Export variable
             export "$key=$value"
-            # Only show confirmation for sensitive variables without their values
-            if [[ "$key" =~ PASS|PASSWORD|CREDENTIALS|SECRET|KEY ]]; then
-                echo "Exported $key (value hidden)"
-            fi
         fi
     done < .env
     echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
@@ -251,7 +247,7 @@ sudo systemctl daemon-reload
 # Try mounting with SMB 3.0 first
 if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
     echo -e "${RED}Mount with SMB 3.0 failed. Trying without version specification...${NC}" >&2
-    
+
     # If SMB 3.0 fails, try without version
     if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
         echo -e "${RED}Both mount attempts failed. Checking system logs...${NC}" >&2
