@@ -212,17 +212,29 @@ chmod +x PiHA-Deployer-NodeRED.sh
 # Handle NAS mount
 echo -e "${BLUE}Handling NAS mount...${NC}" >&2
 
-# Unmount if already mounted
+# Check current mount status
 if mount | grep -q "$NAS_MOUNT_DIR"; then
-    echo -e "${YELLOW}NAS share appears to be already mounted. Unmounting...${NC}" >&2
-    sudo umount -f "$NAS_MOUNT_DIR" || echo "Failed to unmount, continuing anyway..."
+    # Check if it's our NAS share
+    current_mount=$(mount | grep "$NAS_MOUNT_DIR" | grep "$NAS_IP")
+    if [ ! -z "$current_mount" ]; then
+        echo -e "${BLUE}Found existing mount from our NAS, refreshing...${NC}" >&2
+        sudo umount -f "$NAS_MOUNT_DIR" || {
+            echo -e "${RED}Failed to unmount existing NAS share. Please check if it's in use.${NC}" >&2
+            exit 1
+        }
+    else
+        echo -e "${RED}Mount point $NAS_MOUNT_DIR is already in use by another mount.${NC}" >&2
+        echo -e "${RED}Please choose a different mount point or unmount it manually.${NC}" >&2
+        exit 1
+    fi
 fi
 
-# Remove and recreate mount point
-echo -e "${BLUE}Preparing mount point...${NC}" >&2
-sudo rm -rf "$NAS_MOUNT_DIR"
-sudo mkdir -p "$NAS_MOUNT_DIR"
-sudo chmod 755 "$NAS_MOUNT_DIR"
+# Prepare mount point (only if it doesn't exist or we just unmounted our NAS)
+if [ ! -d "$NAS_MOUNT_DIR" ] || [ ! -z "$current_mount" ]; then
+    echo -e "${BLUE}Preparing mount point...${NC}" >&2
+    sudo mkdir -p "$NAS_MOUNT_DIR"
+    sudo chmod 755 "$NAS_MOUNT_DIR"
+fi
 
 # Mount NAS share
 echo -e "${BLUE}Mounting NAS share...${NC}" >&2
