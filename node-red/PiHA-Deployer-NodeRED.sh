@@ -161,168 +161,28 @@ fi
 # Configuración de Syncthing
 announce_step "Configure Syncthing with authentication"
 
-
-
 # Iniciar Syncthing
 echo "Starting Syncthing container..."
 sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
 
-# Función para verificar si Syncthing está listo
-check_syncthing_ready() {
-    local config_file="$SYNCTHING_CONFIG_DIR/config.xml"
+# Esperar a que Syncthing esté listo y obtener su ID
+echo -e "${BLUE}Waiting for Syncthing to start and extracting ID...${NC}"
+sleep 10
 
-    echo -e "\nChecking Syncthing status:"
-    echo "- Config file: $config_file"
-
-    if [ -f "$config_file" ]; then
-        echo "- Config file exists"
-        if [ -s "$config_file" ]; then
-            echo "- Config file has content"
-            if grep -q "<configuration" "$config_file" 2>/dev/null; then
-                echo "- Config file is valid XML"
-                if nc -z localhost 8384; then
-                    echo "- Port 8384 is responding"
-                    return 0
-                else
-                    echo "- Port 8384 is not responding"
-                fi
-            else
-                echo "- Config file is not valid XML"
-            fi
-        else
-            echo "- Config file is empty"
-        fi
-    else
-        echo "- Config file does not exist"
-    fi
-    return 1
-}
-
-# Esperar a que Syncthing esté listo
-echo "Waiting for Syncthing to be ready..."
-MAX_ATTEMPTS=30
-ATTEMPT=0
-
-while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-    if check_syncthing_ready; then
-        echo -e "${GREEN}✅ Syncthing is ready${NC}"
-        break
-    fi
-    sleep 2
-    ATTEMPT=$((ATTEMPT + 1))
-done
-
-if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-    echo -e "\n${RED}❌ Timeout waiting for Syncthing${NC}"
-    echo -e "${BLUE}📋 Debugging information:${NC}"
-    docker logs --tail 20 syncthing
-    ls -la "$SYNCTHING_CONFIG_DIR"
-    exit 1
-fi
-
-# Dar un pequeño tiempo adicional para asegurar estabilidad
-sleep 5
-
-# Espera a que se genere el archivo config.xml con timeout
-echo "Waiting for config.xml to be generated..."
-TIMEOUT=60
-COUNTER=0
-while [ ! -f "$SYNCTHING_CONFIG_DIR/config.xml" ]; do
-    sleep 1
-    COUNTER=$((COUNTER + 1))
-    if [ $COUNTER -ge $TIMEOUT ]; then
-        echo -e "${RED}❌ Timeout waiting for config.xml to be generated${NC}"
-        echo -e "${RED}❌ Please check Syncthing logs: docker logs syncthing${NC}"
+# Ejecutar script de configuración de Syncthing
+echo -e "${BLUE}Configuring Syncthing...${NC}"
+if [ -f "${BASE_DIR}/configure-syncthing.sh" ]; then
+    sudo chmod +x "${BASE_DIR}/configure-syncthing.sh"
+    if ! sudo -E "${BASE_DIR}/configure-syncthing.sh"; then
+        echo -e "${RED}❌ Failed to configure Syncthing${NC}"
         exit 1
     fi
-    echo -n "."
-done
-echo # Nueva línea después de los puntos
-
-# Espera adicional para asegurar que el archivo está completamente escrito
-sleep 5
-
-# Detén Syncthing para modificar el archivo config.xml
-echo "Stopping Syncthing to modify config..."
-sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" stop syncthing || {
-    echo -e "${RED}❌ Failed to stop Syncthing${NC}"
-    exit 1
-}
-
-# Instalar apache2-utils si no está instalado
-if ! command -v htpasswd &> /dev/null; then
-    echo "Installing apache2-utils for password hashing..."
-    sudo apt-get update && sudo apt-get install -y apache2-utils
-fi
-
-# Generar hash bcrypt de la contraseña
-HASHED_PASSWORD=$(htpasswd -bnBC 10 "" "$SYNCTHING_PASS" | tr -d ':\n')
-
-# Debug - Verificar que el hash tiene el formato correcto
-echo "Debug - Password hash format check:"
-if [[ $HASHED_PASSWORD == '$2a$'* ]] || [[ $HASHED_PASSWORD == '$2y$'* ]]; then
-    echo -e "${GREEN}✅ Hash format is correct${NC}"
 else
-    echo -e "${RED}❌ Hash format is incorrect${NC}"
+    echo -e "${RED}❌ configure-syncthing.sh not found${NC}"
     exit 1
 fi
 
-# Modificar el archivo config.xml
-sed -i '/<configuration/,/<\/configuration>/ c\
-<configuration version="37">\
-<folder id="default" label="Default Folder" path="/data/node-red" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
-    <filesystemType>basic</filesystemType>\
-    <minDiskFree unit="%">1</minDiskFree>\
-    <versioning>\
-        <cleanupIntervalS>3600</cleanupIntervalS>\
-        <fsPath/>\
-        <fsType>basic</fsType>\
-    </versioning>\
-</folder>\
-<folder id="portainer" label="Portainer Data" path="/data/portainer" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
-    <filesystemType>basic</filesystemType>\
-    <minDiskFree unit="%">1</minDiskFree>\
-</folder>\
-<folder id="nas" label="NAS Data" path="/data/nas_data" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">\
-    <filesystemType>basic</filesystemType>\
-    <minDiskFree unit="%">1</minDiskFree>\
-</folder>\
-<gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="true" insecureAdminAccess="true">\
-    <address>0.0.0.0:8384</address>\
-    <user>'"$SYNCTHING_USER"'</user>\
-    <password>'"$HASHED_PASSWORD"'</password>\
-    <theme>default</theme>\
-    <insecureSkipHostcheck>true</insecureSkipHostcheck>\
-    <insecureAllowFrameLoading>true</insecureAllowFrameLoading>\
-</gui>\
-<options>\
-    <listenAddress>default</listenAddress>\
-    <globalAnnounceEnabled>false</globalAnnounceEnabled>\
-    <localAnnounceEnabled>true</localAnnounceEnabled>\
-    <relaysEnabled>false</relaysEnabled>\
-    <startBrowser>false</startBrowser>\
-    <natEnabled>true</natEnabled>\
-    <urAccepted>-1</urAccepted>\
-    <urSeen>-1</urSeen>\
-    <crashReportingEnabled>false</crashReportingEnabled>\
-    <usageReportingEnabled>false</usageReportingEnabled>\
-    <autoUpgradeIntervalH>0</autoUpgradeIntervalH>\
-    <upgradeToPreReleases>false</upgradeToPreReleases>\
-</options>\
-</configuration>' "$SYNCTHING_CONFIG_DIR/config.xml"
-
-# Reinicia Syncthing con la configuración actualizada
-sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
-
-# Limpieza de archivos temporales
-announce_step "Clean up temporary files for security"
-cd ~
-sudo rm -rf $BASE_DIR
-
-# Justo antes del mensaje final, extraer el ID y guardarlo
-echo -e "${BLUE}Extracting Syncthing ID...${NC}"
-# Dar tiempo a que los logs se generen
-sleep 5
+# Extraer y guardar el ID de Syncthing
 SYNCTHING_INFO=$(docker logs syncthing 2>&1 | grep -oP "My ID: \K[A-Z0-9-]+" | head -n 1)
 if [ ! -z "$SYNCTHING_INFO" ]; then
     # Guardar una única línea en cada archivo
