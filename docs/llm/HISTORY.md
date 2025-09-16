@@ -239,3 +239,31 @@ Files updated:
 
 Version impact: yes (zigbee2mqtt installer bumped to 1.1.1)
 Notes: No behavioural changes elsewhere; rerun installer or recreate the password file in `${PORTAINER_DATA_DIR}` if you ran v1.1.0 already.
+---
+
+## 2025-09-16 - Codex - Ensure Mosquitto config is created
+
+Summary: Hardended Zigbee2MQTT installer (v1.1.2) to always create the Mosquitto configuration, even on fresh NAS directories. The script now pre-creates config/data/log folders, verifies `mosquitto.conf` exists, and tolerates CIFS mounts by relaxing chown errors. Docs updated accordingly.
+
+Files updated:
+- zigbee2mqtt/install-zigbee2mqtt.sh (now 1.1.2)
+- zigbee2mqtt/README.md
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (zigbee2mqtt installer bumped to 1.1.2)
+Notes: Installer aborts if `mosquitto.conf` could not be written, avoiding silent container restarts.
+---
+
+## 2025-09-16 - Codex - Complete Zigbee2MQTT bootstrap config
+
+Summary: Zigbee2MQTT installer (v1.1.3) now writes a full `configuration.yaml` (homeassistant integration, MQTT v5 keepalive, permit_join enabled, onboarding disabled) and tolerates CIFS permissions. Mosquitto config directories are created up front and `mqtt_auth_block` adds credentials cleanly. Docs updated with the new defaults.
+
+Files updated:
+- zigbee2mqtt/install-zigbee2mqtt.sh (now 1.1.3)
+- zigbee2mqtt/README.md
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (zigbee2mqtt installer bumped to 1.1.3)
+Notes: Zigbee2MQTT UI should skip onboarding wizard on first boot; remember to disable `permit_join` manually after pairing.

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.1"
+VERSION="1.1.3"
 
 # Colors
 BLUE='\033[0;36m'
@@ -217,8 +217,8 @@ mount_nas() {
 setup_dirs() {
   echo -e "${BLUE}Preparing directories...${NC}"
   sudo mkdir -p "$BASE_DIR" "$DOCKER_COMPOSE_DIR" "$Z2M_DATA_DIR" "$MQTT_CONFIG_DIR" "$MQTT_DATA_DIR" "$MQTT_LOG_DIR" "$PORTAINER_DATA_DIR"
-  sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$BASE_DIR" "$DOCKER_COMPOSE_DIR" "$Z2M_DATA_DIR" "$MQTT_CONFIG_DIR" "$MQTT_DATA_DIR" "$MQTT_LOG_DIR" "$PORTAINER_DATA_DIR"
-  sudo chmod -R 775 "$BASE_DIR" "$DOCKER_COMPOSE_DIR" "$Z2M_DATA_DIR" "$MQTT_CONFIG_DIR" "$MQTT_DATA_DIR" "$MQTT_LOG_DIR" "$PORTAINER_DATA_DIR"
+  sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$BASE_DIR" "$DOCKER_COMPOSE_DIR" "$Z2M_DATA_DIR" "$MQTT_CONFIG_DIR" "$MQTT_DATA_DIR" "$MQTT_LOG_DIR" "$PORTAINER_DATA_DIR" 2>/dev/null || true
+  sudo chmod -R 775 "$BASE_DIR" "$DOCKER_COMPOSE_DIR" "$Z2M_DATA_DIR" "$MQTT_CONFIG_DIR" "$MQTT_DATA_DIR" "$MQTT_LOG_DIR" "$PORTAINER_DATA_DIR" 2>/dev/null || true
 }
 
 write_portainer_secret() {
@@ -226,12 +226,13 @@ write_portainer_secret() {
   local pw_file="${PORTAINER_DATA_DIR}/portainer_password.txt"
   sudo mkdir -p "${PORTAINER_DATA_DIR}"
   echo -n "$PORTAINER_PASS" | sudo tee "$pw_file" >/dev/null
-  sudo chmod 600 "$pw_file"
-  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$pw_file"
+  sudo chmod 600 "$pw_file" 2>/dev/null || true
+  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$pw_file" 2>/dev/null || true
 }
 
 setup_mosquitto_config() {
   echo -e "${BLUE}Setting up Mosquitto configuration...${NC}"
+  sudo mkdir -p "${MQTT_CONFIG_DIR}" "${MQTT_DATA_DIR}" "${MQTT_LOG_DIR}"
   local config_file="${MQTT_CONFIG_DIR}/mosquitto.conf"
   local passwd_file="${MQTT_CONFIG_DIR}/passwd"
 
@@ -262,8 +263,8 @@ EOF
       -v "${MQTT_CONFIG_DIR}:/mosquitto/config" \
       eclipse-mosquitto:2.0 \
       sh -c 'touch /mosquitto/config/passwd && mosquitto_passwd -b /mosquitto/config/passwd "$MQTT_USER" "$MQTT_PASSWORD"'
-    sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$passwd_file"
-    sudo chmod 600 "$passwd_file"
+    sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$passwd_file" 2>/dev/null || true
+    sudo chmod 600 "$passwd_file" 2>/dev/null || true
   else
     cat <<EOF | sudo tee "$config_file" >/dev/null
 # Mosquitto configuration for Zigbee2MQTT (anonymous access)
@@ -286,7 +287,12 @@ EOF
     echo -e "${YELLOW}[WARN] No MQTT credentials provided. Using anonymous access.${NC}"
   fi
 
-  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$config_file"
+  if [ ! -s "$config_file" ]; then
+    echo -e "${RED}[ERROR] Failed to create Mosquitto configuration at $config_file${NC}"
+    exit 1
+  fi
+
+  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$config_file" 2>/dev/null || true
 }
 
 setup_zigbee2mqtt_config() {
@@ -299,38 +305,57 @@ setup_zigbee2mqtt_config() {
     mqtt_server="mqtt://${MQTT_USER}:${MQTT_PASSWORD}@mosquitto:1883"
   fi
 
-  cat <<EOF | sudo tee "$config_file" >/dev/null
-# Home Assistant integration (MQTT discovery)
-homeassistant: true
+  local mqtt_auth_block=""
+  if [ -n "$MQTT_USER" ] && [ -n "$MQTT_PASSWORD" ]; then
+    mqtt_auth_block=$'  user: '${MQTT_USER}$'\n  password: '${MQTT_PASSWORD}$'\n'
+  fi
 
-# Allow new devices to join
+  cat <<EOF | sudo tee "$config_file" >/dev/null
+# Core settings
+homeassistant: true
 permit_join: true
 
 # MQTT settings
 mqtt:
   base_topic: zigbee2mqtt
   server: '${mqtt_server}'
+${mqtt_auth_block}  keepalive: 60
+  version: 5
 
 # Serial settings
 serial:
   port: /dev/ttyACM0
+  adapter: auto
 
-# Advanced settings
-advanced:
-  network_key: GENERATE
-  pan_id: GENERATE
-  channel: 11
-
-# Frontend
+# Frontend / UI
 frontend:
   port: 8080
+  host: 0.0.0.0
 
-# Enable experimental features
+# Advanced behaviour
+advanced:
+  log_level: info
+  pan_id: GENERATE
+  ext_pan_id: GENERATE
+  network_key: GENERATE
+  legacy_api: false
+
+# Device defaults
+device_options: {}
+
+# Placeholder structures
+devices: {}
+groups: {}
+
+# Experimental features
 experimental:
   new_api: true
+
+# Mark onboarding wizard as completed
+onboarding: false
 EOF
 
-  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$config_file"
+  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$config_file" 2>/dev/null || true
 }
 
 copy_compose_and_env() {
