@@ -26,9 +26,9 @@ if [ -f .env ]; then
     set +a
 
     # Only show confirmation without values
-    echo -e "${GREEN}✅ Environment variables loaded successfully${NC}"
+    echo -e "${GREEN}[OK] Environment variables loaded successfully${NC}"
 else
-    echo -e "${RED}❌ .env file not found${NC}"
+    echo -e "${RED}[ERROR] .env file not found${NC}"
     exit 1
 fi
 
@@ -61,19 +61,19 @@ required_vars=(
 # Verify all required variables are set
 for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
-        echo -e "${RED}❌ Required variable $var is not set in .env${NC}"
+        echo -e "${RED}[ERROR] Required variable $var is not set in .env${NC}"
         exit 1
     fi
 done
-echo -e "${GREEN}✅ All required variables are set${NC}"
+echo -e "${GREEN}[OK] All required variables are set${NC}"
 
-# Validar SYNC_INTERVAL
+# Validate SYNC_INTERVAL
 if ! [[ "$SYNC_INTERVAL" =~ ^[0-9]+$ ]] || [ "$SYNC_INTERVAL" -lt 60 ]; then
-    echo -e "${RED}❌ SYNC_INTERVAL must be a number greater than 60 seconds${NC}"
+    echo -e "${RED}[ERROR] SYNC_INTERVAL must be a number greater than 60 seconds${NC}"
     exit 1
 fi
 
-# Verificar y obtener IP (mover aquí)
+# Verify and obtain IP address
 echo -e "${BLUE}Verifying IP address...${NC}"
 if [ "$IP" = "auto" ]; then
     IP=$(hostname -I | awk '{print $1}')
@@ -81,10 +81,10 @@ if [ "$IP" = "auto" ]; then
 fi
 
 if [[ ! $IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo -e "${RED}❌ Could not determine valid IP address. Got: $IP${NC}"
+    echo -e "${RED}[ERROR] Could not determine valid IP address. Got: $IP${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ IP address verified: $IP${NC}"
+echo -e "${GREEN}[OK] IP address verified: $IP${NC}"
 
 # Create Portainer password file
 echo -e "${BLUE}Creating Portainer password file...${NC}"
@@ -108,7 +108,7 @@ sudo mkdir -p "$DOCKER_COMPOSE_DIR" \
              "$SYNCTHING_CONFIG_DIR/data/nas_data" \
              "$NAS_MOUNT_DIR"
 
-# Create .stfolder directories with correct permissions (solo una vez)
+# Create .stfolder directories with correct permissions (only once)
 for dir in "node-red" "portainer" "nas_data"; do
     sudo mkdir -p "$SYNCTHING_CONFIG_DIR/data/$dir/.stfolder"
 done
@@ -132,85 +132,86 @@ echo -e "${BLUE}Starting Docker containers...${NC}"
 
 # Check if docker-compose exists
 if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ docker-compose not found. Please install Docker Compose first.${NC}"
+    echo -e "${RED}[ERROR] docker-compose not found. Please install Docker Compose first.${NC}"
     exit 1
 fi
 
 # Check if docker is running
 if ! docker info &> /dev/null; then
-    echo -e "${RED}❌ Docker daemon is not running. Please start Docker first.${NC}"
+    echo -e "${RED}[ERROR] Docker daemon is not running. Please start Docker first.${NC}"
     exit 1
 fi
 
 # Attempt to start containers
 if ! sudo -E docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d; then
-    echo -e "${RED}❌ Failed to start Docker containers. Checking logs...${NC}"
+    echo -e "${RED}[ERROR] Failed to start Docker containers. Checking logs...${NC}"
     sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" logs
-    echo -e "${RED}❌ Please check the logs above for errors.${NC}"
+    echo -e "${RED}[ERROR] Please check the logs above for errors.${NC}"
     exit 1
 fi
 
 # Verify containers are running
 echo -e "${BLUE}Verifying containers status...${NC}"
 if ! docker ps | grep -q "portainer" || ! docker ps | grep -q "node-red"; then
-    echo -e "${RED}❌ One or more containers failed to start. Container status:${NC}"
+    echo -e "${RED}[ERROR] One or more containers failed to start. Container status:${NC}"
     docker ps -a
     exit 1
 fi
 
-# Configuración de Syncthing
+# Syncthing configuration
 announce_step "Configure Syncthing with authentication"
 
-# Iniciar Syncthing
+# Start Syncthing
 echo "Starting Syncthing container..."
 sudo docker-compose -f "${BASE_DIR}/docker-compose.yml" up -d syncthing
 
-# Esperar a que Syncthing esté listo y obtener su ID
+# Wait for Syncthing to be ready and obtain its ID
 echo -e "${BLUE}Waiting for Syncthing to start and extracting ID...${NC}"
 sleep 10
 
-# Ejecutar script de configuración de Syncthing
+# Run Syncthing configuration script
 echo -e "${BLUE}Configuring Syncthing...${NC}"
 if [ -f "${BASE_DIR}/configure-syncthing.sh" ]; then
     sudo chmod +x "${BASE_DIR}/configure-syncthing.sh"
     if ! sudo -E "${BASE_DIR}/configure-syncthing.sh"; then
-        echo -e "${RED}❌ Failed to configure Syncthing${NC}"
+        echo -e "${RED}[ERROR] Failed to configure Syncthing${NC}"
         exit 1
     fi
 else
-    echo -e "${RED}❌ configure-syncthing.sh not found${NC}"
+    echo -e "${RED}[ERROR] configure-syncthing.sh not found${NC}"
     exit 1
 fi
 
-# Extraer y guardar el ID de Syncthing
+# Extract and save Syncthing ID
 SYNCTHING_INFO=$(docker logs syncthing 2>&1 | grep -oP "My ID: \K[A-Z0-9-]+" | head -n 1)
 if [ ! -z "$SYNCTHING_INFO" ]; then
-    # Guardar una única línea en cada archivo
+    # Write a single line in each file
     printf "%s" "$SYNCTHING_INFO" | sudo tee "${SYNCTHING_CONFIG_DIR}/syncthing_id.txt" > /dev/null
     printf "%s" "$SYNCTHING_INFO" | sudo tee "${DOCKER_COMPOSE_DIR}/syncthing_id.txt" > /dev/null
-    echo -e "${GREEN}✅ Syncthing ID saved to configuration files${NC}"
+    echo -e "${GREEN}[OK] Syncthing ID saved to configuration files${NC}"
 else
     SYNCTHING_INFO="Check logs for ID"
-    echo -e "${RED}❌ Could not extract Syncthing ID${NC}"
-    echo -e "${RED}❌ Please check: docker logs syncthing | grep 'My ID:'${NC}"
+    echo -e "${RED}[ERROR] Could not extract Syncthing ID${NC}"
+    echo -e "${RED}[ERROR] Please check: docker logs syncthing | grep 'My ID:'${NC}"
 fi
 
-# Mensaje final unificado
-echo -e "\n${GREEN}🎉 Setup complete!${NC}"
-echo -e "\n${BLUE}📝 Summary of services:${NC}"
-echo -e "${BLUE}🌐 Portainer: http://$IP:$PORTAINER_PORT${NC}"
-echo -e "${BLUE}🔴 Node-RED: http://$IP:$NODE_RED_PORT${NC}"
-echo -e "${BLUE}🔄 Syncthing: http://$IP:8384${NC}"
-echo -e "${BLUE}📁 Samba share: \\\\$IP\\docker${NC}"
-echo -e "${BLUE}👤 Samba username: $SAMBA_USER${NC}"
-echo -e "${BLUE}🔑 Syncthing credentials: ${SYNCTHING_USER}${NC}"
-echo -e "${BLUE}🔑 Syncthing ID: ${SYNCTHING_INFO}${NC}"
+# Final summary
+echo -e "\n${GREEN}Setup complete!${NC}"
+echo -e "\n${BLUE}Summary of services:${NC}"
+echo -e "${BLUE}- Portainer: http://$IP:$PORTAINER_PORT${NC}"
+echo -e "${BLUE}- Node-RED: http://$IP:$NODE_RED_PORT${NC}"
+echo -e "${BLUE}- Syncthing: http://$IP:8384${NC}"
+echo -e "${BLUE}- Samba share: \\$IP\\docker${NC}"
+echo -e "${BLUE}- Samba username: $SAMBA_USER${NC}"
+echo -e "${BLUE}- Syncthing username: ${SYNCTHING_USER}${NC}"
+echo -e "${BLUE}- Syncthing ID: ${SYNCTHING_INFO}${NC}"
 
-# Convertir SYNC_INTERVAL a un formato más legible
+# Convert SYNC_INTERVAL to a more readable format
 SYNC_INTERVAL_MINUTES=$((SYNC_INTERVAL / 60))
 SYNC_INTERVAL_HOURS=$(printf "%.1f" $(echo "$SYNC_INTERVAL_MINUTES / 60" | bc -l))
 
-echo -e "\n${BLUE}ℹ️  Additional Information:${NC}"
+echo -e "\n${BLUE}Additional Information:${NC}"
 echo -e "${BLUE}- Data sync interval: ${SYNC_INTERVAL} seconds (${SYNC_INTERVAL_HOURS} hours)${NC}"
 echo -e "${BLUE}- Docker logs: 'docker logs portainer' or 'docker logs node-red'${NC}"
 echo -e "${BLUE}- Log out and log back in if you experience permission issues${NC}"
+

@@ -1,69 +1,96 @@
-```ini {"id":"01J49XJMP7ZCVW77F4M3KGT9SM"}
-# PiHA-Deployer Node-RED
+# Node-RED Deployment Scripts
 
-## Overview
+## Purpose
+Automated Docker deployment of Node-RED with Portainer, Syncthing, and NAS synchronization for Raspberry Pi home automation.
 
-PiHA-Deployer Node-RED is a part of the PiHA-Deployer project, designed to automate the setup of Node-RED and Portainer on a Raspberry Pi for home automation purposes. This script simplifies the process of installing and configuring Docker, Node-RED, Portainer, and Samba sharing.
+## Quick Start
+1. Copy `.env.example` to `.env` and configure all variables
+2. Ensure NAS is accessible and CIFS/SMB share is available  
+3. Run: `./install-node-red.sh`
 
-## Contents
+## Services Deployed
+- **Node-RED**: Visual programming for IoT and automation flows
+- **Portainer**: Docker container management web interface
+- **Syncthing**: File synchronization with NAS storage
 
-- `install-node-red.sh`: The main installation script.
-- `PiHA-Deployer-NodeRED.sh`: The deployment script for Node-RED and Portainer.
-- `docker-compose.yml`: Docker Compose file for Node-RED and Portainer services.
+## Requirements
+- Fresh Raspberry Pi OS installation
+- Network access to NAS with CIFS/SMB share
+- Docker and Docker Compose installed and running (the installer only ensures SMB client packages)
 
-## What It Does
+## Current Version
+Check VERSION lines in scripts (main installer: 1.0.67)
 
-1. Sets up environment variables interactively.
-2. Installs Docker and Docker Compose.
-3. Sets up Samba for folder sharing.
-4. Deploys Node-RED and Portainer using Docker Compose.
-5. Configures networking and permissions.
+## Configuration (.env)
+
+1. Create a `.env` file and fill in values for your environment. You may set `IP=auto` for auto-detection. You can base it on your existing `.env` conventions.
+2. Required variables (ensure all are present in `.env`):
+   - Host and paths: `HOST_ID`, `BASE_DIR`, `DOCKER_USER_ID`, `DOCKER_GROUP_ID`, `DOCKER_COMPOSE_DIR`, `PORTAINER_DATA_DIR`, `NODE_RED_DATA_DIR`, `SYNCTHING_CONFIG_DIR`
+   - Ports and network: `PORTAINER_PORT`, `NODE_RED_PORT`, `IP`
+   - NAS (CIFS): `NAS_IP`, `NAS_SHARE_NAME`, `NAS_USERNAME`, `NAS_PASSWORD`, `NAS_MOUNT_DIR`
+   - Samba (NAS share credentials if applicable): `SAMBA_USER`, `SAMBA_PASS`
+   - Syncthing: `SYNCTHING_USER`, `SYNCTHING_PASS`, `NAS_SYNCTHING_ID`, `NAS_NAME`
+   - Other: `SYNC_INTERVAL`, `PORTAINER_PASS`
+
+See `.env.example` for the full list and expected format.
+
+Important:
+- Do not edit `.env.example` manually; it is generated automatically from `.env` by a plugin.
+- Do not change or commit existing credentials in `.env`. If a new variable is required, document it and add it to `.env`; the plugin will regenerate `.env.example`.
+
+Recommended NAS paths (group by host):
+- `NODE_RED_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/node-red`
+- `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
+- `DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose`
+
+Password note: if any password contains a `$`, escape it as `\$` in `.env` to avoid shell expansion during loading.
+
+Optional shared config (common/Common.env)
+- Place shared defaults in `common/Common.env` (gitignored) loaded before `.env`.
+- Load order: `../common/Common.env` → `../common/common.env` → `common/Common.env` → `common/common.env` → `$HOME/.piha/common.env` → `/etc/piha/common.env` → `.env`.
+- Suggested: `NAS_MOUNT_DIR`, `DOCKER_USER_ID`, `DOCKER_GROUP_ID`, `TZ`, `PORTAINER_PASS` (if shared).
 
 ## How to Run
 
-1. Ensure you have a Raspberry Pi with a fresh Raspberry Pi OS installation.
+Option A: Run from a cloned repository
+- Navigate to the `node-red` folder where your `.env` is located and run:
+  - `bash install-node-red.sh`
 
-2. Run the following command to start the installation:
-curl -sSL "https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/node-red/install-node-red.sh" | bash
+Option B: Remote one-liner
+- Place a valid `.env` in the current working directory on the target system, then run:
+  - `curl -sSL "https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/node-red/install-node-red.sh" | bash`
 
-3. Follow the prompts to set up your environment variables.
+## What the Installer Does
 
-4. The script will automatically download necessary files and execute the main deployment script.
+1. (Optional) Cleans previous deployments and recreates base directories.
+2. Installs `cifs-utils` and `smbclient` if missing.
+3. Loads variables from `.env` and verifies NAS connectivity.
+4. Creates `BASE_DIR`, copies `.env`, and downloads `PiHA-Deployer-NodeRED.sh` and `docker-compose.yml` from GitHub when appropriate.
+5. Mounts the NAS at `NAS_MOUNT_DIR` (CIFS) and creates structure (`node-red`, `portainer`, `nas_data`, `.stfolder`).
+6. Starts Portainer, Node-RED, and Syncthing via `docker-compose` and configures Syncthing (GUI/auth, devices, and folders). Saves Syncthing ID into config directories.
 
-## Post-Installation
+## Access After Installation
 
-- Access Node-RED at `http://<Your-Pi-IP>:<NODE_RED_PORT>`
-- Access Portainer at `http://<Your-Pi-IP>:<PORTAINER_PORT>`
-- Access Syncthing at `http://<Your-Pi-IP>:8384`
-- Access shared Docker folders via Samba at `\\<Your-Pi-IP>\docker`
-
-## Notes
-
-- The installation process may take several minutes depending on your internet connection and Raspberry Pi model.
-- Ensure your Raspberry Pi is connected to the internet before starting the installation.
-- The script will prompt for sudo permissions as needed.
+- Node-RED: `http://<IP>:<NODE_RED_PORT>`
+- Portainer: `http://<IP>:<PORTAINER_PORT>`
+- Syncthing (GUI): `http://<IP>:8384`
+- NAS mount point: `NAS_MOUNT_DIR`
 
 ## Troubleshooting
 
-If you encounter any issues, check the Docker logs:
-docker logs portainer
-docker logs node-red
+- Verify Docker and Compose: `docker ps` and `docker-compose -f "${BASE_DIR}/docker-compose.yml" logs`
+- Check mount status: `mountpoint -q "${NAS_MOUNT_DIR}"` and connectivity `ping ${NAS_IP}`
+- Container logs: `docker logs portainer`, `docker logs node-red`, `docker logs syncthing`
+- Syncthing ID: `docker logs syncthing | grep 'My ID:'`
 
 ## Security
 
-- The script sets up a Samba share. Ensure you use a strong password when prompted.
-- The .env file containing sensitive information is deleted after setup for security reasons.
-- Each service (Node-RED, Portainer, Syncthing, Samba) uses its own set of credentials
-- Default ports:
-  - Node-RED: 1880
-  - Portainer: 9000
-  - Syncthing: 8384
-  - Syncthing Transfer: 22000
-  - Syncthing Discovery: 21027/udp
+- Use strong passwords for Syncthing and Portainer. The `.env` file contains sensitive credentials.
+- The installer may copy `.env` into `BASE_DIR`. Manage permissions appropriately.
 
 ## Contributing
 
-Feel free to fork this repository and submit pull requests for any enhancements.
+Contributions and PRs are welcome.
 
 ## License
 
@@ -71,8 +98,3 @@ MIT License
 
 Copyright (c) 2024 cdelalama
 
-```
-
-```ini {"id":"01J4AKZ32QN4JV2G1AVYS7DY12"}
-
-```

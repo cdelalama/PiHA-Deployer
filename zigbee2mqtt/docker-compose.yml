@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:2.0
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+    volumes:
+      - "${MQTT_CONFIG_DIR}:/mosquitto/config"
+      - "${MQTT_DATA_DIR}:/mosquitto/data"
+      - "${MQTT_LOG_DIR}:/mosquitto/log"
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+    networks:
+      - zigbee-net
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt:latest
+    restart: unless-stopped
+    ports:
+      - "${Z2M_PORT:-8080}:8080"
+    volumes:
+      - "${Z2M_DATA_DIR}:/app/data"
+      - "/run/udev:/run/udev:ro"
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+    devices:
+      - "${USB_DEVICE_PATH:-/dev/zigbee}:/dev/ttyACM0"
+    depends_on:
+      - mosquitto
+    networks:
+      - zigbee-net
+
+  portainer:
+    container_name: portainer_z2m
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    ports:
+      - "${PORTAINER_PORT:-9000}:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "${PORTAINER_DATA_DIR}:/data"
+    command: --admin-password-file /data/portainer_password.txt
+    networks:
+      - zigbee-net
+
+networks:
+  zigbee-net:
+    driver: bridge

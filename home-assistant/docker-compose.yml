@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command: --admin-password-file=/run/secrets/portainer_password
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PORTAINER_DATA_DIR}:/data
+      - ${DOCKER_COMPOSE_DIR}/portainer_password.txt:/run/secrets/portainer_password:ro
+    ports:
+      - "${PORTAINER_PORT:-9000}:9000"
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    network_mode: host
+    restart: unless-stopped
+    privileged: true
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+    volumes:
+      - ${HA_DATA_DIR}:/config

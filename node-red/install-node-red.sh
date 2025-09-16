@@ -8,8 +8,8 @@ VERSION="1.0.67"
 BLUE='\033[0;36m'  # Lighter blue (cyan)
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
-
 
 # Function to clean up existing installations
 cleanup_existing() {
@@ -41,12 +41,12 @@ cleanup_existing() {
     echo -e "${GREEN}Cleanup completed successfully${NC}"
 }
 
-# Add this after version and before starting the main script
+# Banner
 echo -e "${BLUE}PiHA-Deployer Node-RED Install Script v$VERSION${NC}"
 echo "Script started"
 
 # Ask for cleanup with countdown and default to "Y"
-echo -e "${BLUE}🤔 Do you want to clean up any existing installations? (Y/n)${NC}"
+echo -e "${BLUE}Do you want to clean up any existing installations? (Y/n)${NC}"
 echo -n "Automatically continuing with 'Y' in "
 
 # Initialize cleanup_choice
@@ -90,7 +90,7 @@ BRANCH="main"
 # Function to get version from file
 get_version() {
     local file=$1
-    local version=$(grep "^VERSION=" "$file" | cut -d'"' -f2)
+    local version=$(grep "^VERSION=" "$file" | cut -d'\"' -f2)
     echo "$version"
 }
 
@@ -106,12 +106,12 @@ download_from_github() {
         # If file exists locally
         if [ -f "$file" ]; then
             local local_version=$(get_version "$file")
-            echo -e "${GREEN}✓ Using local $file${NC}" >&2
+            echo -e "${GREEN}[OK] Using local $file${NC}" >&2
             [ ! -z "$local_version" ] && echo -e "${BLUE}Version: $local_version${NC}" >&2
             rm -f "$temp_file"
             return 0
         else
-            echo -e "${RED}✗ File not found locally or on GitHub${NC}" >&2
+            echo -e "${RED}[ERROR] File not found locally or on GitHub${NC}" >&2
             rm -f "$temp_file"
             return 1
         fi
@@ -119,17 +119,17 @@ download_from_github() {
 
     # Check if the downloaded file is valid
     if head -n 1 "$temp_file" | grep -q "404:"; then
-        echo -e "${RED}✗ Invalid file downloaded from GitHub${NC}" >&2
+        echo -e "${RED}[ERROR] Invalid file downloaded from GitHub${NC}" >&2
         rm -f "$temp_file"
 
         # If file exists locally
         if [ -f "$file" ]; then
             local local_version=$(get_version "$file")
-            echo -e "${GREEN}✓ Using local $file instead${NC}" >&2
+            echo -e "${GREEN}[OK] Using local $file instead${NC}" >&2
             [ ! -z "$local_version" ] && echo -e "${BLUE}Version: $local_version${NC}" >&2
             return 0
         else
-            echo -e "${RED}✗ Valid file not found locally or on GitHub${NC}" >&2
+            echo -e "${RED}[ERROR] Valid file not found locally or on GitHub${NC}" >&2
             return 1
         fi
     fi
@@ -143,21 +143,21 @@ download_from_github() {
         # Compare versions if both exist
         if [ ! -z "$local_version" ] && [ ! -z "$remote_version" ]; then
             if [[ "$(printf '%s\n' "$remote_version" "$local_version" | sort -V | tail -n1)" == "$local_version" ]]; then
-                echo -e "${GREEN}✓ Local version is up to date ($local_version)${NC}" >&2
+                echo -e "${GREEN}[OK] Local version is up to date ($local_version)${NC}" >&2
                 rm -f "$temp_file"
                 return 0
             else
-                echo -e "${BLUE}↑ Updating from $local_version to $remote_version${NC}" >&2
+                echo -e "${BLUE}[INFO] Updating from $local_version to $remote_version${NC}" >&2
                 mv "$temp_file" "$file"
             fi
         else
-            echo -e "${BLUE}↑ Updating to latest version${NC}" >&2
+            echo -e "${BLUE}[INFO] Updating to latest version${NC}" >&2
             mv "$temp_file" "$file"
         fi
     else
-        echo -e "${BLUE}⤓ Downloading $file...${NC}" >&2
+        echo -e "${BLUE}[INFO] Downloading $file...${NC}" >&2
         mv "$temp_file" "$file"
-        echo -e "${GREEN}✓ Download complete${NC}" >&2
+        echo -e "${GREEN}[OK] Download complete${NC}" >&2
     fi
 }
 
@@ -179,7 +179,7 @@ if download_from_github "load_env_vars.sh"; then
 else
     # If download_from_github returned non-zero, it means the file doesn't exist on GitHub
     # or there was an error during the download.
-    echo -e "${YELLOW}⚠ load_env_vars.sh not found on GitHub${NC}" >&2
+    echo -e "${YELLOW}[WARN] load_env_vars.sh not found on GitHub${NC}" >&2
 
     # Check if the file exists locally
     if [ -f "load_env_vars.sh" ]; then
@@ -191,13 +191,13 @@ else
         # Source load_env_vars.sh
         source load_env_vars.sh
     else
-        echo -e "${RED}✗ load_env_vars.sh not found locally or on GitHub${NC}" >&2
+        echo -e "${RED}[ERROR] load_env_vars.sh not found locally or on GitHub${NC}" >&2
         echo -e "${YELLOW}Continuing without load_env_vars.sh...${NC}"
     fi
 fi
 
 # Verify NAS connectivity and parameters
-  echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
+echo -e "${BLUE}Verifying NAS connection parameters...${NC}"
 echo -e "NAS IP: '$NAS_IP'"
 echo -e "NAS Share: '$NAS_SHARE_NAME'"
 echo -e "NAS Username: '$NAS_USERNAME'"
@@ -205,9 +205,9 @@ echo -e "Mount Point: '$NAS_MOUNT_DIR'"
 
 echo -e "${BLUE}Checking NAS connectivity...${NC}"
 if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Network connectivity to NAS is good${NC}"
+    echo -e "${GREEN}[OK] Network connectivity to NAS is good${NC}"
 else
-    echo -e "${RED}❌ Cannot reach NAS using NAS_IP. Please check your network connection${NC}"
+    echo -e "${RED}[ERROR] Cannot reach NAS using NAS_IP. Please check your network connection${NC}"
     exit 1
 fi
 
@@ -294,7 +294,24 @@ if ! mountpoint -q "$NAS_MOUNT_DIR"; then
     exit 1
 fi
 
-echo -e "${GREEN}✅ NAS share mounted successfully${NC}" >&2
+echo -e "${GREEN}[OK] NAS share mounted successfully${NC}" >&2
+
+# Create directories in NAS if they don't exist (use env-provided paths)
+echo -e "${BLUE}Creating NAS directories if they don't exist...${NC}" >&2
+sudo mkdir -p "${NODE_RED_DATA_DIR}"
+sudo mkdir -p "${PORTAINER_DATA_DIR}"
+sudo mkdir -p "${NAS_MOUNT_DIR}/nas_data"
+
+# Create Syncthing marker directories (not files)
+echo -e "${BLUE}Creating Syncthing marker directories...${NC}" >&2
+sudo mkdir -p "${NODE_RED_DATA_DIR}/.stfolder"
+sudo mkdir -p "${PORTAINER_DATA_DIR}/.stfolder"
+sudo mkdir -p "${NAS_MOUNT_DIR}/nas_data/.stfolder"
+
+# Set correct permissions
+sudo chmod -R 777 "${NODE_RED_DATA_DIR}"
+sudo chmod -R 777 "${PORTAINER_DATA_DIR}"
+sudo chmod -R 777 "${NAS_MOUNT_DIR}/nas_data"
 
 # Starting second phase of installation
 echo -e "\n${BLUE}=========================================${NC}"

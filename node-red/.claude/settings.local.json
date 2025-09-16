@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.doppler.com)",
+      "Read(C:\\Users\\cdela\\Documents\\GitHub\\PiHA-Deployer/**)",
+      "Read(C:\\Users\\cdela\\Documents\\GitHub\\PiHA-Deployer/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

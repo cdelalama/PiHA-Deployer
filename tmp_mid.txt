@@ -1,0 +1,134 @@
+echo -e "NAS IP: '$NAS_IP'"
+echo -e "NAS Share: '$NAS_SHARE_NAME'"
+echo -e "NAS Username: '$NAS_USERNAME'"
+echo -e "Mount Point: '$NAS_MOUNT_DIR'"
+
+echo -e "${BLUE}Checking NAS connectivity...${NC}"
+if ping -c 4 "$NAS_IP" > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Network connectivity to NAS is good${NC}"
+else
+    echo -e "${RED}❌ Cannot reach NAS using NAS_IP. Please check your network connection${NC}"
+    exit 1
+fi
+
+# Create BASE_DIR
+echo -e "${BLUE}Creating BASE_DIR: $BASE_DIR${NC}" >&2
+mkdir -p "$BASE_DIR"
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to create BASE_DIR. Exiting.${NC}" >&2
+    exit 1
+fi
+echo -e "${GREEN}BASE_DIR created successfully${NC}" >&2
+
+# Copy .env to BASE_DIR (only if not already in BASE_DIR)
+if [ "$(pwd)" != "$BASE_DIR" ]; then
+    echo -e "${BLUE}Copying .env to $BASE_DIR${NC}" >&2
+    cp .env "$BASE_DIR/.env"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to copy .env to BASE_DIR. Exiting.${NC}" >&2
+        exit 1
+    fi
+    echo -e "${GREEN}.env copied to BASE_DIR successfully${NC}" >&2
+else
+    echo -e "${GREEN}.env already in correct directory${NC}" >&2
+fi
+
+# Change to BASE_DIR
+cd "$BASE_DIR" || { echo -e "${RED}Failed to change to BASE_DIR. Exiting.${NC}" >&2; exit 1; }
+
+# Download PiHA-Deployer-NodeRED.sh
+download_from_github "PiHA-Deployer-NodeRED.sh"
+
+# Download docker-compose.yml
+download_from_github "docker-compose.yml"
+
+# Make PiHA-Deployer-NodeRED.sh executable
+chmod +x PiHA-Deployer-NodeRED.sh
+
+# Handle NAS mount
+echo -e "${BLUE}Handling NAS mount...${NC}" >&2
+
+# Check current mount status
+if mount | grep -q "$NAS_MOUNT_DIR"; then
+    # Check if it's our NAS share
+    current_mount=$(mount | grep "$NAS_MOUNT_DIR" | grep "$NAS_IP")
+    if [ ! -z "$current_mount" ]; then
+        echo -e "${BLUE}Found existing mount from our NAS, refreshing...${NC}" >&2
+        sudo umount -f "$NAS_MOUNT_DIR" || {
+            echo -e "${RED}Failed to unmount existing NAS share. Please check if it's in use.${NC}" >&2
+            exit 1
+        }
+    else
+        echo -e "${RED}Mount point $NAS_MOUNT_DIR is already in use by another mount.${NC}" >&2
+        echo -e "${RED}Please choose a different mount point or unmount it manually.${NC}" >&2
+        exit 1
+    fi
+fi
+
+# Prepare mount point (only if it doesn't exist or we just unmounted our NAS)
+if [ ! -d "$NAS_MOUNT_DIR" ] || [ ! -z "$current_mount" ]; then
+    echo -e "${BLUE}Preparing mount point...${NC}" >&2
+    sudo mkdir -p "$NAS_MOUNT_DIR"
+    sudo chmod 755 "$NAS_MOUNT_DIR"
+fi
+
+# Mount NAS share
+echo -e "${BLUE}Mounting NAS share...${NC}" >&2
+sudo systemctl daemon-reload
+
+# Try mounting with SMB 3.0 first
+if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
+    echo -e "${RED}Mount with SMB 3.0 failed. Trying without version specification...${NC}" >&2
+
+    # If SMB 3.0 fails, try without version
+    if ! sudo mount -t cifs -o username="$NAS_USERNAME",password="$NAS_PASSWORD",iocharset=utf8,file_mode=0777,dir_mode=0777 "//${NAS_IP}/${NAS_SHARE_NAME}" "$NAS_MOUNT_DIR"; then
+        echo -e "${RED}Both mount attempts failed. Checking system logs...${NC}" >&2
+        dmesg | tail -n 20
+        exit 1
+    fi
+fi
+
+# Verify mount was successful
+if ! mountpoint -q "$NAS_MOUNT_DIR"; then
+    echo -e "${RED}Mount verification failed. Share is not mounted.${NC}" >&2
+    exit 1
+fi
+
+echo -e "${GREEN}✅ NAS share mounted successfully${NC}" >&2
+
+# Create directories in NAS if they don't exist
+echo -e "${BLUE}Creating NAS directories if they don't exist...${NC}" >&2
+sudo mkdir -p "${NAS_MOUNT_DIR}/node-red"
+sudo mkdir -p "${NAS_MOUNT_DIR}/portainer"
+sudo mkdir -p "${NAS_MOUNT_DIR}/nas_data"
+
+# Create Syncthing marker directories (not files)
+echo -e "${BLUE}Creating Syncthing marker directories...${NC}" >&2
+sudo mkdir -p "${NAS_MOUNT_DIR}/node-red/.stfolder"
+sudo mkdir -p "${NAS_MOUNT_DIR}/portainer/.stfolder"
+sudo mkdir -p "${NAS_MOUNT_DIR}/nas_data/.stfolder"
+
+# Set correct permissions
+sudo chmod -R 777 "${NAS_MOUNT_DIR}/node-red"
+sudo chmod -R 777 "${NAS_MOUNT_DIR}/portainer"
+sudo chmod -R 777 "${NAS_MOUNT_DIR}/nas_data"
+
+# Starting second phase of installation
+echo -e "\n${BLUE}=========================================${NC}"
+echo -e "${BLUE} Starting PiHA-Deployer deployment phase${NC}"
+echo -e "${BLUE}This will:${NC}"
+echo -e "${BLUE}1. Configure Docker containers${NC}"
+echo -e "${BLUE}2. Set up Node-RED and Portainer${NC}"
+echo -e "${BLUE}3. Configure Syncthing for data sync${NC}"
+echo -e "${BLUE}4. Set up Samba sharing${NC}"
+echo -e "${BLUE}=========================================${NC}\n"
+
+echo -e "${BLUE}Executing PiHA-Deployer-NodeRED.sh...${NC}" >&2
+chmod +x PiHA-Deployer-NodeRED.sh
+./PiHA-Deployer-NodeRED.sh
+
+# Clean up silently
+rm -f "$HOME/.env" >/dev/null 2>&1
+
+echo -e "${GREEN}Installation complete!${NC}" >&2
+

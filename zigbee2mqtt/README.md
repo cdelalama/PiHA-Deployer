@@ -1,0 +1,216 @@
+# Zigbee2MQTT Component
+
+Automated deployment of Zigbee2MQTT with Mosquitto MQTT broker on Raspberry Pi for home automation relay control.
+
+## Overview
+
+This component deploys:
+- **Zigbee2MQTT**: Zigbee coordinator and web interface
+- **Mosquitto**: MQTT broker for device communication
+- **Portainer**: Container management interface
+
+All data is stored on NAS following the Group-by-Host convention.
+
+## Requirements
+
+### Hardware
+- Raspberry Pi (4B recommended)
+- SONOFF Zigbee 3.0 USB Dongle Plus V2 (or compatible)
+- Network connection to NAS
+- SD card with Raspberry Pi OS
+
+### Software
+- Fresh Raspberry Pi OS installation
+- SSH access (for remote installation)
+- NAS with SMB/CIFS share accessible
+
+## Quick Start
+
+### 1. Prepare Environment
+```bash
+# Clone repository
+git clone https://github.com/yourusername/PiHA-Deployer.git
+cd PiHA-Deployer/zigbee2mqtt
+
+# Create .env file (see configuration below)
+cp .env.example .env
+nano .env
+```
+
+### 2. Configure .env
+
+Required variables (fill these in `.env`):
+- Host identity & directories: `HOST_ID`, `BASE_DIR`, `DOCKER_COMPOSE_DIR`, `Z2M_DATA_DIR`, `MQTT_CONFIG_DIR`, `MQTT_DATA_DIR`, `MQTT_LOG_DIR`, `PORTAINER_DATA_DIR`
+- Docker runtime: `DOCKER_USER_ID`, `DOCKER_GROUP_ID`
+- NAS access: `NAS_IP`, `NAS_SHARE_NAME`, `NAS_USERNAME`, `NAS_PASSWORD`, `NAS_MOUNT_DIR`
+- Ports: `Z2M_PORT` (frontend), `MQTT_PORT`, `PORTAINER_PORT`
+- Network: `IP` (`auto` for detection or explicit address)
+- Credentials: `PORTAINER_PASS` (required), `MQTT_USER`/`MQTT_PASSWORD` (optional, enables broker auth)
+- Timezone: `TZ` (e.g., `Europe/Madrid`)
+- USB device: `USB_DEVICE_PATH` (optional; auto-set to `/dev/zigbee` if left blank)
+
+Recommended Group-by-Host paths:
+```bash
+NAS_MOUNT_DIR=/mnt/piha
+HOST_ID=z2m-pi-01
+
+BASE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose/zigbee2mqtt
+DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose/zigbee2mqtt
+Z2M_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/zigbee2mqtt
+MQTT_CONFIG_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/mosquitto/config
+MQTT_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/mosquitto/data
+MQTT_LOG_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/mosquitto/log
+PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer
+```
+
+Connection settings (example):
+```bash
+Z2M_PORT=8080
+MQTT_PORT=1883
+PORTAINER_PORT=9000
+DOCKER_USER_ID=1000
+DOCKER_GROUP_ID=1000
+IP=auto
+PORTAINER_PASS=changeMeSecure  # Escape $ as \$
+MQTT_USER=zigbee2mqtt          # Optional
+MQTT_PASSWORD=changeMeMQTT     # Optional
+TZ=Europe/Madrid
+```
+
+USB note: the installer auto-detects the SONOFF dongle and writes `USB_DEVICE_PATH=/dev/zigbee` into the `.env` copy used for compose. Override it in `.env` only if you prefer a different device path.
+
+### 3. Install
+```bash
+chmod +x install-zigbee2mqtt.sh
+./install-zigbee2mqtt.sh
+```
+
+The installer will:
+1. Install Docker and dependencies
+2. Auto-detect SONOFF Zigbee dongle
+3. Setup udev rules for persistent device naming
+4. Mount NAS and create directories
+5. Configure Mosquitto and Zigbee2MQTT (hashing MQTT credentials when provided)
+6. Start all containers
+
+> MQTT authentication: define `MQTT_USER`/`MQTT_PASSWORD` in `.env` to enable credential-protected access. Leaving them blank keeps the broker open for rapid testing.
+
+### 4. Access Services
+
+After installation:
+- **Zigbee2MQTT**: http://YOUR_PI_IP:8080
+- **MQTT Broker**: YOUR_PI_IP:1883
+- **Portainer**: http://YOUR_PI_IP:9000
+
+## Home Assistant Integration
+
+To connect this Zigbee2MQTT to your existing Home Assistant:
+
+1. **Add MQTT Integration** in Home Assistant:
+   - Host: `YOUR_Z2M_PI_IP`
+   - Port: `1883`
+   - Username/Password: As configured in .env
+
+2. **Enable Discovery**:
+   - Zigbee2MQTT automatically publishes device discovery
+   - Devices will appear in Home Assistant after pairing
+
+## USB Dongle Support
+
+### Auto-Detection
+The installer automatically detects SONOFF dongles with these IDs:
+- `1a86:55d4` (SONOFF Zigbee 3.0 USB Dongle Plus V2)
+- `10c4:ea60` (Alternative SONOFF model)
+- `1a86:7523` (CH340 based dongles)
+
+### Manual Configuration
+If auto-detection fails:
+```bash
+# Find your dongle
+lsusb
+
+# Set manually in .env
+USB_DEVICE_PATH=/dev/ttyUSB0  # or appropriate path
+```
+
+## Directory Structure
+
+Following Group-by-Host convention on NAS:
+```
+/mnt/piha/hosts/z2m-pi-01/
+├── compose/                 # Docker Compose files
+├── zigbee2mqtt/            # Z2M configuration and data
+├── mosquitto/
+│   ├── config/            # Mosquitto configuration
+│   ├── data/              # MQTT persistence
+│   └── log/               # MQTT logs
+└── portainer/             # Portainer data
+```
+
+## Troubleshooting
+
+### USB Dongle Issues
+```bash
+# Check device detection
+lsusb | grep -i zigbee
+
+# Verify udev rules
+ls -la /dev/zigbee
+
+# Check container logs
+docker logs zigbee2mqtt
+```
+
+### MQTT Connection Issues
+```bash
+# Test MQTT broker
+mosquitto_pub -h YOUR_PI_IP -p 1883 -t test -m "hello"
+
+# Check Mosquitto logs
+docker logs mosquitto
+```
+
+### NAS Mount Issues
+```bash
+# Verify NAS connectivity
+ping YOUR_NAS_IP
+
+# Check mount status
+mountpoint /mnt/piha
+
+# Manual mount test
+sudo mount -t cifs //NAS_IP/SHARE /mnt/test
+```
+
+## Configuration Files
+
+### Mosquitto (Generated)
+- Location: `${MQTT_CONFIG_DIR}/mosquitto.conf`
+- Authentication: File-based with passwd file
+- Persistence: Enabled in `${MQTT_DATA_DIR}`
+
+### Zigbee2MQTT (Generated)
+- Location: `${Z2M_DATA_DIR}/configuration.yaml`
+- MQTT Discovery: Enabled for Home Assistant
+- Frontend: Enabled on port 8080
+- Network Key: Auto-generated
+
+## Security Notes
+
+- Use strong passwords for MQTT and Portainer
+- Escape `$` characters in passwords as `\$`
+- Keep `.env` file permissions at 600
+- Don't commit secrets to version control
+
+## Version Information
+
+- Component Version: 1.1.0
+- Zigbee2MQTT: Latest official image
+- Mosquitto: 2.0 series
+- Portainer: Latest CE
+
+---
+
+For project documentation and LLM coordination, see:
+- [LLM_START_HERE.md](../LLM_START_HERE.md)
+- [docs/PROJECT_CONTEXT.md](../docs/PROJECT_CONTEXT.md)

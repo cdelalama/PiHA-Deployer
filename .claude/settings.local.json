@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where nmap)",
+      "Bash(where dd)",
+      "Bash(ssh:*)",
+      "Bash(npm view:*)",
+      "Bash(claude-code --version)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
