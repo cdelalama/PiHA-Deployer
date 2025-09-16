@@ -225,3 +225,17 @@ Files updated:
 
 Version impact: yes (zigbee2mqtt installer bumped to 1.1.0)
 Notes: Mosquitto password hashes generated via containerized `mosquitto_passwd`; broker falls back to anonymous if credentials omitted. `.env` copy keeps the auto-detected `/dev/zigbee` path for subsequent compose runs.
+---
+
+## 2025-09-16 - Codex - Zigbee2MQTT Portainer password fix
+
+Summary: Adjusted Zigbee2MQTT installer to store the Portainer admin password file inside `${PORTAINER_DATA_DIR}` so the compose command `--admin-password-file /data/portainer_password.txt` works on first boot. Bumped installer to v1.1.1 and refreshed docs.
+
+Files updated:
+- zigbee2mqtt/install-zigbee2mqtt.sh (now 1.1.1)
+- zigbee2mqtt/README.md
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (zigbee2mqtt installer bumped to 1.1.1)
+Notes: No behavioural changes elsewhere; rerun installer or recreate the password file in `${PORTAINER_DATA_DIR}` if you ran v1.1.0 already.

@@ -60,7 +60,7 @@ PiHA-Deployer/
 |   `-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
 |-- zigbee2mqtt/                   # Zigbee coordinator deployment (scaffolded)
 |   |-- README.md                  # Component overview
-|   |-- install-zigbee2mqtt.sh     # Main installer (v1.1.0)
+|   |-- install-zigbee2mqtt.sh     # Main installer (v1.1.1)
 |   `-- docker-compose.yml         # Service definitions (Z2M + Mosquitto + Portainer)
 `-- nas/
     |-- README.md                  # MariaDB setup guide

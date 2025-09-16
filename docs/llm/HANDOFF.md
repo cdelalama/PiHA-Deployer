@@ -9,7 +9,7 @@ Status: User runs Home Assistant via older script on one Pi. Zigbee2MQTT compone
 ## Immediate Context
 
 Current Work
-- Zigbee2MQTT installer v1.1.0: hashes MQTT credentials, persists detected USB path into `.env`, ensures NAS directories/Base dir created
+- Zigbee2MQTT installer v1.1.1: hashes MQTT credentials, persists detected USB path, writes Portainer password into data volume for compose compatibility
 - Zigbee2MQTT docs refreshed (required vars, group-by-host paths, MQTT auth note) + docker-compose defaults `${USB_DEVICE_PATH:-/dev/zigbee}`
 - Home Assistant installer v1.1.0 + NAS bootstrap script remain ready for validation once Zigbee relays are confirmed
 - Documentation synced (PROJECT_CONTEXT tree, HANDOFF, HISTORY) to reflect Zigbee component status
@@ -29,7 +29,7 @@ Current Versions
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
 - home-assistant/install-home-assistant.sh: 1.1.0
-- zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.0
+- zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.1
 - nas/setup-nas-mariadb.sh: 1.0.0
 
 ## Top Priorities

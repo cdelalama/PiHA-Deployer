@@ -204,7 +204,7 @@ sudo mount -t cifs //NAS_IP/SHARE /mnt/test
 
 ## Version Information
 
-- Component Version: 1.1.0
+- Component Version: 1.1.1
 - Zigbee2MQTT: Latest official image
 - Mosquitto: 2.0 series
 - Portainer: Latest CE

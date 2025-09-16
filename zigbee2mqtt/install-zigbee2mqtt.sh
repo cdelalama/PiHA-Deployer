@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 # Colors
 BLUE='\033[0;36m'
@@ -223,7 +223,8 @@ setup_dirs() {
 
 write_portainer_secret() {
   echo -e "${BLUE}Writing Portainer admin password file...${NC}"
-  local pw_file="${DOCKER_COMPOSE_DIR}/portainer_password.txt"
+  local pw_file="${PORTAINER_DATA_DIR}/portainer_password.txt"
+  sudo mkdir -p "${PORTAINER_DATA_DIR}"
   echo -n "$PORTAINER_PASS" | sudo tee "$pw_file" >/dev/null
   sudo chmod 600 "$pw_file"
   sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$pw_file"
