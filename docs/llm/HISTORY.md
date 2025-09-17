@@ -335,15 +335,15 @@ Notes: Future LLM responses with code changes must include commit information. H
 
 ## 2025-09-16 - Codex - Enforce MariaDB check + auto recorder config
 
-Summary: Home Assistant installer now aborts when `ENABLE_MARIADB_CHECK=true` and MariaDB is unavailable, prints the bootstrap command, and configures `secrets.yaml` + a managed `recorder` block automatically when the database is reachable. Also downloads `docker-compose.yml` if missing to support curl-based installs.
+Summary: Home Assistant installer now aborts when `ENABLE_MARIADB_CHECK=true` and MariaDB is unavailable (printing the bootstrap command) and configures `secrets.yaml` + a managed `recorder` block automatically when the database is reachable. Also downloads `docker-compose.yml` if missing to support curl-based installs.
 
 Files updated:
-- home-assistant/install-home-assistant.sh (now 1.1.3)
+- home-assistant/install-home-assistant.sh (now 1.1.4)
 - home-assistant/README.md (documented new behaviour)
 - README.md (common env steps before running installers)
 - README.md (Environment section reordered)
 - docs/PROJECT_CONTEXT.md
 - docs/llm/HANDOFF.md
 
-Version impact: yes (home-assistant installer bumped to 1.1.3)
+Version impact: yes (home-assistant installer bumped to 1.1.4)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
