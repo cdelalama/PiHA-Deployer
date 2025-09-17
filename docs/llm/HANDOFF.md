@@ -2,16 +2,17 @@
 
 ## Current Status
 
-Last Updated: 2025-09-16 - Codex
-Session Focus: Harden Zigbee2MQTT installer/docs and note next validation steps for HA + MariaDB
-Status: User runs Home Assistant via older script on one Pi. Zigbee2MQTT component hardened (installer v1.1.3: Portainer password, mosquitto.conf safeguards, full Zigbee config); HA installer now guides NAS MariaDB bootstrap and docs updated. Next: deploy Z2M on fresh Pi for relay tests, then validate HA v1.1.0 + NAS MariaDB.
+Last Updated: 2025-09-17 - Claude
+Session Focus: Fix README markup issues and standardize Quick Start instructions
+Status: Fixed broken code blocks in main README.md and standardized working directory guidance across all three components (HA, Zigbee2MQTT, Node-RED). All Quick Start sections now follow consistent pattern: SSH + mkdir + common.env setup + component .env + installer. Zigbee2MQTT component remains hardened (installer v1.1.3), HA installer guides MariaDB bootstrap. Next: deploy Z2M on fresh Pi for relay tests, then validate HA v1.1.0 + NAS MariaDB.
 
 ## Immediate Context
 
 Current Work
+- Root README.md: Fixed broken code blocks in Quick Start sections, standardized working directory instructions across all components
+- All Quick Start sections now follow pattern: SSH + mkdir ~/piha-{component} + create common/Common.env + create .env + run installer
 - Zigbee2MQTT installer v1.1.3: hashes MQTT credentials, persists detected USB path, writes Portainer password, ensures mosquitto.conf is generated, and ships a complete configuration.yaml (onboarding disabled)
 - Home Assistant installer v1.1.2: MariaDB check prints bootstrap command and auto-downloads docker-compose.yml for curl-based installs
-- Root README.md published with project overview and quick-start one-liners
 - Zigbee2MQTT docs refreshed (required vars, group-by-host paths, MQTT auth note) + docker-compose defaults `${USB_DEVICE_PATH:-/dev/zigbee}`
 - Home Assistant installer v1.1.0 + NAS bootstrap script remain ready for validation once Zigbee relays are confirmed
 - Documentation synced (PROJECT_CONTEXT tree, HANDOFF, HISTORY) to reflect Zigbee component status

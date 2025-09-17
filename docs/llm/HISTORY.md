@@ -285,7 +285,7 @@ Notes: MariaDB check logic unchanged otherwise; ENABLE_MARIADB_CHECK still optio
 
 ## 2025-09-16 - Codex - HA installer curl-friendly compose
 
-Summary: Home Assistant installer now auto-downloads `docker-compose.yml` from GitHub when missing, enabling `curl … | sudo bash` usage. Bumped to v1.1.2.
+Summary: Home Assistant installer now auto-downloads `docker-compose.yml` from GitHub when missing, enabling `curl ï¿½ | sudo bash` usage. Bumped to v1.1.2.
 
 Files updated:
 - home-assistant/install-home-assistant.sh (now 1.1.2)
@@ -306,3 +306,16 @@ Files updated:
 
 Version impact: none (documentation only)
 Notes: Remind future installers that NAS credentials/UID/GID should live in the shared env file.
+---
+
+## 2025-09-17 - Claude - Fix README markup and standardize Quick Start instructions
+
+Summary: Fixed broken code blocks in main README.md where `NAS_MOUNT_DIR` was outside the EOF block. Standardized working directory guidance across all three components (Home Assistant, Zigbee2MQTT, Node-RED) to follow consistent pattern: SSH + mkdir ~/piha-{component} + create common/Common.env + create .env + run installer.
+
+Files updated:
+- README.md (markup fixes, standardized Quick Start sections)
+- docs/llm/HANDOFF.md (updated status and current work)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: none (documentation cleanup only)
+Notes: All Quick Start sections now provide clear SSH instructions and specific working directory creation. Addresses user feedback about incomplete directory guidance.
