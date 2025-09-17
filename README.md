@@ -29,6 +29,22 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
    - If `ENABLE_MARIADB_CHECK=true` and MariaDB is absent, it prints a command to bootstrap the NAS service.
 4. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
 
+### Shared values for Home Assistant
+- Place common variables in `~/piha-home-assistant/common/Common.env` (create the `common/` folder next to your `.env`).
+- Example:
+  ```bash
+  # ~/piha-home-assistant/common/Common.env
+  DOCKER_USER_ID=1000
+  DOCKER_GROUP_ID=1000
+  NAS_IP=192.168.1.50
+  NAS_SHARE_NAME=piha
+  NAS_USERNAME=your_nas_user
+  NAS_PASSWORD=changeMeSecure
+  NAS_MOUNT_DIR=/mnt/piha
+  PORTAINER_PASS=changeMePortainer
+  ```
+- The `.env` in `~/piha-home-assistant` then only needs host-specific overrides (HOST_ID, HA_DATA_DIR, ports).
+
 ## Quick Start (Zigbee2MQTT)
 1. SSH into your Pi and create a working directory:
    ```bash
@@ -42,6 +58,21 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
    sudo bash install-zigbee2mqtt.sh
    ```
    (The script writes a full configuration and skips the onboarding wizard.)
+
+### Shared values for Zigbee2MQTT
+- Place common variables in `~/piha-zigbee2mqtt/common/Common.env`.
+  ```bash
+  # ~/piha-zigbee2mqtt/common/Common.env
+  DOCKER_USER_ID=1000
+  DOCKER_GROUP_ID=1000
+  NAS_IP=192.168.1.50
+  NAS_SHARE_NAME=piha
+  NAS_USERNAME=your_nas_user
+  NAS_PASSWORD=changeMeSecure
+  NAS_MOUNT_DIR=/mnt/piha
+  PORTAINER_PASS=changeMePortainer
+  ```
+- The component `.env` only needs HOST_ID, the Zigbee/MQTT/Portainer NAS paths, USB overrides, and ports.
 
 ## Quick Start (Node-RED)
 1. SSH into your Pi and create a working directory:
