@@ -281,3 +281,17 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.1)
 Notes: MariaDB check logic unchanged otherwise; ENABLE_MARIADB_CHECK still optional but now guides the bootstrap flow when missing.
+---
+
+## 2025-09-16 - Codex - HA installer curl-friendly compose
+
+Summary: Home Assistant installer now auto-downloads `docker-compose.yml` from GitHub when missing, enabling `curl … | sudo bash` usage. Bumped to v1.1.2.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (now 1.1.2)
+- README.md (project root quick-starts)
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (home-assistant installer bumped to 1.1.2)
+Notes: Root README adds quick-start one-liners for HA/Zigbee2MQTT/Node-RED.

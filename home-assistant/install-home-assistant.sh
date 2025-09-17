@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.1"
+VERSION="1.1.2"
 
 # Colors
 BLUE='\033[0;36m'
@@ -10,6 +10,8 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
+
+COMPOSE_SOURCE_URL="https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/docker-compose.yml"
 
 echo -e "${BLUE}PiHA-Deployer Home Assistant Installer v${VERSION}${NC}"
 
@@ -170,9 +172,13 @@ write_portainer_secret() {
 }
 
 copy_compose_and_env() {
-  echo -e "${BLUE}Copying compose and .env to BASE_DIR...${NC}"
+  echo -e "${BLUE}Preparing compose and .env for BASE_DIR...${NC}"
   if [ ! -f docker-compose.yml ]; then
-    echo -e "${RED}[ERROR] docker-compose.yml not found next to this installer${NC}"; exit 1
+    echo -e "${YELLOW}[WARN] docker-compose.yml not found locally; downloading from repository...${NC}"
+    if ! curl -fsSL "${COMPOSE_SOURCE_URL}" -o docker-compose.yml; then
+      echo -e "${RED}[ERROR] Unable to download docker-compose.yml from ${COMPOSE_SOURCE_URL}${NC}"
+      exit 1
+    fi
   fi
   cp docker-compose.yml "${BASE_DIR}/docker-compose.yml"
   cp .env "${BASE_DIR}/.env"

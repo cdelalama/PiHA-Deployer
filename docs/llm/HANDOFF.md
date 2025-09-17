@@ -10,17 +10,19 @@ Status: User runs Home Assistant via older script on one Pi. Zigbee2MQTT compone
 
 Current Work
 - Zigbee2MQTT installer v1.1.3: hashes MQTT credentials, persists detected USB path, writes Portainer password, ensures mosquitto.conf is generated, and ships a complete configuration.yaml (onboarding disabled)
-- Home Assistant installer v1.1.1: MariaDB check prints bootstrap command (curl from GitHub) when DB is missing
+- Home Assistant installer v1.1.2: MariaDB check prints bootstrap command and auto-downloads docker-compose.yml for curl-based installs
+- Root README.md published with project overview and quick-start one-liners
 - Zigbee2MQTT docs refreshed (required vars, group-by-host paths, MQTT auth note) + docker-compose defaults `${USB_DEVICE_PATH:-/dev/zigbee}`
 - Home Assistant installer v1.1.0 + NAS bootstrap script remain ready for validation once Zigbee relays are confirmed
 - Documentation synced (PROJECT_CONTEXT tree, HANDOFF, HISTORY) to reflect Zigbee component status
 
 Active Files
+- README.md (project overview & quick starts)
 - docs/PROJECT_CONTEXT.md (architecture & tree include Zigbee2MQTT)
 - docs/llm/HANDOFF.md (this file)
-- docs/llm/HISTORY.md (log updated with latest Zigbee2MQTT notes)
+- docs/llm/HISTORY.md (log updated with latest changes)
 - zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 hardening)
-- home-assistant/install-home-assistant.sh (v1.1.1 MariaDB guidance)
+- home-assistant/install-home-assistant.sh (v1.1.2; MariaDB bootstrap & compose auto-download)
 - zigbee2mqtt/docker-compose.yml (path quoting, USB default)
 - zigbee2mqtt/README.md (required vars, auth guidance)
 - nas/setup-nas-mariadb.sh (SSH bootstrap)
@@ -30,7 +32,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.1
+- home-assistant/install-home-assistant.sh: 1.1.2
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 - nas/setup-nas-mariadb.sh: 1.0.0
 

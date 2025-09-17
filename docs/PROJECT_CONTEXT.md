@@ -39,6 +39,7 @@ Infrastructure
 
 ```
 PiHA-Deployer/
+|-- README.md                      # Project overview & quick starts
 |-- LLM_START_HERE.md              # LLM entry point
 |-- docs/
 |   |-- PROJECT_CONTEXT.md         # This file
