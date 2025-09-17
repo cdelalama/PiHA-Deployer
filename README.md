@@ -54,6 +54,22 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
    curl -sSL "https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/node-red/install-node-red.sh" | bash
    ```
 
+## Environment Files
+- Each component expects a local `.env` with host-specific values (ports, paths, IDs).
+- Shared values (NAS credentials, UID/GID, mount path, Portainer password) should live in `common/Common.env` next to the component or in the repo root; the installers load these files automatically but they are **not** tracked in Git.
+- Example `common/Common.env` snippet (adjust to your environment):
+  ```bash
+  DOCKER_USER_ID=1000
+  DOCKER_GROUP_ID=1000
+  NAS_IP=192.168.1.50
+  NAS_SHARE_NAME=piha
+  NAS_USERNAME=your_nas_user
+  NAS_PASSWORD=changeMeSecure
+  NAS_MOUNT_DIR=/mnt/piha
+  PORTAINER_PASS=changeMePortainer
+  ```
+- Keep secrets out of version control; copy these files manually to each Raspberry Pi.
+
 ## Contributing / Updates
 - Make sure to update `docs/llm/HANDOFF.md` and `docs/llm/HISTORY.md` with every change.
 - Follow ASCII-only rule unless the file already contains non-ASCII.

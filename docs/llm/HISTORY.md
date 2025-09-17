@@ -295,3 +295,14 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.2)
 Notes: Root README adds quick-start one-liners for HA/Zigbee2MQTT/Node-RED.
+---
+
+## 2025-09-16 - Codex - Document common env usage
+
+Summary: Updated root README with guidance on maintaining shared credentials in `common/Common.env` (gitignored) so multiple components can keep per-host `.env` files minimal.
+
+Files updated:
+- README.md
+
+Version impact: none (documentation only)
+Notes: Remind future installers that NAS credentials/UID/GID should live in the shared env file.
