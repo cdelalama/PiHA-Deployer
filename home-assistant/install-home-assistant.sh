@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.4"
+VERSION="1.1.5"
 
 # Colors
 BLUE='\033[0;36m'

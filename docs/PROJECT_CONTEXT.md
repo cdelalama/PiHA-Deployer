@@ -57,7 +57,7 @@ PiHA-Deployer/
 |   `-- docker-compose.yml         # Service definitions
 |-- home-assistant/                # Home Assistant deployment (scaffolded)
 |   |-- README.md                  # Component overview
-|   |-- install-home-assistant.sh  # Main installer (v1.1.4)
+|   |-- install-home-assistant.sh  # Main installer (v1.1.5)
 |   `-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
 |-- zigbee2mqtt/                   # Zigbee coordinator deployment (scaffolded)
 |   |-- README.md                  # Component overview
