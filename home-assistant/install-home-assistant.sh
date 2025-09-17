@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.2"
+VERSION="1.1.3"
 
 # Colors
 BLUE='\033[0;36m'
@@ -91,6 +91,8 @@ post_load_fallbacks() {
     fi
   fi
 }
+
+MARIADB_CONFIGURE_PENDING=false
 
 ensure_packages() {
   echo -e "${BLUE}Ensuring required packages are present...${NC}"
@@ -184,6 +186,48 @@ copy_compose_and_env() {
   cp .env "${BASE_DIR}/.env"
 }
 
+configure_home_assistant_mariadb() {
+  echo -e "${BLUE}Configuring Home Assistant recorder for MariaDB...${NC}"
+  local secrets_file="${HA_DATA_DIR}/secrets.yaml"
+  local config_file="${HA_DATA_DIR}/configuration.yaml"
+  local purge_days="${RECORDER_PURGE_KEEP_DAYS:-14}"
+  local dsn="mysql+pymysql://${MARIADB_USER}:${MARIADB_PASSWORD}@${MARIADB_HOST}:${MARIADB_PORT}/${MARIADB_DATABASE}?charset=utf8mb4"
+
+  sudo mkdir -p "${HA_DATA_DIR}"
+
+  # Manage secrets.yaml
+  sudo touch "$secrets_file"
+  if sudo grep -q '^recorder_db_url:' "$secrets_file"; then
+    sudo sed -i "s#^recorder_db_url:.*#recorder_db_url: ${dsn}#" "$secrets_file"
+  else
+    echo "recorder_db_url: ${dsn}" | sudo tee -a "$secrets_file" >/dev/null
+  fi
+
+  # Manage configuration.yaml
+  sudo touch "$config_file"
+  sudo sed -i '/# --- PiHA-Deployer recorder config (managed) ---/,/# --- PiHA-Deployer recorder config ---/d' "$config_file"
+  if sudo grep -q '^[[:space:]]*recorder:' "$config_file"; then
+    echo -e "${YELLOW}[WARN] Existing recorder configuration detected in ${config_file}. Update it manually to use !secret recorder_db_url.${NC}"
+    MARIADB_STATUS="available"
+    return 0
+  fi
+  echo '' | sudo tee -a "$config_file" >/dev/null
+  sudo tee -a "$config_file" >/dev/null <<EOF
+# --- PiHA-Deployer recorder config (managed) ---
+recorder:
+  db_url: !secret recorder_db_url
+  purge_keep_days: ${purge_days}
+  commit_interval: 30
+# --- PiHA-Deployer recorder config ---
+EOF
+
+  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$secrets_file" "$config_file" 2>/dev/null || true
+  sudo chmod 600 "$secrets_file" 2>/dev/null || true
+  sudo chmod 664 "$config_file" 2>/dev/null || true
+  MARIADB_STATUS="configured"
+  echo -e "${GREEN}[OK] Recorder configured to use MariaDB${NC}"
+}
+
 require_mariadb_vars() {
   local required=(MARIADB_HOST MARIADB_PORT MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD)
   local missing=()
@@ -240,6 +284,9 @@ check_mariadb() {
 
 print_mariadb_followup() {
   case "$MARIADB_STATUS" in
+    configured)
+      echo -e "${GREEN}[OK] MariaDB recorder configured automatically. Review ${HA_DATA_DIR}/configuration.yaml if you need further tweaks.${NC}"
+      ;;
     available)
       echo -e "${GREEN}[OK] MariaDB is ready. Configure Home Assistant recorder using the credentials above (see nas/README.md).${NC}"
       ;;
@@ -310,12 +357,24 @@ if ! ping -c 2 "$NAS_IP" >/dev/null 2>&1; then
 fi
 
 MARIADB_STATUS="not_requested"
+MARIADB_CONFIGURE_PENDING="false"
 if bool_true "${ENABLE_MARIADB_CHECK:-false}"; then
   MARIADB_STATUS="skipped"
   [ -z "$MARIADB_HOST" ] && MARIADB_HOST="$NAS_IP"
   [ -z "$MARIADB_PORT" ] && MARIADB_PORT=3306
   if require_mariadb_vars; then
-    check_mariadb || true
+    check_mariadb
+    if [ "$MARIADB_STATUS" = "available" ]; then
+      MARIADB_CONFIGURE_PENDING="true"
+    else
+      print_mariadb_followup
+      echo -e "${RED}[ERROR] MariaDB validation failed; aborting installation.${NC}"
+      exit 1
+    fi
+  else
+    print_mariadb_followup
+    echo -e "${RED}[ERROR] MariaDB validation failed due to missing variables; aborting installation.${NC}"
+    exit 1
   fi
 fi
 
@@ -332,6 +391,9 @@ if [ -z "$PORTAINER_DATA_DIR" ]; then
 fi
 
 setup_dirs
+if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
+  configure_home_assistant_mariadb
+fi
 write_portainer_secret
 copy_compose_and_env
 

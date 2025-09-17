@@ -319,3 +319,31 @@ Files updated:
 
 Version impact: none (documentation cleanup only)
 Notes: All Quick Start sections now provide clear SSH instructions and specific working directory creation. Addresses user feedback about incomplete directory guidance.
+---
+
+## 2025-09-17 - Claude - Add commit message policy to LLM guidelines
+
+Summary: Added mandatory commit message policy to LLM_START_HERE.md requiring all LLMs to provide commit title and description at the end of responses containing code changes. Also analyzed the significant improvements in Home Assistant installer v1.1.3 which now aborts installation when MariaDB is enabled but unavailable, and automatically configures recorder when MariaDB is reachable.
+
+Files updated:
+- LLM_START_HERE.md (commit message policy)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: none (documentation/policy only)
+Notes: Future LLM responses with code changes must include commit information. HA installer v1.1.3 behavior significantly improved with automatic MariaDB recorder configuration.
+---
+
+## 2025-09-16 - Codex - Enforce MariaDB check + auto recorder config
+
+Summary: Home Assistant installer now aborts when `ENABLE_MARIADB_CHECK=true` and MariaDB is unavailable, prints the bootstrap command, and configures `secrets.yaml` + a managed `recorder` block automatically when the database is reachable. Also downloads `docker-compose.yml` if missing to support curl-based installs.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (now 1.1.3)
+- home-assistant/README.md (documented new behaviour)
+- README.md (common env steps before running installers)
+- README.md (Environment section reordered)
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (home-assistant installer bumped to 1.1.3)
+Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.

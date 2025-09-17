@@ -78,27 +78,28 @@ Important:
 
 Running Recorder on MariaDB avoids SQLite-on-SMB corruption and preserves UI history across Pi reinstalls.
 
+> Set `ENABLE_MARIADB_CHECK=true` plus all `MARIADB_*` variables in `.env` if you want MariaDB. The installer will stop if the database is unavailable (printing the bootstrap command) and will write `secrets.yaml` + a managed `recorder` block automatically when the database is reachable.
+
 1) Deploy MariaDB on your NAS (via SSH)
 - Option A: run `nas/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
   - One-liner: `ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh | bash"`
 - Option B: manually follow `nas/docker-compose.yml` and `nas/README.md` as a template.
 - Ensure MariaDB listens on `3306` and is reachable from the Pi.
 
-2) Point HA Recorder to MariaDB (on the Pi)
-- In `${HA_DATA_DIR}/secrets.yaml` add:
+2) (Optional) Manual configuration
+- If you prefer to manage recorder settings yourself, edit `${HA_DATA_DIR}/secrets.yaml` and `${HA_DATA_DIR}/configuration.yaml` using the snippet below (this matches what the installer writes when the check succeeds).
 ```
+# secrets.yaml
 recorder_db_url: mysql+pymysql://homeassistant:changeMeUser@<NAS_IP>:3306/homeassistant?charset=utf8mb4
-```
 
-- In `${HA_DATA_DIR}/configuration.yaml` add or edit:
-```
+# configuration.yaml
 recorder:
   db_url: !secret recorder_db_url
   purge_keep_days: 14
   commit_interval: 30
 ```
 
-- Restart Home Assistant:
+- After editing manually, restart Home Assistant:
 ```
 docker compose -f "${BASE_DIR}/docker-compose.yml" up -d --force-recreate homeassistant
 ```
@@ -106,8 +107,7 @@ docker compose -f "${BASE_DIR}/docker-compose.yml" up -d --force-recreate homeas
 Notes:
 - Keep MariaDB data on a local NAS filesystem (not on SMB/CIFS).
 - If you previously had SQLite on SMB, remove `home-assistant_v2.db*` from `${HA_DATA_DIR}`.
-- After MariaDB is online, set `ENABLE_MARIADB_CHECK=true` and provide the `MARIADB_*` variables in `.env` so the installer can verify connectivity before deploying containers.
-- If the installer cannot reach MariaDB, it prints the one-liner above so you can bootstrap it from GitHub via SSH.
+- If the installer reports that MariaDB is missing or misconfigured, fix it using the one-liner above and rerun the script.
 
 ## Troubleshooting
 - Verify Docker and Compose: `docker ps` and `docker compose ls`

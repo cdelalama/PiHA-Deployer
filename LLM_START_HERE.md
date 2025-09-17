@@ -23,6 +23,14 @@ Documentation update rules
 - Mandatory: every session must append an entry to docs/llm/HISTORY.md
 - HISTORY format: YYYY-MM-DD - [LLM_NAME] - [Brief summary] - Files: [list] - Version impact: [yes/no + which]
 
+Commit message policy
+- Mandatory: every LLM response with code changes must end with suggested commit information
+- Format: "## Commit Info\n**Title:** [concise commit title]\n**Description:** [brief commit description explaining the change and its impact]"
+- Keep commit titles under 72 characters, descriptions under 200 characters
+- Both title and description must be in English
+- Focus on user impact and functional changes, not implementation details
+- Description should explain what changed and why it benefits the user
+
 Version management
 - Always check VERSION lines in scripts before modifying
 - Never increment versions without reading docs/VERSIONING_RULES.md

@@ -44,6 +44,7 @@ EOF
 (Adjust the values to match your NAS; this file is gitignored and must be created per host.)
 
 3. Create the component `.env` with host-specific values (see `home-assistant/README.md` for the full list; at minimum set `HOST_ID`, `BASE_DIR`, `HA_DATA_DIR`, ports).
+   - Optional: add `ENABLE_MARIADB_CHECK=true` plus `MARIADB_*` values; the installer will stop if MariaDB is unavailable and will auto-configure the recorder when it is reachable.
 4. Run the installer directly from GitHub (requires `curl` and `sudo`):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
