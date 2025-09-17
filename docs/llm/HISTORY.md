@@ -267,3 +267,17 @@ Files updated:
 
 Version impact: yes (zigbee2mqtt installer bumped to 1.1.3)
 Notes: Zigbee2MQTT UI should skip onboarding wizard on first boot; remember to disable `permit_join` manually after pairing.
+---
+
+## 2025-09-16 - Codex - HA installer MariaDB bootstrap hints
+
+Summary: Bumped Home Assistant installer to v1.1.1. When MariaDB validation fails or is skipped, the script now prints a ready-to-run `curl` command (ssh to NAS + `setup-nas-mariadb.sh` from GitHub) so users can provision the database quickly. Updated README with the one-liner.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (now 1.1.1)
+- home-assistant/README.md
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (home-assistant installer bumped to 1.1.1)
+Notes: MariaDB check logic unchanged otherwise; ENABLE_MARIADB_CHECK still optional but now guides the bootstrap flow when missing.

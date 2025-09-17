@@ -80,6 +80,7 @@ Running Recorder on MariaDB avoids SQLite-on-SMB corruption and preserves UI his
 
 1) Deploy MariaDB on your NAS (via SSH)
 - Option A: run `nas/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
+  - One-liner: `ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh | bash"`
 - Option B: manually follow `nas/docker-compose.yml` and `nas/README.md` as a template.
 - Ensure MariaDB listens on `3306` and is reachable from the Pi.
 
@@ -106,6 +107,7 @@ Notes:
 - Keep MariaDB data on a local NAS filesystem (not on SMB/CIFS).
 - If you previously had SQLite on SMB, remove `home-assistant_v2.db*` from `${HA_DATA_DIR}`.
 - After MariaDB is online, set `ENABLE_MARIADB_CHECK=true` and provide the `MARIADB_*` variables in `.env` so the installer can verify connectivity before deploying containers.
+- If the installer cannot reach MariaDB, it prints the one-liner above so you can bootstrap it from GitHub via SSH.
 
 ## Troubleshooting
 - Verify Docker and Compose: `docker ps` and `docker compose ls`

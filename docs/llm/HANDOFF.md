@@ -4,12 +4,13 @@
 
 Last Updated: 2025-09-16 - Codex
 Session Focus: Harden Zigbee2MQTT installer/docs and note next validation steps for HA + MariaDB
-Status: User runs Home Assistant via older script on one Pi. Zigbee2MQTT component hardened (installer v1.1.3: Portainer password, mosquitto.conf safeguards, full Zigbee config) and docs updated. Next: deploy Z2M on fresh Pi for relay tests, then validate HA v1.1.0 + NAS MariaDB.
+Status: User runs Home Assistant via older script on one Pi. Zigbee2MQTT component hardened (installer v1.1.3: Portainer password, mosquitto.conf safeguards, full Zigbee config); HA installer now guides NAS MariaDB bootstrap and docs updated. Next: deploy Z2M on fresh Pi for relay tests, then validate HA v1.1.0 + NAS MariaDB.
 
 ## Immediate Context
 
 Current Work
 - Zigbee2MQTT installer v1.1.3: hashes MQTT credentials, persists detected USB path, writes Portainer password, ensures mosquitto.conf is generated, and ships a complete configuration.yaml (onboarding disabled)
+- Home Assistant installer v1.1.1: MariaDB check prints bootstrap command (curl from GitHub) when DB is missing
 - Zigbee2MQTT docs refreshed (required vars, group-by-host paths, MQTT auth note) + docker-compose defaults `${USB_DEVICE_PATH:-/dev/zigbee}`
 - Home Assistant installer v1.1.0 + NAS bootstrap script remain ready for validation once Zigbee relays are confirmed
 - Documentation synced (PROJECT_CONTEXT tree, HANDOFF, HISTORY) to reflect Zigbee component status
@@ -19,6 +20,7 @@ Active Files
 - docs/llm/HANDOFF.md (this file)
 - docs/llm/HISTORY.md (log updated with latest Zigbee2MQTT notes)
 - zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 hardening)
+- home-assistant/install-home-assistant.sh (v1.1.1 MariaDB guidance)
 - zigbee2mqtt/docker-compose.yml (path quoting, USB default)
 - zigbee2mqtt/README.md (required vars, auth guidance)
 - nas/setup-nas-mariadb.sh (SSH bootstrap)
@@ -28,7 +30,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.0
+- home-assistant/install-home-assistant.sh: 1.1.1
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 - nas/setup-nas-mariadb.sh: 1.0.0
 

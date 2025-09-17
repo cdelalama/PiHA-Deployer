@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 # Colors
 BLUE='\033[0;36m'
@@ -195,6 +195,14 @@ require_mariadb_vars() {
   return 0
 }
 
+print_mariadb_bootstrap_hint() {
+  local bootstrap_url="https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh"
+  local host_hint="${MARIADB_HOST:-${NAS_IP:-<NAS_HOST>}}"
+  echo -e "${BLUE}[INFO] To bootstrap MariaDB on the NAS run:${NC}"
+  echo -e "${BLUE}  ssh <nas-user>@${host_hint} 'curl -fsSL ${bootstrap_url} | bash'${NC}"
+  echo -e "${BLUE}  # Alternatively execute nas/setup-nas-mariadb.sh from this repository with your .env${NC}"
+}
+
 check_mariadb() {
   local host="$MARIADB_HOST"
   local port="${MARIADB_PORT:-3306}"
@@ -241,14 +249,17 @@ print_mariadb_followup() {
       ;;
     unreachable)
       echo -e "${YELLOW}[WARN] MariaDB appears offline. Start it on the NAS using nas/docker-compose.yml or run 'docker compose up -d' on the NAS.${NC}"
+      print_mariadb_bootstrap_hint
       ;;
     skipped)
       echo -e "${YELLOW}[WARN] MariaDB validation skipped. Set ENABLE_MARIADB_CHECK=true and provide MARIADB_* variables in .env to enable automated checks.${NC}"
       echo -e "${BLUE}Refer to nas/README.md for setup instructions.${NC}"
+      print_mariadb_bootstrap_hint
       ;;
     missing_vars)
       echo -e "${YELLOW}[WARN] MariaDB check requested but configuration is incomplete. Add all MARIADB_* variables to .env and rerun.${NC}"
       echo -e "${BLUE}See nas/README.md for the required values.${NC}"
+      print_mariadb_bootstrap_hint
       ;;
   esac
 }
