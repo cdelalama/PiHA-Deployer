@@ -2,28 +2,28 @@
 
 ## Current Status
 
-Last Updated: 2025-09-17 - Claude
-Session Focus: Fix README markup issues and standardize Quick Start instructions
-Status: Fixed broken code blocks in main README.md and standardized working directory guidance across all three components (HA, Zigbee2MQTT, Node-RED). All Quick Start sections now follow consistent pattern: SSH + mkdir + common.env setup + component .env + installer. Zigbee2MQTT component remains hardened (installer v1.1.3), HA installer guides MariaDB bootstrap. Next: deploy Z2M on fresh Pi for relay tests, then validate HA v1.1.0 + NAS MariaDB.
+Last Updated: 2025-09-17 - Codex
+Session Focus: Enforce HA MariaDB check + auto recorder configuration; ensure docs/readme reflect common env usage
+Status: Home Assistant installer bumped to v1.1.4 (MariaDB check aborts + auto recorder config), README clarified common/Common.env placement, quick starts now highlight MariaDB behaviour. Zigbee2MQTT remains hardened (1.1.3). Next: deploy Z2M on fresh Pi, luego validar HA + MariaDB end-to-end.
 
 ## Immediate Context
 
 Current Work
-- Root README.md: Fixed broken code blocks in Quick Start sections, standardized working directory instructions across all components
+- README.md: Quick starts include common/Common.env setup before running installers and clarify MariaDB behaviour
 - All Quick Start sections now follow pattern: SSH + mkdir ~/piha-{component} + create common/Common.env + create .env + run installer
 - Zigbee2MQTT installer v1.1.3: hashes MQTT credentials, persists detected USB path, writes Portainer password, ensures mosquitto.conf is generated, and ships a complete configuration.yaml (onboarding disabled)
-- Home Assistant installer v1.1.3: MariaDB check now aborts when the DB is missing, downloads docker-compose.yml when needed, and configures recorder automatically when MariaDB is reachable
+- Home Assistant installer v1.1.4: MariaDB check aborts when unavailable, prints bootstrap command, auto-configures recorder when reachable, downloads docker-compose.yml if missing
 - Zigbee2MQTT docs refreshed (required vars, group-by-host paths, MQTT auth note) + docker-compose defaults `${USB_DEVICE_PATH:-/dev/zigbee}`
 - Home Assistant installer v1.1.0 + NAS bootstrap script remain ready for validation once Zigbee relays are confirmed
 - Documentation synced (PROJECT_CONTEXT tree, HANDOFF, HISTORY) to reflect Zigbee component status
 
 Active Files
-- README.md (project overview & quick starts)
+- README.md (project overview & quick starts updated)
 - docs/PROJECT_CONTEXT.md (architecture & tree include Zigbee2MQTT)
 - docs/llm/HANDOFF.md (this file)
 - docs/llm/HISTORY.md (log updated with latest changes)
 - zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 hardening)
-- home-assistant/install-home-assistant.sh (v1.1.3; MariaDB bootstrap + auto recorder config)
+- home-assistant/install-home-assistant.sh (v1.1.4; MariaDB bootstrap + auto recorder config)
 - zigbee2mqtt/docker-compose.yml (path quoting, USB default)
 - zigbee2mqtt/README.md (required vars, auth guidance)
 - nas/setup-nas-mariadb.sh (SSH bootstrap)
@@ -33,7 +33,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.3
+- home-assistant/install-home-assistant.sh: 1.1.4
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 - nas/setup-nas-mariadb.sh: 1.0.0
 

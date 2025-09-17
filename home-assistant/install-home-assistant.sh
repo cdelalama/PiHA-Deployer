@@ -93,6 +93,7 @@ post_load_fallbacks() {
 }
 
 MARIADB_CONFIGURE_PENDING=false
+MARIADB_HINT_PRINTED=false
 
 ensure_packages() {
   echo -e "${BLUE}Ensuring required packages are present...${NC}"
@@ -260,6 +261,8 @@ check_mariadb() {
 
   if ! nc -z -w5 "$host" "$port" >/dev/null 2>&1; then
     echo -e "${YELLOW}[WARN] Unable to reach MariaDB at ${host}:${port}. Ensure the NAS container is running and firewall allows access.${NC}"
+    print_mariadb_bootstrap_hint
+    MARIADB_HINT_PRINTED="true"
     MARIADB_STATUS="unreachable"
     return 1
   fi
@@ -367,7 +370,9 @@ if bool_true "${ENABLE_MARIADB_CHECK:-false}"; then
     if [ "$MARIADB_STATUS" = "available" ]; then
       MARIADB_CONFIGURE_PENDING="true"
     else
-      print_mariadb_followup
+      if [ "$MARIADB_HINT_PRINTED" != "true" ]; then
+        print_mariadb_followup
+      fi
       echo -e "${RED}[ERROR] MariaDB validation failed; aborting installation.${NC}"
       exit 1
     fi
