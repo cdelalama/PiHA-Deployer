@@ -20,38 +20,38 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
    ```bash
    mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant
    ```
-2. Create a `.env` file with the required variables (see `home-assistant/README.md` for all variables).
-3. Run the installer directly from GitHub (requires `curl` and `sudo`):
+2. Create the shared config folder and add common variables (NAS credentials, UID/GID, Portainer password):
+   ```bash
+   mkdir -p common
+   cat <<'EOF' > common/Common.env
+   DOCKER_USER_ID=1000
+   DOCKER_GROUP_ID=1000
+   NAS_IP=192.168.1.50
+   NAS_SHARE_NAME=piha
+   NAS_USERNAME=your_nas_user
+   NAS_PASSWORD=changeMeSecure
+  NAS_MOUNT_DIR=/mnt/piha
+   PORTAINER_PASS=changeMePortainer
+   EOF
+   ```
+   (Adjust the values to match your NAS; this file is gitignored and must be created per host.)
+3. Create the component `.env` with host-specific values (see `home-assistant/README.md` for the full list; at minimum set `HOST_ID`, `BASE_DIR`, `HA_DATA_DIR`, ports).
+4. Run the installer directly from GitHub (requires `curl` and `sudo`):
    ```bash
    curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
    ```
    - The script auto-downloads `docker-compose.yml` if missing.
    - If `ENABLE_MARIADB_CHECK=true` and MariaDB is absent, it prints a command to bootstrap the NAS service.
-4. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
-
-### Shared values for Home Assistant
-- Place common variables in `~/piha-home-assistant/common/Common.env` (create the `common/` folder next to your `.env`).
-- Example:
-  ```bash
-  # ~/piha-home-assistant/common/Common.env
-  DOCKER_USER_ID=1000
-  DOCKER_GROUP_ID=1000
-  NAS_IP=192.168.1.50
-  NAS_SHARE_NAME=piha
-  NAS_USERNAME=your_nas_user
-  NAS_PASSWORD=changeMeSecure
-  NAS_MOUNT_DIR=/mnt/piha
-  PORTAINER_PASS=changeMePortainer
-  ```
-- The `.env` in `~/piha-home-assistant` then only needs host-specific overrides (HOST_ID, HA_DATA_DIR, ports).
+5. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
 
 ## Quick Start (Zigbee2MQTT)
 1. SSH into your Pi and create a working directory:
    ```bash
    mkdir -p ~/piha-zigbee2mqtt && cd ~/piha-zigbee2mqtt
    ```
-2. Create a `.env` file with the required variables (see `zigbee2mqtt/README.md` for all variables).
-3. Ensure the SONOFF dongle is connected and run the installer:
+2. Create the shared config folder and populate `common/Common.env` with the NAS credentials and shared values (same format as Home Assistant).
+3. Create the `.env` for Zigbee2MQTT with host-specific values (HOST_ID, Z2M/MQTT/Portainer directories, USB overrides, ports; see `zigbee2mqtt/README.md`).
+4. Ensure the SONOFF dongle is connected and run the installer:
    ```bash
    curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/zigbee2mqtt/install-zigbee2mqtt.sh -o install-zigbee2mqtt.sh
    chmod +x install-zigbee2mqtt.sh
@@ -59,28 +59,14 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
    ```
    (The script writes a full configuration and skips the onboarding wizard.)
 
-### Shared values for Zigbee2MQTT
-- Place common variables in `~/piha-zigbee2mqtt/common/Common.env`.
-  ```bash
-  # ~/piha-zigbee2mqtt/common/Common.env
-  DOCKER_USER_ID=1000
-  DOCKER_GROUP_ID=1000
-  NAS_IP=192.168.1.50
-  NAS_SHARE_NAME=piha
-  NAS_USERNAME=your_nas_user
-  NAS_PASSWORD=changeMeSecure
-  NAS_MOUNT_DIR=/mnt/piha
-  PORTAINER_PASS=changeMePortainer
-  ```
-- The component `.env` only needs HOST_ID, the Zigbee/MQTT/Portainer NAS paths, USB overrides, and ports.
-
 ## Quick Start (Node-RED)
 1. SSH into your Pi and create a working directory:
    ```bash
    mkdir -p ~/piha-node-red && cd ~/piha-node-red
    ```
-2. Create a `.env` file with the required variables (see `node-red/README.md` for all variables).
-3. Run the installer directly from GitHub:
+2. Create the shared config folder (`common/Common.env`) with NAS credentials, UID/GID, and ports shared with other components.
+3. Create the component `.env` (HOST_ID, Node-RED/MQTT/Syncthing paths, ports; see `node-red/README.md`).
+4. Run the installer directly from GitHub:
    ```bash
    curl -sSL "https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/node-red/install-node-red.sh" | bash
    ```
