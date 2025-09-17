@@ -51,7 +51,10 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 ```
 
 - The script auto-downloads `docker-compose.yml` if missing.
-- If `ENABLE_MARIADB_CHECK=true` and MariaDB is absent, it prints a command to bootstrap the NAS service.
+- If `ENABLE_MARIADB_CHECK=true`, the installer validates MariaDB:
+  - When the database is reachable, it configures `secrets.yaml` and `configuration.yaml` automatically.
+  - When the database is missing or misconfigured, it prints the bootstrap command and **aborts**, so you can provision the database and rerun.
+- Leave `ENABLE_MARIADB_CHECK` unset/false to proceed with SQLite (default behaviour).
 
 5. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
 
