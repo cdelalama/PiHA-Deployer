@@ -55,18 +55,18 @@ PiHA-Deployer/
 |   |-- configure-syncthing.sh     # Syncthing configuration (v1.1.5)
 |   |-- load_env_vars.sh           # Environment loader (v1.0.4)
 |   `-- docker-compose.yml         # Service definitions
-|-- home-assistant/                # Home Assistant deployment (scaffolded)
+|-- home-assistant/                # Home Assistant deployment
 |   |-- README.md                  # Component overview
 |   |-- install-home-assistant.sh  # Main installer (v1.1.5)
-|   `-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
-|-- zigbee2mqtt/                   # Zigbee coordinator deployment (scaffolded)
-|   |-- README.md                  # Component overview
-|   |-- install-zigbee2mqtt.sh     # Main installer (v1.1.3)
-|   `-- docker-compose.yml         # Service definitions (Z2M + Mosquitto + Portainer)
-`-- nas/
-    |-- README.md                  # MariaDB setup guide
-    |-- docker-compose.yml         # MariaDB service definition
-    `-- setup-nas-mariadb.sh       # Optional NAS bootstrap script
+|   |-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
+|   `-- mariadb/                   # MariaDB for recorder (runs on NAS)
+|       |-- README.md              # MariaDB setup guide
+|       |-- docker-compose.yml     # MariaDB service definition
+|       `-- setup-nas-mariadb.sh   # NAS bootstrap script
+`-- zigbee2mqtt/                   # Zigbee coordinator deployment
+    |-- README.md                  # Component overview
+    |-- install-zigbee2mqtt.sh     # Main installer (v1.1.3)
+    `-- docker-compose.yml         # Service definitions (Z2M + Mosquitto + Portainer)
 ```
 
 

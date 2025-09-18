@@ -333,6 +333,28 @@ Version impact: none (documentation/policy only)
 Notes: Future LLM responses with code changes must include commit information. HA installer v1.1.3 behavior significantly improved with automatic MariaDB recorder configuration.
 ---
 
+## 2025-09-17 - Claude - Architectural restructure: move MariaDB into Home Assistant
+
+Summary: Major architectural improvement - moved nas/ directory to home-assistant/mariadb/ for consistency. MariaDB is specific to Home Assistant recorder, not a general NAS service. Updated all references across documentation, scripts, and URLs. Cleaned NAS_CONFIGURATION.md to be vendor-agnostic. Project structure now follows pattern: each top-level directory = Pi component, dependencies inside respective components.
+
+Files moved:
+- nas/README.md → home-assistant/mariadb/README.md
+- nas/docker-compose.yml → home-assistant/mariadb/docker-compose.yml
+- nas/setup-nas-mariadb.sh → home-assistant/mariadb/setup-nas-mariadb.sh
+
+Files updated:
+- README.md (updated MariaDB references and structure)
+- docs/PROJECT_CONTEXT.md (updated project tree)
+- docs/NAS_CONFIGURATION.md (cleaned MariaDB-specific content, now vendor-agnostic)
+- home-assistant/README.md (updated MariaDB paths)
+- home-assistant/install-home-assistant.sh (updated bootstrap URLs)
+- docs/llm/HANDOFF.md (updated status, priorities, file locations)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: none (structural reorganization, no code logic changes)
+Notes: QNAP path issue remains - setup-nas-mariadb.sh still defaults to /opt/piha-mariadb instead of /share/Container/compose/mariadb. Next LLM should fix these paths.
+---
+
 ## 2025-09-16 - Codex - Enforce MariaDB check + auto recorder config
 
 Summary: Home Assistant installer now aborts when `ENABLE_MARIADB_CHECK=true` and MariaDB is unavailable (printing the bootstrap command) and configures `secrets.yaml` + a managed `recorder` block automatically when the database is reachable. Also downloads `docker-compose.yml` if missing to support curl-based installs.

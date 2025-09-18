@@ -247,13 +247,13 @@ require_mariadb_vars() {
 }
 
 print_mariadb_bootstrap_hint() {
-  local bootstrap_url="https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh"
+  local bootstrap_url="https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh"
   local host_hint="${MARIADB_HOST:-${NAS_IP:-<NAS_HOST>}}"
   echo -e "${BLUE}[INFO] MariaDB was not detected. Bootstrap it on the NAS with:${NC}"
   echo -e "${BLUE}"
   echo -e "${BLUE}  ssh <nas-user>@${host_hint} 'curl -fsSL ${bootstrap_url} | bash'${NC}"
   echo -e "${BLUE}"
-  echo -e "${BLUE}[INFO] Alternatively, run nas/setup-nas-mariadb.sh from this repository with your .env${NC}"
+  echo -e "${BLUE}[INFO] Alternatively, run home-assistant/mariadb/setup-nas-mariadb.sh from this repository with your .env${NC}"
   echo
 }
 

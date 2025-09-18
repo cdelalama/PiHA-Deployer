@@ -7,13 +7,14 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
 - **Home Assistant** (`home-assistant/`)
 - **Zigbee2MQTT** (`zigbee2mqtt/`)
 - **Node-RED** (`node-red/`)
-- **NAS utilities** (`nas/` - MariaDB bootstrap for recorder)
+- **Home Assistant** includes MariaDB setup for recorder database
 
 ## Documentation Map
 
 - `LLM_START_HERE.md`: entry point with rules and checklist (read first)
 - `docs/PROJECT_CONTEXT.md`: architecture, conventions, repo layout
 - `docs/VERSIONING_RULES.md`: SemVer policy for scripts
+- `docs/NAS_CONFIGURATION.md`: NAS-specific setup and directory structures
 - `docs/llm/HANDOFF.md`: current focus / next steps
 - `docs/llm/HISTORY.md`: chronological log of changes
 
@@ -59,9 +60,11 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 5. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
 
 ### MariaDB on the NAS
-- If the installer reports that MariaDB is missing, run this on the NAS (replace `<nas-user>` and `<NAS_IP>`):
+- **IMPORTANT**: The one-liner bootstrap command requires NAS-specific configuration. See `docs/NAS_CONFIGURATION.md` for your NAS vendor setup.
+- For QNAP NAS: Command currently broken - see HANDOFF.md for issue details
+- Generic setup: If the installer reports that MariaDB is missing, run this on the NAS (replace `<nas-user>` and `<NAS_IP>`):
   ```bash
-  ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh | bash"
+  ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh | bash"
   ```
 - After it finishes, rerun the Home Assistant installer with `ENABLE_MARIADB_CHECK=true`.
 

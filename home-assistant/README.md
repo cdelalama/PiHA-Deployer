@@ -81,9 +81,9 @@ Running Recorder on MariaDB avoids SQLite-on-SMB corruption and preserves UI his
 > Set `ENABLE_MARIADB_CHECK=true` plus all `MARIADB_*` variables in `.env` if you want MariaDB. The installer will stop if the database is unavailable (printing the bootstrap command) and will write `secrets.yaml` + a managed `recorder` block automatically when the database is reachable.
 
 1) Deploy MariaDB on your NAS (via SSH)
-- Option A: run `nas/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
-  - One-liner: `ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh | bash"`
-- Option B: manually follow `nas/docker-compose.yml` and `nas/README.md` as a template.
+- Option A: run `home-assistant/mariadb/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
+  - One-liner: `ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh | bash"`
+- Option B: manually follow `home-assistant/mariadb/docker-compose.yml` and `home-assistant/mariadb/README.md` as a template.
 - Ensure MariaDB listens on `3306` and is reachable from the Pi.
 
 2) (Optional) Manual configuration
@@ -107,7 +107,7 @@ docker compose -f "${BASE_DIR}/docker-compose.yml" up -d --force-recreate homeas
 Notes:
 - Keep MariaDB data on a local NAS filesystem (not on SMB/CIFS).
 - If you previously had SQLite on SMB, remove `home-assistant_v2.db*` from `${HA_DATA_DIR}`.
-- If the installer reports that MariaDB is missing or misconfigured, fix it using the one-liner above and rerun the script.
+- If the installer reports that MariaDB is missing or misconfigured, fix it using the one-liner above and rerun the script. See `home-assistant/mariadb/README.md` for detailed setup instructions.
 
 ## Troubleshooting
 - Verify Docker and Compose: `docker ps` and `docker compose ls`
