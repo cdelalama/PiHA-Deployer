@@ -58,6 +58,13 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 5. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
 
+### MariaDB on the NAS
+- If the installer reports that MariaDB is missing, run this on the NAS (replace `<nas-user>` and `<NAS_IP>`):
+  ```bash
+  ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/nas/setup-nas-mariadb.sh | bash"
+  ```
+- After it finishes, rerun the Home Assistant installer with `ENABLE_MARIADB_CHECK=true`.
+
 ## Quick Start (Zigbee2MQTT)
 
 1. SSH into your Pi and create a working directory:
