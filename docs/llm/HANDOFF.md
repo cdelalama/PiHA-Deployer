@@ -13,7 +13,7 @@ Current Work
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
 - `home-assistant/install-home-assistant.sh` references the new MariaDB path, prints the updated bootstrap checklist, and aborts if NAS data directories already contain HA state (unless HA_ALLOW_EXISTING_DATA=true)
 - `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults; skips copying when source/destination match
-- `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, and security notes
+- `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, security notes, and highlights that MariaDB data lives at `MARIADB_DATA_DIR` (default `${NAS_DEPLOY_DIR}/data`)
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`
@@ -43,10 +43,11 @@ Current Versions
 
 ## Top Priorities
 
-1) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
-2) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).
-3) **LATER**: Execute full Home Assistant + NAS MariaDB flow with `ENABLE_MARIADB_CHECK=true` and document recorder migration.
-4) **ONGOING**: Keep HISTORY and HANDOFF current; document any new env vars or behavioural changes.
+1) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}/data` (current default) or move to a different NAS path. Update README + `.env` if needed.
+2) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
+3) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).
+4) **LATER**: Execute full Home Assistant + NAS MariaDB flow with `ENABLE_MARIADB_CHECK=true` and document recorder migration.
+5) **ONGOING**: Keep HISTORY and HANDOFF current; document any new env vars or behavioural changes.
 
 ## Do Not Touch
 
