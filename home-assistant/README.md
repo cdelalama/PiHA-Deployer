@@ -11,9 +11,19 @@ Automated Docker deployment of Home Assistant with Portainer and NAS-backed pers
 Note: This installer will install Docker and the Docker Compose plugin if missing, and will ensure SMB client packages are present.
 
 ## Quick Start
-1. Create a `.env` file and configure all variables (you can base it on your Node-RED `.env` if available)
-2. Ensure the NAS share is reachable and credentials are correct
-3. Run: `bash install-home-assistant.sh`
+1. SSH into the Home Assistant Pi and create the working directory:
+
+```
+mkdir -p ~/piha-home-assistant
+cd ~/piha-home-assistant
+```
+
+2. Place your component `.env` (and optional `common/Common.env`) in this directory. The installer reads `.env` from the current working folder.
+3. Run the installer directly from GitHub (requires `curl` and `sudo`):
+
+```
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
+```
 
 ## What It Installs
 - Docker + Docker Compose plugin (if missing)

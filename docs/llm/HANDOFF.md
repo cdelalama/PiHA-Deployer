@@ -14,11 +14,13 @@ Current Work
 - `home-assistant/install-home-assistant.sh` references the new MariaDB path and prints the updated bootstrap checklist
 - `home-assistant/mariadb/setup-nas-mariadb.sh` defaults updated for QNAP (`/share/Container/compose/mariadb`)
 - `home-assistant/mariadb/README.md` mirrors the new defaults, explains automated vs manual flows, and removes encoding artifacts
+- `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - Known gap: script still unvalidated on real QNAP after default change
 
 Active Files
 - README.md (component map fix)
+- home-assistant/README.md (Quick Start aligned with curl workflow)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.1 defaults)
 - home-assistant/mariadb/README.md (default paths, automated vs manual docs)

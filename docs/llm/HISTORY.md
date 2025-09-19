@@ -4,6 +4,7 @@ Summary: Aligned Home Assistant messaging and documentation so users know where 
 
 Files updated:
 - home-assistant/install-home-assistant.sh (bootstrap hint now lists recommended + manual steps)
+- home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
 - home-assistant/mariadb/README.md (explicit automated vs manual flows with directory commands)
 - docs/NAS_CONFIGURATION.md (NAS directory prep snippet)
 - docs/llm/HISTORY.md (this entry)
