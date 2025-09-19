@@ -29,13 +29,13 @@ Notes: Compose v2 ignores `version`; removing it avoids noisy WARN0000 messages 
 
 ## 2025-09-18 - Codex - Clarify NAS bootstrap guidance
 
-Summary: Made the manual NAS bootstrap the default Home Assistant guidance, kept the SSH helper script as an optional alternative once `.env` is ready, and fixed NAS shell compatibility in the helper.
+Summary: Made the manual NAS bootstrap the default Home Assistant guidance, kept the SSH helper script as an optional alternative once `.env` is ready, and fixed NAS shell compatibility / bootstrap-env preservation in the helper.
 
 Files updated:
 - home-assistant/install-home-assistant.sh (bootstrap hint now prioritises manual steps and mentions optional automation)
 - home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
 - home-assistant/mariadb/README.md (manual-first flow with single-command helper usage and optional automation)
-- home-assistant/mariadb/setup-nas-mariadb.sh (local-bypass + compose fetch fallback, v1.0.7)
+- home-assistant/mariadb/setup-nas-mariadb.sh (local-bypass, compose fetch fallback, and bootstrap .env preservation, v1.0.7)
 - docs/NAS_CONFIGURATION.md (NAS directory prep snippet + one-liner reference)
 - docs/llm/HISTORY.md (this entry)
 

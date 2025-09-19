@@ -52,12 +52,18 @@ load_env() {
   _load_env_file "${SCRIPT_DIR}/common/common.env"
   _load_env_file "$HOME/.piha/common.env"
   _load_env_file "/etc/piha/common.env"
-  if [ ! -f "${SCRIPT_DIR}/.env" ]; then
-    echo -e "${RED}[ERROR] ${SCRIPT_DIR}/.env not found. Create it based on home-assistant/mariadb/README.md.${NC}"
+
+  local bootstrap_env="${SCRIPT_DIR}/.env"
+  if [ -f "${SCRIPT_DIR}/.env.bootstrap" ]; then
+    bootstrap_env="${SCRIPT_DIR}/.env.bootstrap"
+  fi
+
+  if [ ! -f "$bootstrap_env" ]; then
+    echo -e "${RED}[ERROR] ${bootstrap_env} not found. Create it based on home-assistant/mariadb/README.md.${NC}"
     exit 1
   fi
-  chmod 600 "${SCRIPT_DIR}/.env" || true
-  _load_env_file "${SCRIPT_DIR}/.env"
+  chmod 600 "$bootstrap_env" || true
+  _load_env_file "$bootstrap_env"
   echo -e "${GREEN}[OK] Environment loaded${NC}"
 }
 
@@ -140,6 +146,16 @@ main() {
   remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$NAS_DEPLOY_DIR")"
   remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$MARIADB_DATA_DIR")"
 
+  local same_dir="false"
+  local script_abs="" deploy_abs=""
+  if is_local_host; then
+    script_abs="$(cd "${SCRIPT_DIR}" && pwd)"
+    deploy_abs="$(cd "${NAS_DEPLOY_DIR}" && pwd)"
+    if [ "$script_abs" = "$deploy_abs" ]; then
+      same_dir="true"
+    fi
+  fi
+
   echo -e "${BLUE}Checking Docker availability on NAS...${NC}"
   if ! remote_exec_cmd "${SUDO}docker --version >/dev/null 2>&1"; then
     echo -e "${RED}[ERROR] Docker is not available on the NAS. Install Docker before running this script.${NC}"
@@ -148,10 +164,7 @@ main() {
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
   if is_local_host; then
-    local src_dir dst_dir
-    src_dir="$(cd "${SCRIPT_DIR}" && pwd)"
-    dst_dir="$(cd "${NAS_DEPLOY_DIR}" && pwd)"
-    if [ "$src_dir" = "$dst_dir" ]; then
+    if [ "$same_dir" = "true" ]; then
       echo -e "${YELLOW}[WARN] docker-compose.yml already present in ${NAS_DEPLOY_DIR}; skipping copy.${NC}"
     elif [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
       cp "${SCRIPT_DIR}/docker-compose.yml" "${NAS_DEPLOY_DIR}/docker-compose.yml"
@@ -176,6 +189,9 @@ PUBLISHED_PORT=${PUBLISHED_PORT}
 EOF
 
   if is_local_host; then
+    if [ "$same_dir" = "true" ] && [ -f "${NAS_DEPLOY_DIR}/.env" ] && [ ! -f "${NAS_DEPLOY_DIR}/.env.bootstrap" ]; then
+      cp "${NAS_DEPLOY_DIR}/.env" "${NAS_DEPLOY_DIR}/.env.bootstrap"
+    fi
     cp "$tmp_env" "${NAS_DEPLOY_DIR}/.env"
   else
     scp -P "$NAS_SSH_PORT" "$tmp_env" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/.env" >/dev/null
