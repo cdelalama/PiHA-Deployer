@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.5"
+VERSION="1.0.6"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -148,7 +148,11 @@ main() {
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
   if is_local_host; then
-    cp "${SCRIPT_DIR}/docker-compose.yml" "${NAS_DEPLOY_DIR}/docker-compose.yml"
+    if [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
+      cp "${SCRIPT_DIR}/docker-compose.yml" "${NAS_DEPLOY_DIR}/docker-compose.yml"
+    else
+      curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/docker-compose.yml -o "${NAS_DEPLOY_DIR}/docker-compose.yml"
+    fi
   else
     scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/docker-compose.yml" >/dev/null
   fi
