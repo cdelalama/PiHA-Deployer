@@ -17,15 +17,12 @@ mkdir -p /share/Container/compose/mariadb
 cd /share/Container/compose/mariadb
 ```
 2) Copy or create `.env` in that directory using the variables above (upload it via SFTP/Samba or generate it with a secrets manager).
-3) Download the compose file if it is not already present:
+3) With `.env` in place, download and run the helper in a single command (it will honour the values in your `.env` and start the stack):
 ```
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh
 ```
-4) Start MariaDB on the NAS:
-```
-docker compose up -d
-```
-5) Test connectivity from the Home Assistant Pi:
+   - The script reads `NAS_SSH_HOST`, `NAS_SSH_USER`, etc. from `.env`. If you are running it directly on the NAS, you can set `NAS_SSH_HOST=localhost` (or the NAS IP) and `NAS_SSH_USER` to your current user.
+4) Test connectivity from the Home Assistant Pi:
 ```
 nc -vz <NAS_IP> 3306
 ```
@@ -41,7 +38,7 @@ nc -vz <NAS_IP> 3306
    - Start the MariaDB stack using Docker Compose
 3) Verify the container with `docker ps | grep mariadb` on the NAS if desired.
 
-> Tip: You can also copy the helper script to the NAS (`curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh`), but it still expects the `.env` file next to it and will execute SSH back to the host defined in `.env`. For fresh installs, the manual NAS flow above is usually the most straightforward.
+> Tip: If you prefer to run the script directly on the NAS, download it into `/share/Container/compose/mariadb/` and execute it as shown above; the script still reads `.env` and can run locally when `NAS_SSH_HOST` points to the NAS itself.
 
 ## Home Assistant configuration (on the Pi)
 

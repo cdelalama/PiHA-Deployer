@@ -5,12 +5,12 @@ Summary: Made the manual NAS bootstrap the default Home Assistant guidance and k
 Files updated:
 - home-assistant/install-home-assistant.sh (bootstrap hint now prioritises manual steps and mentions optional automation)
 - home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
-- home-assistant/mariadb/README.md (manual-first flow with automated script as optional)
-- docs/NAS_CONFIGURATION.md (NAS directory prep snippet)
+- home-assistant/mariadb/README.md (manual-first flow with single-command helper usage and optional automation)
+- docs/NAS_CONFIGURATION.md (NAS directory prep snippet + one-liner reference)
 - docs/llm/HISTORY.md (this entry)
 
 Version impact: none (documentation and messaging only)
-Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script remains available for users with `.env` ready in their repo.
+Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script remains available locally or via SSH once `.env` exists.
 
 ---
 

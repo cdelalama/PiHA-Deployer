@@ -44,7 +44,7 @@ ssh <nas-user>@<NAS_IP>
 mkdir -p /share/Container/compose/mariadb
 cd /share/Container/compose/mariadb
 ```
-Then copy or create `.env` in that folder and use `docker compose up -d` (see the component README for details). If you already keep `home-assistant/mariadb/.env` in your PiHA-Deployer clone, you can still run `bash home-assistant/mariadb/setup-nas-mariadb.sh` to perform the same actions over SSH.
+Then copy or create `.env` in that folder and either run the one-liner shown in the component README (download `setup-nas-mariadb.sh` and execute it) or use `docker compose up -d` manually. If you keep `home-assistant/mariadb/.env` in your PiHA-Deployer clone, you can still run `bash home-assistant/mariadb/setup-nas-mariadb.sh` from there to perform the same actions over SSH.
 
 ## Common Script Adaptation Issues
 1. **Path differences** - avoid `/opt/` style paths on QNAP; use `/share/Container/` instead.
