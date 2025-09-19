@@ -4,15 +4,15 @@
 
 Last Updated: 2025-09-18 - Codex
 Session Focus: Clean up post-restructure issues and align MariaDB NAS defaults with QNAP layout.
-Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers now point to the new location. QNAP defaults were corrected and NAS guide rewritten in ASCII.
+Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers now point to the new location. QNAP defaults were corrected and NAS guide rewritten in ASCII. Recent work hardened the NAS helper + Home Assistant installer to avoid surprises when data already exists.
 
 ## Immediate Context
 
 Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
-- `home-assistant/install-home-assistant.sh` references the new MariaDB path and prints the updated bootstrap checklist
-- `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults
+- `home-assistant/install-home-assistant.sh` references the new MariaDB path, prints the updated bootstrap checklist, and aborts if NAS data directories already contain HA state (unless HA_ALLOW_EXISTING_DATA=true)
+- `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults; skips copying when source/destination match
 - `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, and security notes
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
@@ -37,8 +37,8 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.5
-- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.6
+- home-assistant/install-home-assistant.sh: 1.1.6
+- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.7
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities

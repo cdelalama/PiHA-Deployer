@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.5"
+VERSION="1.1.6"
 
 # Colors
 BLUE='\033[0;36m'
@@ -62,6 +62,43 @@ bool_true() {
     1|y|yes|true|on) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+dir_has_content() {
+  local dir="$1"
+  [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]
+}
+
+check_existing_data() {
+  local reuse_flag=${HA_ALLOW_EXISTING_DATA:-false}
+  local reuse=false
+  if bool_true "$reuse_flag"; then
+    reuse=true
+  fi
+
+  local existing_dirs=()
+  if dir_has_content "$HA_DATA_DIR"; then existing_dirs+=("$HA_DATA_DIR"); fi
+  if dir_has_content "$BASE_DIR"; then existing_dirs+=("$BASE_DIR"); fi
+  if dir_has_content "$PORTAINER_DATA_DIR"; then existing_dirs+=("$PORTAINER_DATA_DIR"); fi
+
+  if [ ${#existing_dirs[@]} -eq 0 ]; then
+    return
+  fi
+
+  if [ "$reuse" = true ]; then
+    echo -e "${YELLOW}[WARN] Existing Home Assistant data detected; proceeding because HA_ALLOW_EXISTING_DATA=true.${NC}"
+    for dir in "${existing_dirs[@]}"; do
+      echo -e "${YELLOW}  - Reusing ${dir}${NC}"
+    done
+    return
+  fi
+
+  echo -e "${RED}[ERROR] Existing Home Assistant data detected in the NAS directories shown below.${NC}"
+  for dir in "${existing_dirs[@]}"; do
+    echo -e "${YELLOW}  - ${dir}${NC}"
+  done
+  echo -e "${YELLOW}[WARN] Remove the directories above for a clean install, or set HA_ALLOW_EXISTING_DATA=true in .env if you intend to reuse them.${NC}"
+  exit 1
 }
 
 require_vars() {
@@ -400,6 +437,7 @@ if [ -z "$PORTAINER_DATA_DIR" ]; then
   PORTAINER_DATA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer"
 fi
 
+check_existing_data
 setup_dirs
 if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
   configure_home_assistant_mariadb

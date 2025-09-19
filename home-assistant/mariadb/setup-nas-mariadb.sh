@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.6"
+VERSION="1.0.7"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -148,7 +148,12 @@ main() {
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
   if is_local_host; then
-    if [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
+    local src_dir dst_dir
+    src_dir="$(cd "${SCRIPT_DIR}" && pwd)"
+    dst_dir="$(cd "${NAS_DEPLOY_DIR}" && pwd)"
+    if [ "$src_dir" = "$dst_dir" ]; then
+      echo -e "${YELLOW}[WARN] docker-compose.yml already present in ${NAS_DEPLOY_DIR}; skipping copy.${NC}"
+    elif [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
       cp "${SCRIPT_DIR}/docker-compose.yml" "${NAS_DEPLOY_DIR}/docker-compose.yml"
     else
       curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/docker-compose.yml -o "${NAS_DEPLOY_DIR}/docker-compose.yml"

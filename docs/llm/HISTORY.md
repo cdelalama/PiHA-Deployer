@@ -1,3 +1,18 @@
+## 2025-09-18 - Codex - Guard against stale Home Assistant data
+
+Summary: The Home Assistant installer now halts when NAS data directories already contain configuration unless the operator opts in, preventing accidental reuse of old state.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (warn/abort on existing data, `HA_ALLOW_EXISTING_DATA` override, v1.1.6)
+- home-assistant/README.md (document the safety check)
+- docs/llm/HANDOFF.md (status update)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.6)
+Notes: Remove `${HA_DATA_DIR}` (and related NAS folders) or set `HA_ALLOW_EXISTING_DATA=true` before rerunning when you deliberately want to reuse state.
+
+---
+
 ## 2025-09-18 - Codex - Drop docker-compose version field
 
 Summary: Removed the deprecated `version` key from Home Assistant and MariaDB compose files to silence the compose v2 warning.
@@ -20,11 +35,11 @@ Files updated:
 - home-assistant/install-home-assistant.sh (bootstrap hint now prioritises manual steps and mentions optional automation)
 - home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
 - home-assistant/mariadb/README.md (manual-first flow with single-command helper usage and optional automation)
-- home-assistant/mariadb/setup-nas-mariadb.sh (local-bypass + compose fetch fallback, v1.0.6)
+- home-assistant/mariadb/setup-nas-mariadb.sh (local-bypass + compose fetch fallback, v1.0.7)
 - docs/NAS_CONFIGURATION.md (NAS directory prep snippet + one-liner reference)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.6)
+Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.7)
 Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script works on busybox/old bash shells and remains available locally or via SSH once `.env` exists.
 
 ---

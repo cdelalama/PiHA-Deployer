@@ -25,6 +25,8 @@ cd ~/piha-home-assistant
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
 ```
 
+> Heads-up: if the NAS already contains previous Home Assistant data (e.g. `${HA_DATA_DIR}`), the installer will abort unless you remove the existing folders or set `HA_ALLOW_EXISTING_DATA=true` in `.env` to confirm you want to reuse them.
+
 ## What It Installs
 - Docker + Docker Compose plugin (if missing)
 - Portainer (local instance on this Raspberry Pi)
