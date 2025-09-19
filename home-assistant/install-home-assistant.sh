@@ -248,16 +248,14 @@ require_mariadb_vars() {
 
 print_mariadb_bootstrap_hint() {
   local host_hint="${MARIADB_HOST:-${NAS_IP:-<NAS_HOST>}}"
-  local compose_url="https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/docker-compose.yml"
-
   echo -e "${BLUE}[INFO] MariaDB was not detected on the NAS.${NC}"
   echo -e "${BLUE}[INFO] Manual bootstrap (recommended for fresh installs):${NC}"
   echo -e "${BLUE}  1) ssh <nas-user>@${host_hint}${NC}"
   echo -e "${BLUE}  2) mkdir -p /share/Container/compose/mariadb && cd /share/Container/compose/mariadb${NC}"
-  echo -e "${BLUE}  3) Copy or create .env in that directory (see home-assistant/mariadb/README.md for required values)${NC}"
-  echo -e "${BLUE}  4) curl -fsSL ${compose_url} -o docker-compose.yml${NC}"
-  echo -e "${BLUE}  5) docker compose up -d${NC}"
-  echo -e "${BLUE}[INFO] Optional automation: if you already have home-assistant/mariadb/.env populated in your PiHA-Deployer clone, run 'bash home-assistant/mariadb/setup-nas-mariadb.sh' to perform the same steps over SSH.${NC}"
+  echo -e "${BLUE}  3) Place .env in that directory (see home-assistant/mariadb/README.md for required keys).${NC}"
+  echo -e "${BLUE}  4) Run: curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh${NC}"
+  echo -e "${BLUE}  5) From the Pi, verify connectivity with: nc -vz ${host_hint} 3306${NC}"
+  echo -e "${BLUE}[INFO] Optional automation: if you already have home-assistant/mariadb/.env in your PiHA-Deployer clone, run 'bash home-assistant/mariadb/setup-nas-mariadb.sh' there to perform the same steps over SSH.${NC}"
   echo
 }
 
