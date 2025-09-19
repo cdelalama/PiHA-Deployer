@@ -13,7 +13,7 @@ Current Work
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
 - `home-assistant/install-home-assistant.sh` references the new MariaDB path and prints the updated bootstrap checklist
 - `home-assistant/mariadb/setup-nas-mariadb.sh` defaults updated for QNAP (`/share/Container/compose/mariadb`)
-- `home-assistant/mariadb/README.md` now promotes the manual NAS bootstrap flow (with the single-command helper) and the helper script works on BusyBox/bash 3 shells and logs the SSH step
+- `home-assistant/mariadb/README.md` now promotes the manual NAS bootstrap flow (with the single-command helper) and the helper script works on BusyBox/bash 3 shells, logs the SSH step, and skips SSH when NAS_SSH_HOST is local
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - Known gap: script still unvalidated on real QNAP after default change
@@ -34,7 +34,7 @@ Current Versions
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
 - home-assistant/install-home-assistant.sh: 1.1.5
-- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.3
+- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.4
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities

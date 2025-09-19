@@ -6,11 +6,11 @@ Files updated:
 - home-assistant/install-home-assistant.sh (bootstrap hint now prioritises manual steps and mentions optional automation)
 - home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
 - home-assistant/mariadb/README.md (manual-first flow with single-command helper usage and optional automation)
-- home-assistant/mariadb/setup-nas-mariadb.sh (shell compatibility fix, v1.0.3 with explicit SSH notice)
+- home-assistant/mariadb/setup-nas-mariadb.sh (local-bypass + shell compatibility fix, v1.0.4)
 - docs/NAS_CONFIGURATION.md (NAS directory prep snippet + one-liner reference)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.3)
+Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.4)
 Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script works on busybox/old bash shells and remains available locally or via SSH once `.env` exists.
 
 ---

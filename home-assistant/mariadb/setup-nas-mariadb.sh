@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -13,6 +13,16 @@ NC='\033[0m'
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 echo -e "${BLUE}PiHA-Deployer NAS MariaDB bootstrap v${VERSION}${NC}"
+
+is_local_host() {
+  case "$NAS_SSH_HOST" in
+    localhost|127.0.0.1|::1) return 0 ;;
+  esac
+  if [ -n "$LOCAL_HOST_ALIAS" ] && [ "$NAS_SSH_HOST" = "$LOCAL_HOST_ALIAS" ]; then
+    return 0
+  fi
+  return 1
+}
 
 _load_env_file() {
   local file="$1"
@@ -88,7 +98,11 @@ shell_quote() {
 
 remote_exec_cmd() {
   local command="$1"
-  ssh -p "$NAS_SSH_PORT" "$NAS_SSH_USER@$NAS_SSH_HOST" "bash -lc $(shell_quote "set -e; ${command}")"
+  if is_local_host; then
+    bash -lc "set -e; ${command}"
+  else
+    ssh -p "$NAS_SSH_PORT" "$NAS_SSH_USER@$NAS_SSH_HOST" "bash -lc $(shell_quote "set -e; ${command}")"
+  fi
 }
 
 main() {
@@ -107,14 +121,20 @@ main() {
     SUDO="sudo "
   fi
 
-  echo -e "${BLUE}[INFO] Establishing SSH session to ${NAS_SSH_USER}@${NAS_SSH_HOST}:${NAS_SSH_PORT} (even when running on the NAS itself) to keep remote compatibility.${NC}"
-  echo -e "${BLUE}Testing SSH connectivity...${NC}"
-  echo -e "${BLUE}[INFO] Establishing SSH session to ${NAS_SSH_USER}@${NAS_SSH_HOST}:${NAS_SSH_PORT} (even when running on this NAS) to keep the remote automation flow consistent.${NC}"
-  if ! ssh -p "$NAS_SSH_PORT" "$NAS_SSH_USER@$NAS_SSH_HOST" "echo ok" >/dev/null 2>&1; then
-    echo -e "${RED}[ERROR] SSH connection failed. Verify host, user, and keys/passwords.${NC}"
-    exit 1
+  echo -e "${BLUE}Testing NAS access...${NC}"
+  if is_local_host; then
+    if ! bash -lc "echo ok" >/dev/null 2>&1; then
+      echo -e "${RED}[ERROR] Unable to execute commands locally on the NAS shell.${NC}"
+      exit 1
+    fi
+  else
+    echo -e "${BLUE}[INFO] Establishing SSH session to ${NAS_SSH_USER}@${NAS_SSH_HOST}:${NAS_SSH_PORT}.${NC}"
+    if ! ssh -p "$NAS_SSH_PORT" "$NAS_SSH_USER@$NAS_SSH_HOST" "echo ok" >/dev/null 2>&1; then
+      echo -e "${RED}[ERROR] SSH connection failed. Verify host, user, and keys/passwords.${NC}"
+      exit 1
+    fi
   fi
-  echo -e "${GREEN}[OK] SSH reachable${NC}"
+  echo -e "${GREEN}[OK] NAS reachable${NC}"
 
   echo -e "${BLUE}Creating deployment directories on NAS...${NC}"
   remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$NAS_DEPLOY_DIR")"
