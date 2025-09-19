@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -107,7 +107,9 @@ main() {
     SUDO="sudo "
   fi
 
+  echo -e "${BLUE}[INFO] Establishing SSH session to ${NAS_SSH_USER}@${NAS_SSH_HOST}:${NAS_SSH_PORT} (even when running on the NAS itself) to keep remote compatibility.${NC}"
   echo -e "${BLUE}Testing SSH connectivity...${NC}"
+  echo -e "${BLUE}[INFO] Establishing SSH session to ${NAS_SSH_USER}@${NAS_SSH_HOST}:${NAS_SSH_PORT} (even when running on this NAS) to keep the remote automation flow consistent.${NC}"
   if ! ssh -p "$NAS_SSH_PORT" "$NAS_SSH_USER@$NAS_SSH_HOST" "echo ok" >/dev/null 2>&1; then
     echo -e "${RED}[ERROR] SSH connection failed. Verify host, user, and keys/passwords.${NC}"
     exit 1
