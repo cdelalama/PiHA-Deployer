@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.4"
+VERSION="1.0.5"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -147,7 +147,11 @@ main() {
   fi
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
-  scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/docker-compose.yml" >/dev/null
+  if is_local_host; then
+    cp "${SCRIPT_DIR}/docker-compose.yml" "${NAS_DEPLOY_DIR}/docker-compose.yml"
+  else
+    scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/docker-compose.yml" >/dev/null
+  fi
 
   echo -e "${BLUE}Rendering .env for MariaDB...${NC}"
   local tmp_env
@@ -162,7 +166,11 @@ MARIADB_DATA_DIR=${MARIADB_DATA_DIR}
 PUBLISHED_PORT=${PUBLISHED_PORT}
 EOF
 
-  scp -P "$NAS_SSH_PORT" "$tmp_env" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/.env" >/dev/null
+  if is_local_host; then
+    cp "$tmp_env" "${NAS_DEPLOY_DIR}/.env"
+  else
+    scp -P "$NAS_SSH_PORT" "$tmp_env" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/.env" >/dev/null
+  fi
   remote_exec_cmd "${SUDO}chmod 600 $(shell_quote "${NAS_DEPLOY_DIR}/.env")"
 
   echo -e "${BLUE}Starting MariaDB container on NAS...${NC}"
