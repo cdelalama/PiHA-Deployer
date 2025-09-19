@@ -1,16 +1,16 @@
 ## 2025-09-18 - Codex - Clarify NAS bootstrap guidance
 
-Summary: Aligned Home Assistant messaging and documentation so users know where to run the MariaDB helper and which directories to create when working directly on the NAS.
+Summary: Made the manual NAS bootstrap the default Home Assistant guidance and kept the SSH helper script as an optional alternative once `.env` is ready.
 
 Files updated:
-- home-assistant/install-home-assistant.sh (bootstrap hint now lists recommended + manual steps)
+- home-assistant/install-home-assistant.sh (bootstrap hint now prioritises manual steps and mentions optional automation)
 - home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
-- home-assistant/mariadb/README.md (explicit automated vs manual flows with directory commands)
+- home-assistant/mariadb/README.md (manual-first flow with automated script as optional)
 - docs/NAS_CONFIGURATION.md (NAS directory prep snippet)
 - docs/llm/HISTORY.md (this entry)
 
 Version impact: none (documentation and messaging only)
-Notes: Automated script remains the preferred path; manual NAS flow documented for direct SSH usage.
+Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script remains available for users with `.env` ready in their repo.
 
 ---
 

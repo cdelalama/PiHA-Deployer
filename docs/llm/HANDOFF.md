@@ -13,7 +13,7 @@ Current Work
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
 - `home-assistant/install-home-assistant.sh` references the new MariaDB path and prints the updated bootstrap checklist
 - `home-assistant/mariadb/setup-nas-mariadb.sh` defaults updated for QNAP (`/share/Container/compose/mariadb`)
-- `home-assistant/mariadb/README.md` mirrors the new defaults, explains automated vs manual flows, and removes encoding artifacts
+- `home-assistant/mariadb/README.md` now promotes the manual NAS bootstrap flow and keeps the SSH helper as optional
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - Known gap: script still unvalidated on real QNAP after default change
@@ -23,7 +23,7 @@ Active Files
 - home-assistant/README.md (Quick Start aligned with curl workflow)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.1 defaults)
-- home-assistant/mariadb/README.md (default paths, automated vs manual docs)
+- home-assistant/mariadb/README.md (manual-first docs, optional automation)
 - docs/NAS_CONFIGURATION.md (rewritten guide + NAS prep snippet)
 - docs/llm/HANDOFF.md (this file)
 - docs/llm/HISTORY.md (new entry required)
