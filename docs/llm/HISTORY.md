@@ -1,3 +1,17 @@
+## 2025-09-18 - Codex - Drop docker-compose version field
+
+Summary: Removed the deprecated `version` key from Home Assistant and MariaDB compose files to silence the compose v2 warning.
+
+Files updated:
+- home-assistant/docker-compose.yml (removed top-level version)
+- home-assistant/mariadb/docker-compose.yml (removed top-level version)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: none (compose files only)
+Notes: Compose v2 ignores `version`; removing it avoids noisy WARN0000 messages during installs.
+
+---
+
 ## 2025-09-18 - Codex - Clarify NAS bootstrap guidance
 
 Summary: Made the manual NAS bootstrap the default Home Assistant guidance, kept the SSH helper script as an optional alternative once `.env` is ready, and fixed NAS shell compatibility in the helper.

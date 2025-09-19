@@ -12,21 +12,25 @@ Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
 - `home-assistant/install-home-assistant.sh` references the new MariaDB path and prints the updated bootstrap checklist
-- `home-assistant/mariadb/setup-nas-mariadb.sh` defaults updated for QNAP (`/share/Container/compose/mariadb`)
-- `home-assistant/mariadb/README.md` now promotes the manual NAS bootstrap flow (with the single-command helper) and the helper script works on BusyBox/bash 3 shells, logs the SSH step, skips SSH when NAS_SSH_HOST is local, and fetches compose when local copy is missing
+- `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults
+- `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, and security notes
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
+- `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`
+- `docs/llm/HISTORY.md` tracking latest helper + compose updates
 - Known gap: script still unvalidated on real QNAP after default change
 
 Active Files
 - README.md (component map fix)
 - home-assistant/README.md (Quick Start aligned with curl workflow)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
-- home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.1 defaults)
-- home-assistant/mariadb/README.md (manual-first docs, optional automation)
+- home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.6 local/remote-aware helper)
+- home-assistant/mariadb/README.md (manual-first docs + security notes)
+- home-assistant/docker-compose.yml (version key removed)
+- home-assistant/mariadb/docker-compose.yml (version key removed)
 - docs/NAS_CONFIGURATION.md (rewritten guide + NAS prep snippet)
 - docs/llm/HANDOFF.md (this file)
-- docs/llm/HISTORY.md (new entry required)
+- docs/llm/HISTORY.md (recent entries added)
 
 Current Versions
 - node-red/install-node-red.sh: 1.0.67

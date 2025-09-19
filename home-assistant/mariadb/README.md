@@ -68,3 +68,8 @@ docker compose -f "${BASE_DIR}/docker-compose.yml" up -d --force-recreate homeas
 - Ensure the NAS firewall allows port `3306` from the Home Assistant Pi.
 - Keep credentials in the NAS `.env` only; do not commit them.
 - After the container is running, set `ENABLE_MARIADB_CHECK=true` and the `MARIADB_*` variables in `home-assistant/.env` so the installer can verify the database.
+
+## Security Notes
+- Expose `PUBLISHED_PORT` (3306 by default) only inside trusted networks; restrict access with firewall rules so only the Home Assistant host (or intended clients) can reach it.
+- Use strong, distinct secrets for `MARIADB_ROOT_PASSWORD` and `MARIADB_PASSWORD`; store them in a secrets manager instead of plain text.
+- Enable TLS and extra hardening if you require encrypted traffic between the NAS and the Pi.
