@@ -12,7 +12,7 @@ Run MariaDB on your NAS (via Docker Compose) so Home Assistant (running on a Ras
 ### Option A: Automated bootstrap (run from this repository)
 1) Populate `home-assistant/mariadb/.env` with the required variables:
    - SSH: `NAS_SSH_HOST`, `NAS_SSH_USER`, optional `NAS_SSH_PORT` (default `22`), optional `NAS_SSH_USE_SUDO=true` if Docker requires sudo
-   - Deployment: `NAS_DEPLOY_DIR` (default `/opt/piha-mariadb`), `MARIADB_DATA_DIR` (local filesystem path on the NAS)
+   - Deployment: `NAS_DEPLOY_DIR` (default `/share/Container/compose/mariadb`), `MARIADB_DATA_DIR` (local filesystem path on the NAS; defaults to `${NAS_DEPLOY_DIR}/data`)
    - MariaDB credentials: `MARIADB_ROOT_PASSWORD`, `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`, `PUBLISHED_PORT`
 2) Run `bash setup-nas-mariadb.sh`
    - The script copies `docker-compose.yml` and renders `.env`, creates folders, and starts the stack via SSH.
@@ -20,7 +20,7 @@ Run MariaDB on your NAS (via Docker Compose) so Home Assistant (running on a Ras
 3) Verify the container with `docker ps | grep mariadb` on the NAS if desired.
 
 ### Option B: Manual steps
-1) Create a working directory on the NAS (e.g. `/opt/piha-mariadb`)
+1) Create a working directory on the NAS (e.g. `/share/Container/compose/mariadb`)
    - Place the files from `home-assistant/mariadb/` (this directory) there.
 
 2) Create a `.env` file on the NAS with credentials and data path:
@@ -29,7 +29,7 @@ MARIADB_ROOT_PASSWORD=changeMeRoot
 MARIADB_DATABASE=homeassistant
 MARIADB_USER=homeassistant
 MARIADB_PASSWORD=changeMeUser
-MARIADB_DATA_DIR=/srv/mariadb   # or another local ext4 path on the NAS
+MARIADB_DATA_DIR=/share/Container/compose/mariadb/data  # or another local ext4 path on the NAS
 PUBLISHED_PORT=3306             # external port exposed by NAS
 ```
 
@@ -45,7 +45,7 @@ nc -vz <NAS_IP> 3306
 
 ## Home Assistant configuration (on the Pi)
 
-1) Add a local DB folder for MariaDB (not needed for remote DB) – skip for NAS DB
+1) Add a local DB folder for MariaDB (not needed for remote DB) - skip for NAS DB
 
 2) Point Recorder to MariaDB using secrets
 - In `${HA_DATA_DIR}/secrets.yaml` add:

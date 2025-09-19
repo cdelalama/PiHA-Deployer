@@ -7,7 +7,8 @@ Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assist
 - **Home Assistant** (`home-assistant/`)
 - **Zigbee2MQTT** (`zigbee2mqtt/`)
 - **Node-RED** (`node-red/`)
-- **Home Assistant** includes MariaDB setup for recorder database
+- **Home Assistant / MariaDB** (`home-assistant/mariadb/`)
+- **NAS guidance** (`docs/NAS_CONFIGURATION.md`)
 
 ## Documentation Map
 

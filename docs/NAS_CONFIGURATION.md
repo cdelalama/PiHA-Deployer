@@ -1,112 +1,58 @@
 # NAS Configuration Guide
 
 ## Overview
+This guide captures the NAS conventions PiHA-Deployer expects today and highlights QNAP specifics. Adjust the paths to match your NAS vendor before running any automation scripts.
 
-This document describes NAS-specific configurations for PiHA-Deployer. Different NAS vendors have different directory structures and Docker implementations, requiring adaptation of deployment scripts.
-
-## Current Setup: QNAP NAS
+## Current Reference: QNAP NAS
 
 ### Hardware
 - Model: QNAP NAS with ZFS storage pools
-- Storage pools: ZFS1_DATA through ZFS530_DATA
-- Container Station: Installed for Docker support
+- Container runtime: Container Station (Docker + Docker Compose)
 
-### Directory Structure
-
+### Directory Layout Snapshot
 ```
 /share/
-├── Container/                    # User container deployments (target for MariaDB)
-│   ├── compose/                 # Docker compose projects
-│   ├── n8n/                     # Individual containers
-│   ├── syncthing/               # Syncthing data
-│   └── container-station-data/  # Container Station system data
-├── piha/                        # -> ZFS26_DATA/piha/ (Pi data storage)
-│   └── hosts/                   # Group-by-host data
-│       ├── ha-pi-01/
-│       └── z2m-pi-01/
-├── docker/                      # Docker system directory
-└── ZFS530_DATA/                 # System storage pool
-    └── .qpkg/
-        └── container-station/   # Container Station installation
-            ├── bin/docker       # Docker binary location
-            └── docker/          # Docker root dir
+|-- Container/                     # User container deployments (target for MariaDB)
+|   |-- compose/                   # Docker Compose projects live here
+|   |   |-- mariadb/               # MariaDB deployment folder (default target)
+|   |   `-- ...
+|   |-- n8n/
+|   `-- syncthing/
+|-- piha/                          # NAS share exported to Raspberry Pi hosts
+|   `-- hosts/                     # Group-by-host data managed by PiHA
+|       |-- ha-pi-01/
+|       `-- z2m-pi-01/
+|-- ZFS530_DATA/
+    `-- .qpkg/
+        `-- container-station/     # Container Station installation (docker binaries)
 ```
 
-### Docker Configuration
-- **Docker Binary**: `/share/ZFS530_DATA/.qpkg/container-station/bin/docker`
-- **Docker Root Dir**: `/share/ZFS530_DATA/.qpkg/container-station/docker`
-- **User Containers**: `/share/Container/`
-- **Container Station Data**: `/share/ZFS19_DATA/Container/container-station-data/`
+### Key Paths
+- Docker binary: `/share/ZFS530_DATA/.qpkg/container-station/bin/docker`
+- Docker root dir: `/share/ZFS530_DATA/.qpkg/container-station/docker`
+- User container projects: `/share/Container/compose/`
 
-### Recommended Paths for Container Deployments
-- **User Containers**: `/share/Container/compose/`
-- **Individual Services**: `/share/Container/compose/{service-name}/`
-- **Data Storage**: Service-specific data directories under compose folders
+### Recommended Defaults for MariaDB Script
+- `NAS_DEPLOY_DIR=/share/Container/compose/mariadb`
+- `MARIADB_DATA_DIR=/share/Container/compose/mariadb/data`
 
-### Pi Data Mount Points
-- **Pi Mount Target**: `/mnt/piha` (on Pi devices)
-- **NAS Share Path**: `/share/piha/` (CIFS/SMB exported)
-- **Actual Storage**: `/share/ZFS26_DATA/piha/`
+These defaults are now baked into `home-assistant/mariadb/setup-nas-mariadb.sh`. Override them in `.env` if your NAS uses a different layout.
 
 ## Common Script Adaptation Issues
+1. **Path differences** - avoid `/opt/` style paths on QNAP; use `/share/Container/` instead.
+2. **Docker availability** - ensure Container Station is running so `docker` and `docker compose` work over SSH.
+3. **Permissions** - some NAS models require `NAS_SSH_USE_SUDO=true` so the script can create directories and run Docker.
+4. **Firewall** - allow inbound TCP/3306 from the Raspberry Pi that hosts Home Assistant.
 
-### QNAP-Specific Considerations
-1. **Path differences**: Generic Linux paths like `/opt/` don't exist, use `/share/Container/` instead
-2. **Container Station**: Docker binaries and data are in `.qpkg/container-station/`
-3. **Environment setup**: Scripts may need adaptation for QNAP directory structure
-4. **Permission handling**: QNAP may have different user/group requirements
+## Other Vendors (Examples)
 
-### General Adaptation Guidelines
-- Update default deployment directories to match NAS vendor conventions
-- Ensure scripts can detect NAS type and adjust paths accordingly
-- Test one-liner curl commands with proper working directory setup
-- Verify Docker and compose command availability
+| Vendor    | Suggested Compose Path                | Data Path Example                                |
+|----------|----------------------------------------|--------------------------------------------------|
+| Synology | `/volume1/docker/{service-name}`       | `/volume1/docker/{service-name}/data`            |
+| TrueNAS  | `/mnt/<pool>/docker/{service-name}`    | `/mnt/<pool>/docker/{service-name}/data`         |
+| Generic  | `/opt/{service-name}`                  | `/opt/{service-name}/data`                       |
 
-## Adaptation for Other NAS Vendors
-
-### Synology
-- Container Manager path: `/volume1/docker/`
-- User data: `/volume1/homes/`
-- Recommended container path: `/volume1/docker/{service-name}/`
-
-### TrueNAS
-- Datasets path: `/mnt/pool-name/`
-- Apps path: `/mnt/pool-name/ix-applications/`
-- Recommended container path: `/mnt/pool-name/docker/{service-name}/`
-
-### Generic Linux
-- System Docker: `/var/lib/docker/`
-- User data: `/home/user/docker/`
-- Recommended container path: `/opt/{service-name}/`
-
-## Configuration Variables
-
-Different NAS vendors require different base paths in deployment scripts. Common variables to adapt:
-
-### QNAP Example
-```bash
-# QNAP-specific paths
-NAS_DEPLOY_DIR=/share/Container/compose/{service-name}
-DATA_DIR=/share/Container/compose/{service-name}/data
-NAS_SSH_HOST=192.168.1.100
-NAS_SSH_USER=your-nas-user
-NAS_SSH_PORT=22
-```
-
-### Synology Example
-```bash
-# Synology-specific paths
-NAS_DEPLOY_DIR=/volume1/docker/{service-name}
-DATA_DIR=/volume1/docker/{service-name}/data
-```
-
-### TrueNAS Example
-```bash
-# TrueNAS-specific paths
-NAS_DEPLOY_DIR=/mnt/pool-name/docker/{service-name}
-DATA_DIR=/mnt/pool-name/docker/{service-name}/data
-```
+Always verify that the target filesystem is local (ext4, ZFS, Btrfs, etc.). Avoid SMB/NFS paths for MariaDB data.
 
 ---
-
-*This configuration is specific to the current deployment. Update paths and variables according to your NAS setup.*
+Update this document when the deployment targets or defaults change so future automation runs stay aligned with the environment.

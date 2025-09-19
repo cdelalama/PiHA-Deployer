@@ -294,30 +294,30 @@ print_mariadb_followup() {
       echo -e "${GREEN}[OK] MariaDB recorder configured automatically. Review ${HA_DATA_DIR}/configuration.yaml if you need further tweaks.${NC}"
       ;;
     available)
-      echo -e "${GREEN}[OK] MariaDB is ready. Configure Home Assistant recorder using the credentials above (see nas/README.md).${NC}"
+      echo -e "${GREEN}[OK] MariaDB is ready. Configure Home Assistant recorder using the credentials above (see home-assistant/mariadb/README.md).${NC}"
       ;;
     reachable_no_mysql)
       echo -e "${YELLOW}[WARN] MariaDB port reachable but credential check skipped (mysql client missing). Install 'mariadb-client' or run manual tests if needed.${NC}"
       ;;
     not_requested)
       echo -e "${BLUE}[INFO] MariaDB validation not requested. Enable it by setting ENABLE_MARIADB_CHECK=true if you plan to use the NAS MariaDB recorder.${NC}"
-      echo -e "${BLUE}Refer to nas/README.md when ready.${NC}"
+      echo -e "${BLUE}Refer to home-assistant/mariadb/README.md when ready.${NC}"
       ;;
     auth_failed)
-      echo -e "${YELLOW}[WARN] MariaDB authentication failed. Confirm credentials in .env and in the NAS deployment (nas/docker-compose.yml).${NC}"
+      echo -e "${YELLOW}[WARN] MariaDB authentication failed. Confirm credentials in .env and in the NAS deployment (home-assistant/mariadb/docker-compose.yml).${NC}"
       ;;
     unreachable)
-      echo -e "${YELLOW}[WARN] MariaDB appears offline. Start it on the NAS using nas/docker-compose.yml or run 'docker compose up -d' on the NAS.${NC}"
+      echo -e "${YELLOW}[WARN] MariaDB appears offline. Start it on the NAS using home-assistant/mariadb/docker-compose.yml or run 'docker compose up -d' on the NAS.${NC}"
       print_mariadb_bootstrap_hint
       ;;
     skipped)
       echo -e "${YELLOW}[WARN] MariaDB validation skipped. Set ENABLE_MARIADB_CHECK=true and provide MARIADB_* variables in .env to enable automated checks.${NC}"
-      echo -e "${BLUE}Refer to nas/README.md for setup instructions.${NC}"
+      echo -e "${BLUE}Refer to home-assistant/mariadb/README.md for setup instructions.${NC}"
       print_mariadb_bootstrap_hint
       ;;
     missing_vars)
       echo -e "${YELLOW}[WARN] MariaDB check requested but configuration is incomplete. Add all MARIADB_* variables to .env and rerun.${NC}"
-      echo -e "${BLUE}See nas/README.md for the required values.${NC}"
+      echo -e "${BLUE}See home-assistant/mariadb/README.md for the required values.${NC}"
       print_mariadb_bootstrap_hint
       ;;
   esac

@@ -1,5 +1,24 @@
 # LLM Development History
 
+## 2025-09-18 - Codex - Align MariaDB defaults with QNAP layout
+
+Summary: Completed post-restructure cleanup by updating docs and scripts to reference `home-assistant/mariadb/` and baked in QNAP-friendly defaults for the NAS bootstrap script.
+
+Files updated:
+- README.md (component list now includes MariaDB + NAS guide)
+- home-assistant/install-home-assistant.sh (links point to new MariaDB directory)
+- home-assistant/mariadb/setup-nas-mariadb.sh (default paths + version 1.0.1)
+- home-assistant/mariadb/README.md (default paths, ASCII cleanup)
+- docs/NAS_CONFIGURATION.md (rewritten vendor guide)
+- docs/llm/HANDOFF.md (status + priorities)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.1)
+Notes: Need to validate the QNAP defaults on real hardware and remove the legacy `nas/` copies once confirmed obsolete.
+
+---
+
+
 ## 2024-01-06 - Claude - Documentation system implementation
 
 Summary: Created minimal documentation structure for LLM coordination with single entry point and clear handoff mechanism.
@@ -285,7 +304,7 @@ Notes: MariaDB check logic unchanged otherwise; ENABLE_MARIADB_CHECK still optio
 
 ## 2025-09-16 - Codex - HA installer curl-friendly compose
 
-Summary: Home Assistant installer now auto-downloads `docker-compose.yml` from GitHub when missing, enabling `curl � | sudo bash` usage. Bumped to v1.1.2.
+Summary: Home Assistant installer now auto-downloads `docker-compose.yml` from GitHub when missing, enabling `curl ... | sudo bash` usage. Bumped to v1.1.2.
 
 Files updated:
 - home-assistant/install-home-assistant.sh (now 1.1.2)
@@ -338,9 +357,9 @@ Notes: Future LLM responses with code changes must include commit information. H
 Summary: Major architectural improvement - moved nas/ directory to home-assistant/mariadb/ for consistency. MariaDB is specific to Home Assistant recorder, not a general NAS service. Updated all references across documentation, scripts, and URLs. Cleaned NAS_CONFIGURATION.md to be vendor-agnostic. Project structure now follows pattern: each top-level directory = Pi component, dependencies inside respective components.
 
 Files moved:
-- nas/README.md → home-assistant/mariadb/README.md
-- nas/docker-compose.yml → home-assistant/mariadb/docker-compose.yml
-- nas/setup-nas-mariadb.sh → home-assistant/mariadb/setup-nas-mariadb.sh
+- nas/README.md -> home-assistant/mariadb/README.md
+- nas/docker-compose.yml -> home-assistant/mariadb/docker-compose.yml
+- nas/setup-nas-mariadb.sh -> home-assistant/mariadb/setup-nas-mariadb.sh
 
 Files updated:
 - README.md (updated MariaDB references and structure)
