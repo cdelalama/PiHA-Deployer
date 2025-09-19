@@ -38,6 +38,14 @@ This guide captures the NAS conventions PiHA-Deployer expects today and highligh
 
 These defaults are now baked into `home-assistant/mariadb/setup-nas-mariadb.sh`. Override them in `.env` if your NAS uses a different layout.
 
+When bootstrapping directly on the NAS, create the directory and move into it before downloading files:
+```
+ssh <nas-user>@<NAS_IP>
+mkdir -p /share/Container/compose/mariadb
+cd /share/Container/compose/mariadb
+```
+Then copy or create `.env` in that folder and use `docker compose up -d` (see the component README for details).
+
 ## Common Script Adaptation Issues
 1. **Path differences** - avoid `/opt/` style paths on QNAP; use `/share/Container/` instead.
 2. **Docker availability** - ensure Container Station is running so `docker` and `docker compose` work over SSH.

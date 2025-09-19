@@ -1,3 +1,18 @@
+## 2025-09-18 - Codex - Clarify NAS bootstrap guidance
+
+Summary: Aligned Home Assistant messaging and documentation so users know where to run the MariaDB helper and which directories to create when working directly on the NAS.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (bootstrap hint now lists recommended + manual steps)
+- home-assistant/mariadb/README.md (explicit automated vs manual flows with directory commands)
+- docs/NAS_CONFIGURATION.md (NAS directory prep snippet)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: none (documentation and messaging only)
+Notes: Automated script remains the preferred path; manual NAS flow documented for direct SSH usage.
+
+---
+
 # LLM Development History
 
 ## 2025-09-18 - Codex - Align MariaDB defaults with QNAP layout

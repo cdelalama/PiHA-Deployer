@@ -57,7 +57,7 @@ Password note: if any password contains a `$`, escape it as `\$` in `.env` to av
 
 Optional shared config (common/Common.env)
 - To avoid duplication, place shared defaults in `common/Common.env` (gitignored) which is loaded before `.env`.
-- Load order: `../common/Common.env` → `../common/common.env` → `common/Common.env` → `common/common.env` → `$HOME/.piha/common.env` → `/etc/piha/common.env` → `./Common.env` → `./common.env` → `.env` (last wins).
+- Load order: `../common/Common.env` -> `../common/common.env` -> `common/Common.env` -> `common/common.env` -> `$HOME/.piha/common.env` -> `/etc/piha/common.env` -> `./Common.env` -> `./common.env` -> `.env` (last wins).
 - Suggested contents: `NAS_MOUNT_DIR`, `DOCKER_USER_ID`, `DOCKER_GROUP_ID`, `TZ`, `PORTAINER_PASS` (if you want a single password per host), `PORTAINER_PORT=9000` (standardize across Pis).
 
 Important:
