@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -52,7 +52,9 @@ load_env() {
 }
 
 bool_true() {
-  case "${1,,}" in
+  local val
+  val="$(printf "%s" "$1" | tr "[:upper:]" "[:lower:]")"
+  case "$val" in
     1|y|yes|true|on) return 0 ;;
     *) return 1 ;;
   esac

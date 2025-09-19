@@ -1,16 +1,17 @@
 ## 2025-09-18 - Codex - Clarify NAS bootstrap guidance
 
-Summary: Made the manual NAS bootstrap the default Home Assistant guidance and kept the SSH helper script as an optional alternative once `.env` is ready.
+Summary: Made the manual NAS bootstrap the default Home Assistant guidance, kept the SSH helper script as an optional alternative once `.env` is ready, and fixed NAS shell compatibility in the helper.
 
 Files updated:
 - home-assistant/install-home-assistant.sh (bootstrap hint now prioritises manual steps and mentions optional automation)
 - home-assistant/README.md (Quick Start aligned with curl-based install and working directory setup)
 - home-assistant/mariadb/README.md (manual-first flow with single-command helper usage and optional automation)
+- home-assistant/mariadb/setup-nas-mariadb.sh (shell compatibility fix, v1.0.2)
 - docs/NAS_CONFIGURATION.md (NAS directory prep snippet + one-liner reference)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: none (documentation and messaging only)
-Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script remains available locally or via SSH once `.env` exists.
+Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.2)
+Notes: Manual NAS setup is now the recommended path for fresh installs; the helper script works on busybox/old bash shells and remains available locally or via SSH once `.env` exists.
 
 ---
 
