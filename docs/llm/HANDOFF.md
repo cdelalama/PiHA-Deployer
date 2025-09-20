@@ -3,7 +3,7 @@
 ## Current Status
 
 Last Updated: 2025-09-18 - Codex
-Session Focus: Clean up post-restructure issues and align MariaDB NAS defaults with QNAP layout.
+Session Focus: Clean up post-restructure issues, align MariaDB NAS defaults with QNAP layout, and harden installers against stale data reuse.
 Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers now point to the new location. QNAP defaults were corrected and NAS guide rewritten in ASCII. Recent work hardened the NAS helper + Home Assistant installer to avoid surprises when data already exists.
 
 ## Immediate Context
@@ -11,7 +11,7 @@ Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`
 Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
-- `home-assistant/install-home-assistant.sh` references the new MariaDB path, prints the updated bootstrap checklist, and aborts if NAS data directories already contain HA state (unless HA_ALLOW_EXISTING_DATA=true)
+- `home-assistant/install-home-assistant.sh` references the new MariaDB path, prints the updated bootstrap checklist, and halts when NAS data directories contain HA state (interactive prompt or HA_ALLOW_EXISTING_DATA=true)
 - `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults; skips copying when source/destination match
 - `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, security notes, and highlights that MariaDB data lives at `MARIADB_DATA_DIR` (default `${NAS_DEPLOY_DIR}/data`)
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
@@ -24,7 +24,7 @@ Active Files
 - README.md (component map fix)
 - home-assistant/README.md (Quick Start aligned with curl workflow)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
-- home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.6 local/remote-aware helper)
+- home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.7 local/remote-aware helper)
 - home-assistant/mariadb/README.md (manual-first docs + security notes)
 - home-assistant/docker-compose.yml (version key removed)
 - home-assistant/mariadb/docker-compose.yml (version key removed)
@@ -37,7 +37,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.6
+- home-assistant/install-home-assistant.sh: 1.1.7
 - home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.7
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
@@ -48,6 +48,7 @@ Current Versions
 3) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).
 4) **LATER**: Execute full Home Assistant + NAS MariaDB flow with `ENABLE_MARIADB_CHECK=true` and document recorder migration.
 5) **ONGOING**: Keep HISTORY and HANDOFF current; document any new env vars or behavioural changes.
+6) **DOC**: Record the final decision on MariaDB data directory layout for future automation runs.
 
 ## Do Not Touch
 

@@ -1,3 +1,18 @@
+## 2025-09-18 - Codex - Interactive reuse guard for Home Assistant
+
+Summary: Home Assistant installer v1.1.7 now prompts to reuse existing NAS data when a TTY is available, while keeping the HA_ALLOW_EXISTING_DATA override for non-interactive runs.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (interactive prompt + TTY detection, continues to support HA_ALLOW_EXISTING_DATA)
+- home-assistant/README.md (document prompt vs override)
+- docs/llm/HANDOFF.md (status + priorities refreshed)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.7)
+Notes: Users running `curl ... | sudo bash` should pre-set HA_ALLOW_EXISTING_DATA=true if they intentionally keep old data; otherwise the installer asks interactively when possible.
+
+---
+
 ## 2025-09-18 - Codex - Guard against stale Home Assistant data
 
 Summary: The Home Assistant installer now halts when NAS data directories already contain configuration unless the operator opts in, preventing accidental reuse of old state.

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.6"
+VERSION="1.1.7"
 
 # Colors
 BLUE='\033[0;36m'
@@ -64,6 +64,16 @@ bool_true() {
   esac
 }
 
+has_tty() {
+  if [ -t 0 ] || [ -t 1 ] || [ -t 2 ]; then
+    return 0
+  fi
+  if [ -r /dev/tty ] && [ -w /dev/tty ]; then
+    return 0
+  fi
+  return 1
+}
+
 dir_has_content() {
   local dir="$1"
   [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]
@@ -97,6 +107,21 @@ check_existing_data() {
   for dir in "${existing_dirs[@]}"; do
     echo -e "${YELLOW}  - ${dir}${NC}"
   done
+
+  if has_tty; then
+    echo -ne "${YELLOW}Continue and reuse these directories? [y/N]: ${NC}" > /dev/tty
+    local reply
+    if read -r reply < /dev/tty; then
+      if bool_true "$reply"; then
+        echo -e "${YELLOW}[WARN] Reusing existing Home Assistant data directories.${NC}"
+        for dir in "${existing_dirs[@]}"; do
+          echo -e "${YELLOW}  - Reusing ${dir}${NC}"
+        done
+        return
+      fi
+    fi
+  fi
+
   echo -e "${YELLOW}[WARN] Remove the directories above for a clean install, or set HA_ALLOW_EXISTING_DATA=true in .env if you intend to reuse them.${NC}"
   exit 1
 }
