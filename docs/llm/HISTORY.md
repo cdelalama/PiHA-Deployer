@@ -5,6 +5,8 @@ Summary: Home Assistant installer v1.1.7 now prompts to reuse existing NAS data 
 Files updated:
 - home-assistant/install-home-assistant.sh (interactive prompt + TTY detection, continues to support HA_ALLOW_EXISTING_DATA)
 - home-assistant/README.md (document prompt vs override)
+- home-assistant/.env.example (document HA_ALLOW_EXISTING_DATA usage)
+- home-assistant/TEST_MATRIX.md (scenario checklist)
 - docs/llm/HANDOFF.md (status + priorities refreshed)
 - docs/llm/HISTORY.md (this entry)
 
