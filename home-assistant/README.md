@@ -18,8 +18,9 @@ mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
 ```
 
-2. Place your component `.env` (and optional `common/Common.env`) in this directory. The installer reads `.env` from the current working folder.
-3. Run the installer directly from GitHub (requires `curl` and `sudo`):
+2. Create a `common/` subdirectory here and drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
+3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`).
+4. Run the installer directly from GitHub (requires `curl` and `sudo`):
 
 ```
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
@@ -51,7 +52,7 @@ Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_D
 - Unless `--keep-env` (or `UNINSTALL_KEEP_ENV=true`) is set, the run deletes `.env` (and `.env.bootstrap` when present) from the working directory so credentials are not left behind.
 - Staying in interactive mode (recommended) gives you a final confirmation before deleting.
 
-Afterwards recreate your working folder (e.g. `mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`) before rerunning the installer. Restore `.env` from your secrets backup if you allowed the uninstaller to remove it.
+Afterwards recreate your working folder (e.g. `mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`) and repopulate both `common/common.env` and `.env` from your secrets backup before rerunning the installer.
 
 To double-check the cleanup on the Pi, run:
 

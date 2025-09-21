@@ -17,7 +17,7 @@ Current Work
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - Legacy `nas/` directory removed; `home-assistant/mariadb/` is now the sole MariaDB source (see HISTORY entry).
-- `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.10 and the cleanup script)
+- `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.10, cleanup script, and common/common.env prep)
 - `home-assistant/.env.example` deduplicated the installer behaviour section so the reuse flag guidance stays single-sourced
 - `home-assistant/uninstall-home-assistant.sh` teardown helper now at v1.0.9 (removes `.env`/`.env.bootstrap` by default, adds `--keep-env`, keeps purge flags + docker lookup fallbacks)
 - `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`
@@ -26,7 +26,7 @@ Current Work
 
 Active Files
 - README.md (component map fix)
-- home-assistant/README.md (Quick Start aligned with curl workflow + inline comment guidance for reuse flag)
+- home-assistant/README.md (Quick Start now calls out recreating common/common.env + curl workflow guidance)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
 - home-assistant/uninstall-home-assistant.sh (teardown helper, v1.0.9 with .env cleanup + keep flag)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.7 local/remote-aware helper)
@@ -48,7 +48,7 @@ Current Versions
 
 ## Top Priorities
 
-1) **VERIFY**: Re-run `home-assistant/uninstall-home-assistant.sh` (interactive, pipeline, `--keep-env`, `--purge-local`) to confirm `.env` removal behaves as documented and that purge flags leave the Pi ready for reinstall.
+1) **VERIFY**: Re-run `home-assistant/uninstall-home-assistant.sh` (interactive, pipeline, `--keep-env`, `--purge-local`) to confirm `.env` removal behaves as documented and that purge flags leave the Pi ready for reinstall; confirm reinstall requires restoring both `common/common.env` and `.env`.
 2) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}/data` (current default) or move to a different NAS path. Update README + `.env` if needed.
 3) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
 4) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).

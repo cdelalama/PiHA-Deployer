@@ -5,7 +5,7 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 ## 1. Home Assistant Installer (v1.1.10)
 
 ### 1A. Fresh install without MariaDB
-- **Prep**: Create a clean working dir (`mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`). Populate `.env` *without* `ENABLE_MARIADB_CHECK` (or set it to `false`). Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` do not exist or are empty.
+- **Prep**: Create a clean working dir (`mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`). Populate `common/common.env` with shared defaults (copy from template if needed) and `.env` *without* `ENABLE_MARIADB_CHECK` (or set it to `false`). Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` do not exist or are empty.
 - **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
 - **Expect**: Installer completes, Home Assistant and Portainer containers running, recorder remains on SQLite.
 
@@ -15,14 +15,14 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 - **Expect**: Installer verifies MariaDB, writes recorder config, and starts both containers.
 
 ### 1C. Existing data - interactive run
-- **Prep**: Download the script locally (`curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh -o install-home-assistant.sh`). Leave content in `${HA_DATA_DIR}`, `${BASE_DIR}`, `${PORTAINER_DATA_DIR}`.
+- **Prep**: Download the script locally (`curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh -o install-home-assistant.sh`). Ensure `common/common.env` and `.env` remain populated. Leave content in `${HA_DATA_DIR}`, `${BASE_DIR}`, `${PORTAINER_DATA_DIR}`.
 - **Run**: `sudo bash install-home-assistant.sh`
 - **Expect**: Prompt `Continue and reuse these directories? [y/N]`.
   - Reply `y`: installer reuses directories and proceeds.
   - Reply `n` (or press Enter): installer aborts and lists directories to remove.
 
 ### 1D. Existing data - non-interactive, reuse not declared
-- **Prep**: Same data setup as 1C. `.env` must **not** contain `HA_ALLOW_EXISTING_DATA=true`.
+- **Prep**: Same data setup as 1C (keep `common/common.env` + `.env` intact). `.env` must **not** contain `HA_ALLOW_EXISTING_DATA=true`.
 - **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
 - **Expect**: Installer aborts, prints the list of directories, and instructs to set `HA_ALLOW_EXISTING_DATA=true` or remove them.
 

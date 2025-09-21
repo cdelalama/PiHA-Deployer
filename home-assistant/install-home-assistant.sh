@@ -144,6 +144,7 @@ require_vars() {
   done
   if [ ${#missing[@]} -gt 0 ]; then
     echo -e "${RED}[ERROR] Missing required variables in .env:${NC} ${missing[*]}"
+    echo -e "${YELLOW}[HINT] Recreate your shared env file (common/common.env or ../common/common.env) alongside .env, or move those values into .env before rerunning.${NC}"
     exit 1
   fi
 }

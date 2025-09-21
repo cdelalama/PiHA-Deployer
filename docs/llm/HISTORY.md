@@ -1,3 +1,19 @@
+## 2025-09-21 - Codex - Document shared env requirement
+
+Summary: Clarified that installers load shared defaults from `common/common.env`, updated Quick Start/Test Matrix to recreate it after purges, and added an installer hint when required vars are missing.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (missing var hint references common/common.env)
+- home-assistant/README.md (Quick Start + reset instructions call out recreating common/common.env)
+- home-assistant/TEST_MATRIX.md (prep steps mention common/common.env)
+- docs/llm/HANDOFF.md (status/priorities mention new reminder)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: no (installer message tweak only).
+Notes: After running the uninstaller with `--purge-local`, users must repopulate both `common/common.env` and `.env` before reinstalling.
+
+---
+
 ## 2025-09-21 - Codex - Remove .env during HA uninstall
 
 Summary: Bumped the Home Assistant uninstaller to v1.0.9, deleting `.env`/`.env.bootstrap` by default, adding a `--keep-env` toggle, and clarifying docs/test coverage for the new behaviour.
