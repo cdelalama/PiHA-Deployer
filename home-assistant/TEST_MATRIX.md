@@ -20,6 +20,7 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 - **Expect**: Prompt `Continue and reuse these directories? [y/N]`.
   - Reply `y`: installer reuses directories and proceeds.
   - Reply `n` (or press Enter): installer aborts and lists directories to remove.
+  - After reuse, restart the `homeassistant` container so the refreshed `requirements.txt` dependency is installed.
 
 ### 1D. Existing data - non-interactive, reuse not declared
 - **Prep**: Same data setup as 1C (keep `common/common.env` + `.env` intact). `.env` must **not** contain `HA_ALLOW_EXISTING_DATA=true`.
@@ -31,6 +32,7 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 - **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
 - **Expect**: Warning about existing data, then installer proceeds without prompting.
 - **Note**: Inline comments after the flag are ignored (e.g., `HA_ALLOW_EXISTING_DATA=true  # reuse NAS data`).
+- After the run, restart `homeassistant` so the dependency written to `requirements.txt` is applied.
 
 ### 1F. Failure checks (optional)
 - Missing MariaDB credentials (`ENABLE_MARIADB_CHECK=true` but incomplete `MARIADB_*`): expect abort with guidance.

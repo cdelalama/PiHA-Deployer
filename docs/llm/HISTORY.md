@@ -1,3 +1,19 @@
+## 2025-09-21 - Codex - Warn about restart when reusing HA stack
+
+Summary: Installer v1.1.12 now tells users to restart Home Assistant if the container was already running when MariaDB recorder config is updated, so the new requirements take effect automatically.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (v1.1.12 emits restart hint when `homeassistant` is running)
+- home-assistant/README.md (mention restart after automatic PyMySQL entry)
+- home-assistant/TEST_MATRIX.md (reuse scenarios remind to restart container)
+- docs/llm/HANDOFF.md (status/priorities updated)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.12)
+Notes: Reinstalling over existing data now clearly prompts for a container restart to load `requirements.txt` changes.
+
+---
+
 ## 2025-09-21 - Codex - Auto-manage PyMySQL requirement
 
 Summary: Home Assistant installer v1.1.11 now ensures `${HA_DATA_DIR}/requirements.txt` includes PyMySQL when MariaDB is enabled so the recorder loads the MySQL driver automatically.

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.11"
+VERSION="1.1.12"
 
 # Colors
 BLUE='\033[0;36m'
@@ -307,8 +307,16 @@ EOF
   sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$requirements_file" 2>/dev/null || true
   sudo chmod 664 "$requirements_file" 2>/dev/null || true
 
+  local ha_running="false"
+  if sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^homeassistant$'; then
+    ha_running="true"
+  fi
+
   MARIADB_STATUS="configured"
   echo -e "${GREEN}[OK] Recorder configured to use MariaDB${NC}"
+  if [ "$ha_running" = "true" ]; then
+    echo -e "${YELLOW}[NOTE] Home Assistant container already running; restart it so requirements.txt changes take effect.${NC}"
+  fi
 }
 
 require_mariadb_vars() {
