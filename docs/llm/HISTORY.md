@@ -1,3 +1,16 @@
+## 2025-09-20 - Codex - Ensure HA uninstaller finds docker on QNAP
+
+Summary: Tweaked the Home Assistant uninstaller to locate the docker binary on QNAP volumes, guaranteeing the MariaDB container is removed even when the NAS exposes it solely via Container Station paths.
+
+Files updated:
+- home-assistant/uninstall-home-assistant.sh (docker lookup fallback, v1.0.7)
+- docs/llm/HANDOFF.md (version reference)
+
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.7)
+Notes: The cleanup still targets only the MariaDB container (`--filter name=mariadb`) and aborts with an actionable message if any linger.
+
+---
+
 ## 2025-09-20 - Codex - Add Home Assistant uninstaller
 
 Summary: Added a scripted teardown that stops the HA stack, removes NAS-hosted data directories, and (optionally) cleans the NAS MariaDB deployment over SSH (falling back to MARIADB_HOST, then NAS_IP, when NAS_SSH_HOST=localhost) and validates the remote docker path so cleanup works from the Pi.

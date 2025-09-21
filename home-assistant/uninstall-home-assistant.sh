@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.6"
+VERSION="1.0.7"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -134,7 +134,7 @@ run_remote_cleanup() {
   local port="${NAS_SSH_PORT:-22}"
   local deploy_dir="${NAS_DEPLOY_DIR:-}"
   local sudo_prefix=""
-  local remote_base_path=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+  local remote_base_path=/share/ZFS530_DATA/.qpkg/container-station/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
   if bool_true "${NAS_SSH_USE_SUDO:-false}"; then
     sudo_prefix="sudo "
@@ -156,6 +156,14 @@ run_remote_cleanup() {
     local docker_path
     docker_path=$(command -v docker 2>/dev/null || true)
     if [ -z "$docker_path" ]; then
+      for candidate in /share/ZFS530_DATA/.qpkg/container-station/bin/docker /usr/local/bin/docker /usr/bin/docker /bin/docker /usr/local/sbin/docker /sbin/docker; do
+        if [ -x "$candidate" ]; then
+          docker_path="$candidate"
+          break
+        fi
+      done
+    fi
+    if [ -z "$docker_path" ]; then
       echo -e "${RED}[ERROR] docker command not found on NAS; aborting cleanup.${NC}"
       exit 1
     fi
@@ -174,12 +182,12 @@ run_remote_cleanup() {
       ${sudo_prefix}rm -rf "$deploy_dir"
     fi
     local containers
-    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=mariadb || true)
+    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=^mariadb$ || true)
     if [ -n "$containers" ]; then
       echo "[remote] removing containers: $containers"
       ${sudo_prefix}$docker_path rm -f $containers || true
     fi
-    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=mariadb || true)
+    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=^mariadb$ || true)
     if [ -n "$containers" ]; then
       echo -e "${RED}[ERROR] MariaDB container(s) still present on NAS: $containers. Remove manually (ssh ${user}@${host} \"docker rm -f $containers\") and rerun if needed.${NC}"
       exit 1
@@ -206,7 +214,15 @@ else
   DOCKER=$(command -v docker 2>/dev/null || true)
 fi
 if [ -z "$DOCKER" ]; then
-  echo "[remote][ERROR] docker command not found in PATH." >&2
+  for candidate in /share/ZFS530_DATA/.qpkg/container-station/bin/docker /usr/local/bin/docker /usr/bin/docker /bin/docker /usr/local/sbin/docker /sbin/docker; do
+    if [ -x "$candidate" ]; then
+      DOCKER="$candidate"
+      break
+    fi
+  done
+fi
+if [ -z "$DOCKER" ]; then
+  echo "[remote][ERROR] docker command not found." >&2
   exit 90
 fi
 COMPOSE=""
@@ -232,9 +248,9 @@ if [ -n "$DEPLOY_DIR" ] && [ -d "$DEPLOY_DIR" ]; then
   fi
 fi
 if [ -n "$REMOTE_SUDO" ]; then
-  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=mariadb || true)
+  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=^mariadb$ || true)
 else
-  CONTAINERS=$($DOCKER ps -aq --filter name=mariadb || true)
+  CONTAINERS=$($DOCKER ps -aq --filter name=^mariadb$ || true)
 fi
 if [ -n "$CONTAINERS" ]; then
   echo "[remote] removing containers: $CONTAINERS"
@@ -245,9 +261,9 @@ if [ -n "$CONTAINERS" ]; then
   fi
 fi
 if [ -n "$REMOTE_SUDO" ]; then
-  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=mariadb || true)
+  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=^mariadb$ || true)
 else
-  CONTAINERS=$($DOCKER ps -aq --filter name=mariadb || true)
+  CONTAINERS=$($DOCKER ps -aq --filter name=^mariadb$ || true)
 fi
 if [ -n "$CONTAINERS" ]; then
   echo "[remote][ERROR] MariaDB container(s) still running: $CONTAINERS" >&2
@@ -262,7 +278,7 @@ EOF
         exit 1
         ;;
       91)
-        echo -e "${RED}[ERROR] MariaDB container(s) still running on NAS after cleanup. Run on the NAS: ssh ${user}@${host} \"docker rm -f $(docker ps -aq --filter name=mariadb)\" and rerun if needed.${NC}"
+        echo -e "${RED}[ERROR] MariaDB container(s) still running on NAS after cleanup. Run on the NAS: ssh ${user}@${host} \"docker rm -f $(docker ps -aq --filter name=^mariadb$)\" and rerun if needed.${NC}"
         exit 1
         ;;
       *)
