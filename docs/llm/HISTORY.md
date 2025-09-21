@@ -1,3 +1,17 @@
+## 2025-09-20 - ChatGPT - Refine HA installer non-interactive behaviour
+
+Summary: Updated the Home Assistant installer to abort without prompting when run via pipeline unless `HA_ALLOW_EXISTING_DATA=true` is set, keeping the interactive prompt for local executions.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (non-interactive guard, now 1.1.8)
+- home-assistant/.env.example (document HA_ALLOW_EXISTING_DATA)
+- docs/llm/HANDOFF.md (version/status updated)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.8)
+Notes: Pipeline runs (`curl … | sudo bash`) now exit immediately unless the reuse flag is set; interactive runs still prompt for confirmation.
+
+---
+
 ## 2025-09-20 - ChatGPT - Remove legacy nas directory
 
 Summary: Deleted the obsolete `nas/` helper folder now that MariaDB lives under `home-assistant/mariadb/`. All references now point to the maintained location.

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.7"
+VERSION="1.1.8"
 
 # Colors
 BLUE='\033[0;36m'
@@ -63,17 +63,6 @@ bool_true() {
     *) return 1 ;;
   esac
 }
-
-has_tty() {
-  if [ -t 0 ] || [ -t 1 ] || [ -t 2 ]; then
-    return 0
-  fi
-  if [ -r /dev/tty ] && [ -w /dev/tty ]; then
-    return 0
-  fi
-  return 1
-}
-
 dir_has_content() {
   local dir="$1"
   [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]
@@ -108,7 +97,7 @@ check_existing_data() {
     echo -e "${YELLOW}  - ${dir}${NC}"
   done
 
-  if has_tty; then
+  if [ -t 0 ]; then
     echo -ne "${YELLOW}Continue and reuse these directories? [y/N]: ${NC}" > /dev/tty
     local reply
     if read -r reply < /dev/tty; then
@@ -120,6 +109,8 @@ check_existing_data() {
         return
       fi
     fi
+    echo -e "${YELLOW}[WARN] Remove the directories above for a clean install, or set HA_ALLOW_EXISTING_DATA=true in .env if you intend to reuse them.${NC}"
+    exit 1
   fi
 
   echo -e "${YELLOW}[WARN] Remove the directories above for a clean install, or set HA_ALLOW_EXISTING_DATA=true in .env if you intend to reuse them.${NC}"

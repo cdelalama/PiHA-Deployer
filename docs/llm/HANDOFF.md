@@ -11,7 +11,7 @@ Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`
 Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
-- `home-assistant/install-home-assistant.sh` references the new MariaDB path, prints the updated bootstrap checklist, and halts when NAS data directories contain HA state (interactive prompt or HA_ALLOW_EXISTING_DATA=true)
+- `home-assistant/install-home-assistant.sh` references the new MariaDB path, prints the updated bootstrap checklist, and halts when NAS data directories contain HA state (interactive prompt locally; non-interactive runs require `HA_ALLOW_EXISTING_DATA=true`)
 - `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults; skips copying when source/destination match
 - `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, security notes, and highlights that MariaDB data lives at `MARIADB_DATA_DIR` (default `${NAS_DEPLOY_DIR}/data`)
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
@@ -39,7 +39,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.7
+- home-assistant/install-home-assistant.sh: 1.1.8
 - home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.7
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 

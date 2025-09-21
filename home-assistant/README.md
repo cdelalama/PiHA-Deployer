@@ -25,7 +25,7 @@ cd ~/piha-home-assistant
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
 ```
 
-> Heads-up: if the NAS already contains previous Home Assistant data (e.g. `${HA_DATA_DIR}`), the installer detects it. When running interactively it will ask whether to reuse the data; in non-interactive runs (e.g. `curl ... | sudo bash`) set `HA_ALLOW_EXISTING_DATA=true` in `.env` before rerunning, or remove the directories for a clean install.
+> Heads-up: if the NAS already contains previous Home Assistant data (e.g. `${HA_DATA_DIR}`), the installer detects it. When running interactively it will ask whether to reuse the data; in non-interactive runs (e.g. `curl ... | sudo bash`) the installer exits unless `HA_ALLOW_EXISTING_DATA=true` is set in `.env` (or you remove the directories for a clean install).
 
 ## What It Installs
 - Docker + Docker Compose plugin (if missing)
