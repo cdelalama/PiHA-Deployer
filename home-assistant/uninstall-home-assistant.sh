@@ -3,6 +3,8 @@ set -e
 
 VERSION="1.0.7"
 
+WORK_DIR=$(pwd)
+
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -18,6 +20,7 @@ Usage: sudo bash uninstall-home-assistant.sh [options]
 Options:
   -f, --force        Do not prompt, proceed with removal
   --skip-nas-ssh     Do not connect to NAS via SSH to clean MariaDB deployment
+  --purge-local      Remove this working directory after cleanup
   -h, --help         Print this message
 
 The script stops the Home Assistant stack on this Pi, removes NAS-backed
@@ -291,6 +294,21 @@ EOF
   echo -e "${GREEN}[OK] NAS MariaDB deployment directory removed${NC}"
 }
 
+purge_working_dir() {
+  if ! bool_true "$PURGE_LOCAL"; then
+    return
+  fi
+  local dir="$WORK_DIR"
+  if [ -z "$dir" ] || [ "$dir" = "/" ]; then
+    echo -e "${RED}[ERROR] Refusing to remove working directory: invalid path (${dir:-empty}).${NC}"
+    return
+  fi
+  echo -e "${BLUE}Removing local working directory ${dir}...${NC}"
+  cd /
+  sudo rm -rf "$dir" || true
+}
+
+
 
 confirm_or_exit() {
   local force_flag="$1"
@@ -312,6 +330,10 @@ confirm_or_exit() {
 
 FORCE=false
 SKIP_NAS_SSH=false
+PURGE_LOCAL=false
+if bool_true "${UNINSTALL_PURGE_LOCAL:-false}"; then
+  PURGE_LOCAL=true
+fi
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -321,6 +343,10 @@ while [ $# -gt 0 ]; do
       ;;
     --skip-nas-ssh)
       SKIP_NAS_SSH=true
+      shift
+      ;;
+    --purge-local)
+      PURGE_LOCAL=true
       shift
       ;;
     -h|--help)
@@ -397,4 +423,5 @@ else
   echo -e "${YELLOW}[WARN] Skipping NAS SSH cleanup as requested.${NC}"
 fi
 
+purge_working_dir
 echo -e "${BLUE}Cleanup complete. You may now remove the working directory (e.g. rm -rf $(pwd)) if desired.${NC}"
