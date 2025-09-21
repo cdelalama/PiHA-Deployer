@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -200,9 +200,9 @@ EOF
 
   echo -e "${BLUE}Starting MariaDB container on NAS...${NC}"
   if remote_exec_cmd "${SUDO}docker compose version >/dev/null 2>&1"; then
-    remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker compose up -d"
+    remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker compose -f docker-compose.yml up -d"
   else
-    remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker-compose up -d"
+    remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker-compose -f docker-compose.yml up -d"
   fi
 
   echo -e "${GREEN}[OK] MariaDB deployment finished${NC}"

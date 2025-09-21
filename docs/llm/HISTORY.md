@@ -1,3 +1,20 @@
+## 2025-09-21 - Codex - Harden NAS helper compose defaults
+
+Summary: Tweaked the NAS MariaDB helper so `docker compose` always loads the local file and shipped a `.env.example` to simplify bootstrapping.
+
+Files updated:
+- home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.8 uses `-f docker-compose.yml` when starting containers)
+- home-assistant/mariadb/.env.example (new template with required variables)
+- home-assistant/README.md (Quick Start points to .env template)
+- home-assistant/mariadb/README.md (references the example file)
+- docs/llm/HANDOFF.md (status notes updated)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.8)
+Notes: Running the helper directly on the NAS no longer fails with 'no configuration file provided'.
+
+---
+
 ## 2025-09-21 - Codex - Document shared env requirement
 
 Summary: Clarified that installers load shared defaults from `common/common.env`, updated Quick Start/Test Matrix to recreate it after purges, and added an installer hint when required vars are missing.
