@@ -335,6 +335,7 @@ purge_working_dir() {
   echo -e "${BLUE}Removing local working directory ${dir}...${NC}"
   cd /
   sudo rm -rf "$dir" || true
+  PURGED_LOCAL_DONE=true
 }
 
 
@@ -361,6 +362,7 @@ FORCE=false
 SKIP_NAS_SSH=false
 PURGE_LOCAL=false
 PURGE_IMAGES=false
+PURGED_LOCAL_DONE=false
 if bool_true "${UNINSTALL_PURGE_LOCAL:-false}"; then
   PURGE_LOCAL=true
 fi

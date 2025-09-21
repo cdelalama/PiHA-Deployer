@@ -51,6 +51,16 @@ Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_D
 - Staying in interactive mode (recommended) gives you a final confirmation before deleting.
 
 Afterwards you can remove the local working folder (e.g. `rm -rf ~/piha-home-assistant`) and rerun the installer for a clean deployment.
+
+
+To double-check the cleanup on the Pi, run:
+
+```
+sudo docker ps -a
+sudo docker images
+```
+
+Both commands should return empty lists (or only show other services you have installed).
 ## What It Installs
 - Docker + Docker Compose plugin (if missing)
 - Portainer (local instance on this Raspberry Pi)
