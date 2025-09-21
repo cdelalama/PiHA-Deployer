@@ -135,6 +135,7 @@ run_remote_cleanup() {
   local deploy_dir="${NAS_DEPLOY_DIR:-}"
   local sudo_prefix=""
   local remote_base_path=/share/ZFS530_DATA/.qpkg/container-station/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+  local container_name="${MARIADB_CONTAINER_NAME:-mariadb}"
 
   if bool_true "${NAS_SSH_USE_SUDO:-false}"; then
     sudo_prefix="sudo "
@@ -182,12 +183,12 @@ run_remote_cleanup() {
       ${sudo_prefix}rm -rf "$deploy_dir"
     fi
     local containers
-    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=^mariadb$ || true)
+    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=^${container_name}$ || true)
     if [ -n "$containers" ]; then
       echo "[remote] removing containers: $containers"
       ${sudo_prefix}$docker_path rm -f $containers || true
     fi
-    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=^mariadb$ || true)
+    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=^${container_name}$ || true)
     if [ -n "$containers" ]; then
       echo -e "${RED}[ERROR] MariaDB container(s) still present on NAS: $containers. Remove manually (ssh ${user}@${host} \"docker rm -f $containers\") and rerun if needed.${NC}"
       exit 1
@@ -202,7 +203,7 @@ run_remote_cleanup() {
   fi
 
   local remote_env
-  printf -v remote_env "DEPLOY_DIR=%q REMOTE_SUDO=%q" "$deploy_dir" "$sudo_prefix"
+  printf -v remote_env "DEPLOY_DIR=%q REMOTE_SUDO=%q MARIADB_NAME=%q" "$deploy_dir" "$sudo_prefix" "$container_name"
   local remote_cmd
   remote_cmd="PATH=${remote_base_path} ${remote_env} bash -s"
 
@@ -248,9 +249,9 @@ if [ -n "$DEPLOY_DIR" ] && [ -d "$DEPLOY_DIR" ]; then
   fi
 fi
 if [ -n "$REMOTE_SUDO" ]; then
-  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=^mariadb$ || true)
+  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=^${MARIADB_NAME:-mariadb}$ || true)
 else
-  CONTAINERS=$($DOCKER ps -aq --filter name=^mariadb$ || true)
+  CONTAINERS=$($DOCKER ps -aq --filter name=^${MARIADB_NAME:-mariadb}$ || true)
 fi
 if [ -n "$CONTAINERS" ]; then
   echo "[remote] removing containers: $CONTAINERS"
@@ -261,9 +262,9 @@ if [ -n "$CONTAINERS" ]; then
   fi
 fi
 if [ -n "$REMOTE_SUDO" ]; then
-  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=^mariadb$ || true)
+  CONTAINERS=$($REMOTE_SUDO $DOCKER ps -aq --filter name=^${MARIADB_NAME:-mariadb}$ || true)
 else
-  CONTAINERS=$($DOCKER ps -aq --filter name=^mariadb$ || true)
+  CONTAINERS=$($DOCKER ps -aq --filter name=^${MARIADB_NAME:-mariadb}$ || true)
 fi
 if [ -n "$CONTAINERS" ]; then
   echo "[remote][ERROR] MariaDB container(s) still running: $CONTAINERS" >&2
@@ -278,7 +279,7 @@ EOF
         exit 1
         ;;
       91)
-        echo -e "${RED}[ERROR] MariaDB container(s) still running on NAS after cleanup. Run on the NAS: ssh ${user}@${host} \"docker rm -f $(docker ps -aq --filter name=^mariadb$)\" and rerun if needed.${NC}"
+        echo -e "${RED}[ERROR] MariaDB container(s) still running on NAS after cleanup. Run on the NAS: ssh ${user}@${host} \"docker rm -f $(docker ps -aq --filter name=^${container_name}$)\" and rerun if needed.${NC}"
         exit 1
         ;;
       *)

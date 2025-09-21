@@ -3,11 +3,14 @@
 Summary: Tweaked the Home Assistant uninstaller to locate the docker binary on QNAP volumes, guaranteeing the MariaDB container is removed even when the NAS exposes it solely via Container Station paths.
 
 Files updated:
-- home-assistant/uninstall-home-assistant.sh (docker lookup fallback, v1.0.7)
-- docs/llm/HANDOFF.md (version reference)
+- home-assistant/uninstall-home-assistant.sh (docker lookup fallback + configurable container name, v1.0.7)
+- home-assistant/mariadb/docker-compose.yml (container_name now configurable via env)
+- home-assistant/.env.example (document MARIADB_CONTAINER_NAME)
+- home-assistant/README.md (mention container name override)
+- docs/llm/HANDOFF.md (version/reference update)
 
 Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.7)
-Notes: The cleanup still targets only the MariaDB container (`--filter name=mariadb`) and aborts with an actionable message if any linger.
+Notes: Cleanup now targets `--filter name=^${MARIADB_CONTAINER_NAME:-mariadb}$` so only the project MariaDB container is affected.
 
 ---
 

@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: mariadb:11
-    container_name: mariadb
+    container_name: ${MARIADB_CONTAINER_NAME:-mariadb}
     restart: unless-stopped
     ports:
       - "${PUBLISHED_PORT:-3306}:3306"

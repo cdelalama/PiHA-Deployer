@@ -85,6 +85,7 @@ Variables to consider as well:
 Optional: MariaDB recorder validation
 - Set `ENABLE_MARIADB_CHECK=true` to have the installer verify MariaDB before deployment
 - Provide `MARIADB_HOST` (defaults to `NAS_IP`), `MARIADB_PORT` (defaults to `3306`), `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`
+- Optionally set `MARIADB_CONTAINER_NAME` to customize the MariaDB container name (defaults to `mariadb`).
 - The installer uses `netcat-openbsd` and `mariadb-client` to verify port reachability and credentials
 
 Refer to this README and your existing environment. Do not edit `.env.example` (it is generated from `.env` by a plugin).

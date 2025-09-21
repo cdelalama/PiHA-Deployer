@@ -19,7 +19,7 @@ Current Work
 - Legacy `nas/` directory removed; `home-assistant/mariadb/` is now the sole MariaDB source (see HISTORY entry).
 - `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.10 and the cleanup script)
 - `home-assistant/.env.example` deduplicated the installer behaviour section so the reuse flag guidance stays single-sourced
-- `home-assistant/uninstall-home-assistant.sh` new teardown helper for full resets (falls back to MARIADB_HOST/NAS_IP when NAS_SSH_HOST=localhost, v1.0.7)
+- `home-assistant/uninstall-home-assistant.sh` new teardown helper for full resets (falls back to MARIADB_HOST/NAS_IP when NAS_SSH_HOST=localhost, respects MARIADB_CONTAINER_NAME, v1.0.7)
 - `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`
 - `docs/llm/HISTORY.md` tracking latest helper + compose updates
 - Known gap: script still unvalidated on real QNAP after default change
