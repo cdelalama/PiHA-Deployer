@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -129,19 +129,29 @@ delete_path() {
 }
 
 run_remote_cleanup() {
-  local host="$NAS_SSH_HOST"
-  local user="$NAS_SSH_USER"
+  local host="${NAS_SSH_HOST:-}"
+  local user="${NAS_SSH_USER:-}"
   local port="${NAS_SSH_PORT:-22}"
-  local deploy_dir="$NAS_DEPLOY_DIR"
+  local deploy_dir="${NAS_DEPLOY_DIR:-}"
   local sudo_prefix=""
+
   if bool_true "${NAS_SSH_USE_SUDO:-false}"; then
     sudo_prefix="sudo "
   fi
+
+  if [[ -z "$host" || "$host" =~ ^(localhost|127\.0\.0\.1|::1)$ ]]; then
+    if [ -n "${NAS_IP:-}" ]; then
+      host="$NAS_IP"
+      echo -e "${YELLOW}[WARN] NAS_SSH_HOST points to localhost; using NAS_IP=${NAS_IP}.${NC}"
+    fi
+  fi
+
   if [ -z "$host" ] || [ -z "$user" ] || [ -z "$deploy_dir" ]; then
-    echo -e "${YELLOW}[WARN] NAS SSH cleanup skipped (missing NAS_SSH_* vars).${NC}"
+    echo -e "${YELLOW}[WARN] NAS SSH cleanup skipped (missing NAS_SSH_* or NAS_IP vars).${NC}"
     return
   fi
-  echo -e "${BLUE}Cleaning MariaDB deployment on NAS via SSH...${NC}"
+
+  echo -e "${BLUE}Cleaning MariaDB deployment on NAS via SSH (${user}@${host})...${NC}"
   ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" <<EOF
 set -e
 if [ -d "$deploy_dir" ]; then

@@ -29,15 +29,26 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 ## Reset / Uninstall
 
-If you need a full reset (containers, NAS data, and the NAS MariaDB deployment), run the uninstaller from your Home Assistant working directory (by default `~/piha-home-assistant`, created in Quick Start step 1):
+If you need a full reset (containers, NAS data, and the NAS MariaDB deployment), use the uninstaller from your Home Assistant working directory (by default `~/piha-home-assistant`, created in Quick Start step 1).
+
+**Recommended (keeps the confirmation prompt):**
 
 ```
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh
+sudo bash uninstall-home-assistant.sh
 ```
+
+**Automation-friendly one-liner (skips confirmation):**
+
+```
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash -s -- --force
+```
+
+Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_DIR}` on the NAS via SSH.
 
 - The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` on the NAS share.
-- By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB. Pass `--skip-nas-ssh` if you prefer to clean MariaDB manually.
-- It prompts before deleting unless you add `--force`.
+- By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB.
+- Staying in interactive mode (recommended) gives you a final confirmation before deleting.
 
 Afterwards you can remove the local working folder (e.g. `rm -rf ~/piha-home-assistant`) and rerun the installer for a clean deployment.
 ## What It Installs
@@ -146,4 +157,5 @@ Notes:
 ## Notes
 - This setup uses a local Portainer per Raspberry Pi for simplicity. A centralized Portainer Server + Agents can be added later as an enhancement.
   - Future plan: move Portainer Server to NAS and install Portainer Agent on each Raspberry Pi.
+
 
