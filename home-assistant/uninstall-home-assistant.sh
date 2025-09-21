@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 WORK_DIR=$(pwd)
 
@@ -21,6 +21,7 @@ Options:
   -f, --force        Do not prompt, proceed with removal
   --skip-nas-ssh     Do not connect to NAS via SSH to clean MariaDB deployment
   --purge-local      Remove this working directory after cleanup
+  --purge-images     Remove Home Assistant/Portainer Docker images from this Pi
   -h, --help         Print this message
 
 The script stops the Home Assistant stack on this Pi, removes NAS-backed
@@ -294,6 +295,34 @@ EOF
   echo -e "${GREEN}[OK] NAS MariaDB deployment directory removed${NC}"
 }
 
+purge_project_images() {
+  if ! bool_true "$PURGE_IMAGES"; then
+    return
+  fi
+  echo -e "${BLUE}Removing Home Assistant project images...${NC}"
+  local images=("ghcr.io/home-assistant/home-assistant" "portainer/portainer-ce")
+  local repo
+  local removed=0
+  for repo in "${images[@]}"; do
+    local tags
+    tags=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "^${repo}:" || true)
+    if [ -z "$tags" ]; then
+      echo -e "${YELLOW}[WARN] No local image found for ${repo}${NC}"
+      continue
+    fi
+    for tag in $tags; do
+      echo -e "${BLUE}  - Removing image ${tag}${NC}"
+      docker image rm -f "$tag" || true
+    done
+    removed=1
+  done
+  if [ "$removed" -eq 1 ]; then
+    docker image prune -f >/dev/null 2>&1 || true
+  else
+    echo -e "${BLUE}No project images to remove.${NC}"
+  fi
+}
+
 purge_working_dir() {
   if ! bool_true "$PURGE_LOCAL"; then
     return
@@ -331,8 +360,12 @@ confirm_or_exit() {
 FORCE=false
 SKIP_NAS_SSH=false
 PURGE_LOCAL=false
+PURGE_IMAGES=false
 if bool_true "${UNINSTALL_PURGE_LOCAL:-false}"; then
   PURGE_LOCAL=true
+fi
+if bool_true "${UNINSTALL_PURGE_IMAGES:-false}"; then
+  PURGE_IMAGES=true
 fi
 
 while [ $# -gt 0 ]; do
@@ -347,6 +380,10 @@ while [ $# -gt 0 ]; do
       ;;
     --purge-local)
       PURGE_LOCAL=true
+      shift
+      ;;
+    --purge-images)
+      PURGE_IMAGES=true
       shift
       ;;
     -h|--help)
@@ -423,5 +460,6 @@ else
   echo -e "${YELLOW}[WARN] Skipping NAS SSH cleanup as requested.${NC}"
 fi
 
+purge_project_images
 purge_working_dir
 echo -e "${BLUE}Cleanup complete. You may now remove the working directory (e.g. rm -rf $(pwd)) if desired.${NC}"

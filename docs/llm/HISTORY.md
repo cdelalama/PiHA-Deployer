@@ -1,16 +1,17 @@
 ## 2025-09-20 - Codex - Ensure HA uninstaller finds docker on QNAP
 
-Summary: Tweaked the Home Assistant uninstaller to locate the docker binary on QNAP volumes, guaranteeing the MariaDB container is removed even when the NAS exposes it solely via Container Station paths.
+Summary: Tweaked the Home Assistant uninstaller to locate the docker binary on QNAP volumes, scope cleanups to the configurable MariaDB container, and optionally purge the Pi working directory and images.
 
 Files updated:
-- home-assistant/uninstall-home-assistant.sh (docker lookup fallback + configurable container name, v1.0.7)
+- home-assistant/uninstall-home-assistant.sh (docker lookup fallback + configurable container name + purge flags, v1.0.8)
 - home-assistant/mariadb/docker-compose.yml (container_name now configurable via env)
-- home-assistant/.env.example (document MARIADB_CONTAINER_NAME)
-- home-assistant/README.md (mention container name override)
+- home-assistant/.env.example (document MARIADB_CONTAINER_NAME and purge flags)
+- home-assistant/README.md (mention container name override and purge options)
+- home-assistant/TEST_MATRIX.md (automation notes for new flags)
 - docs/llm/HANDOFF.md (version/reference update)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.7)
-Notes: Cleanup now targets `--filter name=^${MARIADB_CONTAINER_NAME:-mariadb}$` so only the project MariaDB container is affected.
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.8)
+Notes: Cleanup now targets `--filter name=^${MARIADB_CONTAINER_NAME:-mariadb}$`; use `--purge-local`/`--purge-images` (or env vars) to remove the Pi working directory and project images as part of the teardown.
 
 ---
 
