@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.9"
+VERSION="1.1.10"
 
 # Colors
 BLUE='\033[0;36m'
@@ -78,6 +78,19 @@ check_existing_data() {
   local reuse=false
   if bool_true "$reuse_flag"; then
     reuse=true
+  fi
+
+  if [ "$reuse" != true ] && [ -f .env ]; then
+    local raw_line raw_value
+    raw_line=$(grep -E '^[[:space:]]*HA_ALLOW_EXISTING_DATA[[:space:]]*=' .env | tail -n 1 || true)
+    if [ -n "$raw_line" ]; then
+      raw_line=$(printf '%s' "$raw_line" | sed $'s/\xEF\xBB\xBF//g; s/\xC2\xA0/ /g' | tr -d '\r')
+      raw_value=${raw_line#*=}
+      raw_value=$(echo "$raw_value" | xargs)
+      if bool_true "$raw_value"; then
+        reuse=true
+      fi
+    fi
   fi
 
   local existing_dirs=()

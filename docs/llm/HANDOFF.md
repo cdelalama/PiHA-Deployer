@@ -3,7 +3,7 @@
 ## Current Status
 
 Last Updated: 2025-09-20 - Codex
-Session Focus: Hardened the Home Assistant installer reuse flow after the restructure so non-interactive runs honour reuse flags, while keeping QNAP-aligned defaults in place.
+Session Focus: Hardened the Home Assistant installer reuse flow so non-interactive runs honour reuse flags even when env parsing is messy, while keeping QNAP-aligned defaults in place.
 Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers now point to the new location. QNAP defaults were corrected and NAS guide rewritten in ASCII. Recent work hardened the NAS helper + Home Assistant installer to avoid surprises when data already exists.
 
 ## Immediate Context
@@ -11,7 +11,7 @@ Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`
 Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
-- `home-assistant/install-home-assistant.sh` now at v1.1.9: references the new MariaDB path, halts when NAS data directories contain HA state, and correctly honours `HA_ALLOW_EXISTING_DATA` even when comments trail the value (interactive prompt locally; pipelines rely on the flag).
+- `home-assistant/install-home-assistant.sh` now at v1.1.10: references the new MariaDB path, halts on existing NAS data, and falls back to parsing `.env` directly so pipelines honour `HA_ALLOW_EXISTING_DATA` even with inline comments or parsing edge cases (interactive prompt locally; pipelines rely on the flag).
 - `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing) while keeping remote/QNAP defaults; skips copying when source/destination match
 - `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, security notes, and highlights that MariaDB data lives at `MARIADB_DATA_DIR` (default `${NAS_DEPLOY_DIR}/data`)
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
@@ -40,7 +40,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.9
+- home-assistant/install-home-assistant.sh: 1.1.10
 - home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.7
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
@@ -66,5 +66,6 @@ Current Versions
 ## Testing Notes
 
 During development you may copy files from Windows to the Pi using a Samba share on the Pi. For production, rely on GitHub-based installs.
+
 
 
