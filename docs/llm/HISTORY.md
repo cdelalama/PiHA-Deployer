@@ -1,3 +1,19 @@
+## 2025-09-21 - Codex - Auto-manage PyMySQL requirement
+
+Summary: Home Assistant installer v1.1.11 now ensures `${HA_DATA_DIR}/requirements.txt` includes PyMySQL when MariaDB is enabled so the recorder loads the MySQL driver automatically.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (v1.1.11 writes PyMySQL==1.1.0 to requirements.txt)
+- home-assistant/README.md (document automatic PyMySQL handling)
+- home-assistant/TEST_MATRIX.md (expectations mention requirements.txt)
+- docs/llm/HANDOFF.md (status/version updates)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.11)
+Notes: Users no longer need to install PyMySQL manually; a restart after installation pulls the dependency.
+
+---
+
 ## 2025-09-21 - Codex - Fix NAS helper compose copy
 
 Summary: When running setup-nas-mariadb.sh from the deployment directory the helper now redownloads docker-compose.yml if it is missing, preventing the 'stat ... no such file or directory' failure.

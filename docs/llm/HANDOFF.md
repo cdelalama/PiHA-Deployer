@@ -11,13 +11,13 @@ Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`
 Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
-- `home-assistant/install-home-assistant.sh` now at v1.1.10: references the new MariaDB path, halts on existing NAS data, and falls back to parsing `.env` directly so pipelines honour `HA_ALLOW_EXISTING_DATA` even with inline comments or parsing edge cases (interactive prompt locally; pipelines rely on the flag).
+- `home-assistant/install-home-assistant.sh` now at v1.1.11: references the new MariaDB path, halts on existing NAS data, falls back to parsing `.env` directly so pipelines honour `HA_ALLOW_EXISTING_DATA`, and now auto-manages PyMySQL in `${HA_DATA_DIR}/requirements.txt` when MariaDB is enabled.
 - `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing), forces compose to read the bundled file, and redownloads it when absent even in-place; keeps remote/QNAP defaults and skips copying when source/destination match
 - `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, security notes, and highlights that MariaDB data lives at `MARIADB_DATA_DIR` (default `${NAS_DEPLOY_DIR}/data`)
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - Legacy `nas/` directory removed; `home-assistant/mariadb/` is now the sole MariaDB source (see HISTORY entry).
-- `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.10, cleanup script, and common/common.env prep)
+- `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.11, cleanup script, common/common.env prep, and PyMySQL requirement checks)
 - `home-assistant/.env.example` deduplicated the installer behaviour section so the reuse flag guidance stays single-sourced
 - `home-assistant/uninstall-home-assistant.sh` teardown helper now at v1.0.9 (removes `.env`/`.env.bootstrap` by default, adds `--keep-env`, keeps purge flags + docker lookup fallbacks)
 - `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`; new `.env.example` for MariaDB helper
@@ -42,13 +42,13 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.10
+- home-assistant/install-home-assistant.sh: 1.1.11
 - home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.9
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities
 
-1) **VERIFY**: Re-run `home-assistant/uninstall-home-assistant.sh` (interactive, pipeline, `--keep-env`, `--purge-local`) to confirm `.env` removal behaves as documented and that purge flags leave the Pi ready for reinstall; confirm reinstall requires restoring both `common/common.env` and `.env`.
+1) **VERIFY**: Re-run `home-assistant/uninstall-home-assistant.sh` (interactive, pipeline, `--keep-env`, `--purge-local`) to confirm `.env` removal behaves as documented, that purge flags leave the Pi ready, and that the next install repopulates `${HA_DATA_DIR}/requirements.txt` with PyMySQL.
 2) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}/data` (current default) or move to a different NAS path. Update README + `.env` if needed.
 3) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
 4) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).

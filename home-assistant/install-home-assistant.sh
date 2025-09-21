@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.10"
+VERSION="1.1.11"
 
 # Colors
 BLUE='\033[0;36m'
@@ -297,6 +297,16 @@ EOF
   sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$secrets_file" "$config_file" 2>/dev/null || true
   sudo chmod 600 "$secrets_file" 2>/dev/null || true
   sudo chmod 664 "$config_file" 2>/dev/null || true
+
+  local requirements_file="${HA_DATA_DIR}/requirements.txt"
+  sudo touch "$requirements_file"
+  if ! sudo grep -qi '^pymysql' "$requirements_file"; then
+    echo "PyMySQL==1.1.0" | sudo tee -a "$requirements_file" >/dev/null
+    echo -e "${BLUE}[INFO] Added PyMySQL dependency to ${requirements_file}.${NC}"
+  fi
+  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$requirements_file" 2>/dev/null || true
+  sudo chmod 664 "$requirements_file" 2>/dev/null || true
+
   MARIADB_STATUS="configured"
   echo -e "${GREEN}[OK] Recorder configured to use MariaDB${NC}"
 }
