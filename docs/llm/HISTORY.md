@@ -3,12 +3,12 @@
 Summary: Added a scripted teardown that stops the HA stack, removes NAS-hosted data directories, and (optionally) cleans the NAS MariaDB deployment over SSH (falling back to MARIADB_HOST, then NAS_IP, when NAS_SSH_HOST=localhost) to ease fresh reinstall workflows.
 
 Files updated:
-- home-assistant/uninstall-home-assistant.sh (new helper script, v1.0.3)
+- home-assistant/uninstall-home-assistant.sh (new helper script, v1.0.4)
 - home-assistant/README.md (document reset instructions + interactive vs automation guidance)
 - home-assistant/TEST_MATRIX.md (new scenario 1G for cleanup script)
 - docs/llm/HANDOFF.md (status + tooling update)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 Notes: The uninstaller prompts before deleting; pipelines can pass --force and --skip-nas-ssh when needed. MariaDB cleanup requires the NAS SSH variables to be set.
 
 ---
@@ -51,7 +51,7 @@ Files updated:
 - docs/llm/HISTORY.md (this entry)
 - Removed `nas/` directory from repository
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 Notes: Historical entries referencing `nas/` remain for context; future updates must use `home-assistant/mariadb/`.
 
 ---
@@ -97,7 +97,7 @@ Files updated:
 - home-assistant/mariadb/docker-compose.yml (removed top-level version)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (compose files only)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (compose files only)
 Notes: Compose v2 ignores `version`; removing it avoids noisy WARN0000 messages during installs.
 
 ---
@@ -151,7 +151,7 @@ Files created/updated:
 - docs/llm/HANDOFF.md (operational handoff state)
 - docs/llm/HISTORY.md (this file)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 Next priority: complete component READMEs and create home-assistant structure
 
 ---
@@ -168,7 +168,7 @@ Files updated:
 - docs/llm/HISTORY.md (this entry)
 - node-red/README.md (requirements corrected)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (code behavior unchanged)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (code behavior unchanged)
 Notes: Rule to update HANDOFF and HISTORY after every code change is emphasized in multiple files.
 Env policy: Added clear guidance - do not edit .env.example (generated from .env), never change credentials in .env; document new vars and ask user to populate.
 
@@ -187,7 +187,7 @@ Files updated:
 - docs/PROJECT_CONTEXT.md (component structure)
 - docs/llm/HANDOFF.md (current status, priorities, versions)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (new component scaffolding; existing components unchanged)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (new component scaffolding; existing components unchanged)
 Notes: Installer installs Docker/Compose if missing, mounts NAS, binds data directories on NAS, deploys Portainer + Home Assistant. Environment file policy respected.
 
 ---
@@ -203,7 +203,7 @@ Files updated:
 - home-assistant/install-home-assistant.sh (auto-detect IP for URLs)
 - node-red/README.md (align .env creation instructions)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 
 ---
 
@@ -221,7 +221,7 @@ Installers updated:
 - node-red/configure-syncthing.sh (permissions and markers based on env paths)
 - home-assistant/install-home-assistant.sh (derive HA/Portainer/compose dirs from HOST_ID when missing)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (path behavior follows .env; default derivation only when env not set)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (path behavior follows .env; default derivation only when env not set)
 
 ---
 
@@ -235,7 +235,7 @@ Docs touched:
 
 Notes:
 - User updated both .env files accordingly. Next step is on-device validation on HA Pi.
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (env/config only)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (env/config only)
 
 ---
 
@@ -248,7 +248,7 @@ Docs updated:
 - node-red/README.md (password escape note)
 - docs/llm/HANDOFF.md (validation checklist bullet)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 
 ---
 
@@ -262,7 +262,7 @@ Files updated:
 
 Docs: password escape notes already present in component READMEs.
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (behavior safer; no functional change intended)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (behavior safer; no functional change intended)
 
 ---
 
@@ -274,7 +274,7 @@ Files updated:
 - home-assistant/install-home-assistant.sh (line normalization in loader)
 - node-red/load_env_vars.sh (line normalization in loader)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 
 ---
 
@@ -285,7 +285,7 @@ Summary: Added a defensive fallback to recover `PORTAINER_PASS` directly from `.
 Files updated:
 - home-assistant/install-home-assistant.sh (post-load fallback)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 ---
 
 ## 2025-09-06 - ChatGPT - Add optional shared config (common.env)
@@ -300,7 +300,7 @@ Docs:
 - docs/PROJECT_CONTEXT.md (Shared Configuration section with precedence)
 - home-assistant/README.md and node-red/README.md (Optional shared config notes)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 
 ---
 
@@ -316,7 +316,7 @@ Docs:
 - docs/PROJECT_CONTEXT.md (primary location and precedence)
 - home-assistant/README.md and node-red/README.md (usage notes)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 
 ---
 
@@ -330,7 +330,7 @@ Files added/updated:
 - home-assistant/README.md (Recorder with MariaDB instructions)
 - docs/llm/HANDOFF.md (status and next steps)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4)
 ---
 
 ## 2025-09-16 - Codex - Home Assistant MariaDB validation + NAS bootstrap
@@ -444,7 +444,7 @@ Summary: Updated root README with guidance on maintaining shared credentials in 
 Files updated:
 - README.md
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (documentation only)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (documentation only)
 Notes: Remind future installers that NAS credentials/UID/GID should live in the shared env file.
 ---
 
@@ -457,7 +457,7 @@ Files updated:
 - docs/llm/HANDOFF.md (updated status and current work)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (documentation cleanup only)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (documentation cleanup only)
 Notes: All Quick Start sections now provide clear SSH instructions and specific working directory creation. Addresses user feedback about incomplete directory guidance.
 ---
 
@@ -469,7 +469,7 @@ Files updated:
 - LLM_START_HERE.md (commit message policy)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (documentation/policy only)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (documentation/policy only)
 Notes: Future LLM responses with code changes must include commit information. HA installer v1.1.3 behavior significantly improved with automatic MariaDB recorder configuration.
 ---
 
@@ -491,7 +491,7 @@ Files updated:
 - docs/llm/HANDOFF.md (updated status, priorities, file locations)
 - docs/llm/HISTORY.md (this entry)
 
-Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.3) (structural reorganization, no code logic changes)
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.4) (structural reorganization, no code logic changes)
 Notes: QNAP path issue remains - setup-nas-mariadb.sh still defaults to /opt/piha-mariadb instead of /share/Container/compose/mariadb. Next LLM should fix these paths.
 ---
 
@@ -509,6 +509,7 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
 
 
 

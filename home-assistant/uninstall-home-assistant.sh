@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -11,7 +11,7 @@ NC='\033[0m'
 
 usage() {
   cat <<'EOF'
-PiHA-Deployer Home Assistant Uninstaller v1.0.0
+PiHA-Deployer Home Assistant Uninstaller v1.0.4
 
 Usage: sudo bash uninstall-home-assistant.sh [options]
 
@@ -176,17 +176,27 @@ run_remote_cleanup() {
   echo -e "${BLUE}Cleaning MariaDB deployment on NAS via SSH (${user}@${host})...${NC}"
   ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" <<EOF
 set -e
+echo "[remote] Checking $deploy_dir for compose assets"
 if [ -d "$deploy_dir" ]; then
   if [ -f "$deploy_dir/docker-compose.yml" ]; then
+    echo "[remote] docker compose down"
     ${sudo_prefix}docker compose -f "$deploy_dir/docker-compose.yml" down --remove-orphans || true
   fi
+  echo "[remote] removing $deploy_dir"
   ${sudo_prefix}rm -rf "$deploy_dir"
 fi
 containers=$(${sudo_prefix}docker ps -aq --filter name=mariadb || true)
 if [ -n "$containers" ]; then
+  echo "[remote] removing containers: $containers"
   ${sudo_prefix}docker rm -f $containers || true
 fi
 EOF
+  local leftover
+  leftover=$(ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" "docker ps -aq --filter name=mariadb || true")
+  if [ -n "$leftover" ]; then
+    echo -e "${RED}[ERROR] MariaDB container(s) still present on NAS: $leftover. Remove manually (ssh ${user}@${host} "docker rm -f $leftover") and rerun if needed.${NC}"
+    exit 1
+  fi
   echo -e "${GREEN}[OK] NAS MariaDB deployment directory removed${NC}"
 }
 
