@@ -29,7 +29,7 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 ## Reset / Uninstall
 
-If you need a full reset (containers, NAS data, and the NAS MariaDB deployment), run the uninstaller from your Home Assistant working directory:
+If you need a full reset (containers, NAS data, and the NAS MariaDB deployment), run the uninstaller from your Home Assistant working directory (by default `~/piha-home-assistant`, created in Quick Start step 1):
 
 ```
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash
@@ -146,6 +146,4 @@ Notes:
 ## Notes
 - This setup uses a local Portainer per Raspberry Pi for simplicity. A centralized Portainer Server + Agents can be added later as an enhancement.
   - Future plan: move Portainer Server to NAS and install Portainer Agent on each Raspberry Pi.
-
-
 
