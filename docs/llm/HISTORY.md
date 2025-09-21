@@ -1,4 +1,17 @@
-## 2025-09-20 - ChatGPT - Refine HA installer non-interactive behaviour
+## 2025-09-20 - Codex - Harden HA reuse flag parsing
+
+Summary: Made the Home Assistant installer tolerant to inline comments/extra tokens when reading `HA_ALLOW_EXISTING_DATA`, ensuring non-interactive runs honor the flag. Cleaned up the generated `.env.example` and refreshed the test matrix version.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (boolean parser now trims comments/whitespace, bumped to v1.1.9)
+- home-assistant/.env.example (deduplicated installer behaviour block)
+- home-assistant/TEST_MATRIX.md (reflects installer v1.1.9)
+- docs/llm/HANDOFF.md (status/version refresh)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.9)
+Notes: Pipeline command `curl ... | sudo bash` now respects `HA_ALLOW_EXISTING_DATA=true` even when comments follow the value; existing data reuse behaves consistently across scenarios.
+
+---## 2025-09-20 - ChatGPT - Refine HA installer non-interactive behaviour
 
 Summary: Updated the Home Assistant installer to abort without prompting when run via pipeline unless `HA_ALLOW_EXISTING_DATA=true` is set, keeping the interactive prompt for local executions.
 
@@ -479,3 +492,5 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
+

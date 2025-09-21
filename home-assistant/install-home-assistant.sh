@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.8"
+VERSION="1.1.9"
 
 # Colors
 BLUE='\033[0;36m'
@@ -58,7 +58,12 @@ load_env() {
 }
 
 bool_true() {
-  case "${1,,}" in
+  local raw="$1"
+  raw="$(printf '%s' "$raw" | sed $'s/\xC2\xA0/ /g; s/\r//g')"
+  raw="${raw%%#*}"
+  raw="$(echo "$raw" | awk '{print $1}' 2>/dev/null)"
+  raw="${raw,,}"
+  case "$raw" in
     1|y|yes|true|on) return 0 ;;
     *) return 1 ;;
   esac
