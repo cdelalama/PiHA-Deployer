@@ -10,8 +10,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 usage() {
-  cat <<'EOF'
-PiHA-Deployer Home Assistant Uninstaller v1.0.4
+  cat <<EOF
+PiHA-Deployer Home Assistant Uninstaller v${VERSION}
 
 Usage: sudo bash uninstall-home-assistant.sh [options]
 
@@ -153,16 +153,37 @@ run_remote_cleanup() {
   # Local execution path (script running directly on the NAS)
   if [[ -z "$host" || "$host" =~ ^(localhost|127\.0\.0\.1|::1)$ ]] || [ -z "$user" ]; then
     echo -e "${BLUE}Cleaning MariaDB deployment locally on this NAS...${NC}"
+    PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
+    local docker_path
+    docker_path=$(command -v docker 2>/dev/null || true)
+    if [ -z "$docker_path" ]; then
+      echo -e "${RED}[ERROR] docker command not found on NAS; aborting cleanup.${NC}"
+      exit 1
+    fi
+    local compose_cmd=""
+    if $docker_path compose version >/dev/null 2>&1; then
+      compose_cmd="$docker_path compose"
+    elif command -v docker-compose >/dev/null 2>&1; then
+      compose_cmd="$(command -v docker-compose)"
+    fi
     if [ -n "$deploy_dir" ] && [ -d "$deploy_dir" ]; then
-      if [ -f "$deploy_dir/docker-compose.yml" ]; then
-        ${sudo_prefix}docker compose -f "$deploy_dir/docker-compose.yml" down --remove-orphans || true
+      if [ -n "$compose_cmd" ] && [ -f "$deploy_dir/docker-compose.yml" ]; then
+        echo "[remote] running $compose_cmd down"
+        ${sudo_prefix}${compose_cmd} -f "$deploy_dir/docker-compose.yml" down --remove-orphans || true
       fi
+      echo "[remote] removing $deploy_dir"
       ${sudo_prefix}rm -rf "$deploy_dir"
     fi
     local containers
-    containers=$(${sudo_prefix}docker ps -aq --filter name=mariadb || true)
+    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=mariadb || true)
     if [ -n "$containers" ]; then
-      ${sudo_prefix}docker rm -f $containers || true
+      echo "[remote] removing containers: $containers"
+      ${sudo_prefix}$docker_path rm -f $containers || true
+    fi
+    containers=$(${sudo_prefix}$docker_path ps -aq --filter name=mariadb || true)
+    if [ -n "$containers" ]; then
+      echo -e "${RED}[ERROR] MariaDB container(s) still present on NAS: $containers. Remove manually (ssh ${user}@${host} "docker rm -f $containers") and rerun if needed.${NC}"
+      exit 1
     fi
     echo -e "${GREEN}[OK] Local NAS MariaDB deployment removed${NC}"
     return
@@ -174,31 +195,70 @@ run_remote_cleanup() {
   fi
 
   echo -e "${BLUE}Cleaning MariaDB deployment on NAS via SSH (${user}@${host})...${NC}"
-  ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" <<EOF
+  if ! ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" <<EOF; then
 set -e
-echo "[remote] Checking $deploy_dir for compose assets"
-if [ -d "$deploy_dir" ]; then
-  if [ -f "$deploy_dir/docker-compose.yml" ]; then
-    echo "[remote] docker compose down"
-    ${sudo_prefix}docker compose -f "$deploy_dir/docker-compose.yml" down --remove-orphans || true
-  fi
-  echo "[remote] removing $deploy_dir"
-  ${sudo_prefix}rm -rf "$deploy_dir"
+PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
+REMOTE_SUDO="${sudo_prefix}"
+DEPLOY_DIR="$deploy_dir"
+DOCKER_PATH=$(command -v docker 2>/dev/null || true)
+if [ -z "$DOCKER_PATH" ]; then
+  echo "[remote][ERROR] docker command not found in PATH." >&2
+  exit 90
 fi
-containers=$(${sudo_prefix}docker ps -aq --filter name=mariadb || true)
-if [ -n "$containers" ]; then
-  echo "[remote] removing containers: $containers"
-  ${sudo_prefix}docker rm -f $containers || true
+COMPOSE_CMD=""
+if $DOCKER_PATH compose version >/dev/null 2>&1; then
+  COMPOSE_CMD="$DOCKER_PATH compose"
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_CMD="$(command -v docker-compose)"
+fi
+
+echo "[remote] Checking $DEPLOY_DIR for compose assets"
+if [ -d "$DEPLOY_DIR" ]; then
+  if [ -n "$COMPOSE_CMD" ] && [ -f "$DEPLOY_DIR/docker-compose.yml" ]; then
+    echo "[remote] running $COMPOSE_CMD down"
+    if [ -n "$REMOTE_SUDO" ]; then
+      $REMOTE_SUDO $COMPOSE_CMD -f "$DEPLOY_DIR/docker-compose.yml" down --remove-orphans || true
+    else
+      $COMPOSE_CMD -f "$DEPLOY_DIR/docker-compose.yml" down --remove-orphans || true
+    fi
+  fi
+  echo "[remote] removing $DEPLOY_DIR"
+  if [ -n "$REMOTE_SUDO" ]; then
+    $REMOTE_SUDO rm -rf "$DEPLOY_DIR"
+  else
+    rm -rf "$DEPLOY_DIR"
+  fi
+fi
+if [ -n "$REMOTE_SUDO" ]; then
+  CONTAINERS=$($REMOTE_SUDO $DOCKER_PATH ps -aq --filter name=mariadb || true)
+else
+  CONTAINERS=$($DOCKER_PATH ps -aq --filter name=mariadb || true)
+fi
+if [ -n "$CONTAINERS" ]; then
+  echo "[remote][ERROR] MariaDB container(s) still running: $CONTAINERS" >&2
+  exit 91
 fi
 EOF
-  local leftover
-  leftover=$(ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" "docker ps -aq --filter name=mariadb || true")
-  if [ -n "$leftover" ]; then
-    echo -e "${RED}[ERROR] MariaDB container(s) still present on NAS: $leftover. Remove manually (ssh ${user}@${host} "docker rm -f $leftover") and rerun if needed.${NC}"
-    exit 1
+  then
+    local rc=$?
+    case $rc in
+      90)
+        echo -e "${RED}[ERROR] docker command not found on NAS PATH during SSH cleanup.${NC}"
+        exit 1
+        ;;
+      91)
+        echo -e "${RED}[ERROR] MariaDB container(s) still running on NAS after cleanup. Run on the NAS: ssh ${user}@${host} "docker rm -f \$(docker ps -aq --filter name=mariadb)" and rerun if needed.${NC}"
+        exit 1
+        ;;
+      *)
+        echo -e "${RED}[ERROR] SSH cleanup failed for NAS (exit $rc).${NC}"
+        exit 1
+        ;;
+    esac
   fi
   echo -e "${GREEN}[OK] NAS MariaDB deployment directory removed${NC}"
 }
+
 
 confirm_or_exit() {
   local force_flag="$1"
