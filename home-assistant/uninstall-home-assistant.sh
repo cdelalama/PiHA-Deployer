@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -139,15 +139,37 @@ run_remote_cleanup() {
     sudo_prefix="sudo "
   fi
 
+  # Fallbacks when NAS_SSH_HOST points to localhost
   if [[ -z "$host" || "$host" =~ ^(localhost|127\.0\.0\.1|::1)$ ]]; then
-    if [ -n "${NAS_IP:-}" ]; then
+    if [ -n "${MARIADB_HOST:-}" ] && [[ ! "${MARIADB_HOST,,}" =~ ^(localhost|127\.0\.0\.1|::1)$ ]]; then
+      host="$MARIADB_HOST"
+      echo -e "${YELLOW}[WARN] NAS_SSH_HOST=localhost; using MARIADB_HOST=${MARIADB_HOST} for cleanup.${NC}"
+    elif [ -n "${NAS_IP:-}" ] && [[ ! "${NAS_IP,,}" =~ ^(localhost|127\.0\.0\.1|::1)$ ]]; then
       host="$NAS_IP"
-      echo -e "${YELLOW}[WARN] NAS_SSH_HOST points to localhost; using NAS_IP=${NAS_IP}.${NC}"
+      echo -e "${YELLOW}[WARN] NAS_SSH_HOST=localhost; using NAS_IP=${NAS_IP} for cleanup.${NC}"
     fi
   fi
 
-  if [ -z "$host" ] || [ -z "$user" ] || [ -z "$deploy_dir" ]; then
-    echo -e "${YELLOW}[WARN] NAS SSH cleanup skipped (missing NAS_SSH_* or NAS_IP vars).${NC}"
+  # Local execution path (script running directly on the NAS)
+  if [[ -z "$host" || "$host" =~ ^(localhost|127\.0\.0\.1|::1)$ ]] || [ -z "$user" ]; then
+    echo -e "${BLUE}Cleaning MariaDB deployment locally on this NAS...${NC}"
+    if [ -n "$deploy_dir" ] && [ -d "$deploy_dir" ]; then
+      if [ -f "$deploy_dir/docker-compose.yml" ]; then
+        ${sudo_prefix}docker compose -f "$deploy_dir/docker-compose.yml" down --remove-orphans || true
+      fi
+      ${sudo_prefix}rm -rf "$deploy_dir"
+    fi
+    local containers
+    containers=$(${sudo_prefix}docker ps -aq --filter name=mariadb || true)
+    if [ -n "$containers" ]; then
+      ${sudo_prefix}docker rm -f $containers || true
+    fi
+    echo -e "${GREEN}[OK] Local NAS MariaDB deployment removed${NC}"
+    return
+  fi
+
+  if [ -z "$deploy_dir" ]; then
+    echo -e "${YELLOW}[WARN] NAS SSH cleanup skipped (NAS_DEPLOY_DIR not provided).${NC}"
     return
   fi
 
@@ -159,6 +181,10 @@ if [ -d "$deploy_dir" ]; then
     ${sudo_prefix}docker compose -f "$deploy_dir/docker-compose.yml" down --remove-orphans || true
   fi
   ${sudo_prefix}rm -rf "$deploy_dir"
+fi
+containers=$(${sudo_prefix}docker ps -aq --filter name=mariadb || true)
+if [ -n "$containers" ]; then
+  ${sudo_prefix}docker rm -f $containers || true
 fi
 EOF
   echo -e "${GREEN}[OK] NAS MariaDB deployment directory removed${NC}"

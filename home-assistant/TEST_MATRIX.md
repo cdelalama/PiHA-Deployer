@@ -73,3 +73,4 @@ After each scenario, confirm:
 - **NAS data**: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files.
 
 
+
