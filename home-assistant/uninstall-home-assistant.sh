@@ -199,7 +199,6 @@ run_remote_cleanup() {
   remote_cmd="PATH=${remote_base_path} ${remote_env} bash -s"
 
   if ! ssh -p "$port" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${user}@${host}" "$remote_cmd" <<'EOF'
-  then
 set -e
 if [ -n "$REMOTE_SUDO" ]; then
   DOCKER=$($REMOTE_SUDO command -v docker 2>/dev/null || true)
