@@ -2,9 +2,9 @@
 
 ## Current Status
 
-Last Updated: 2025-09-20 - Codex
-Session Focus: Hardened the Home Assistant installer reuse flow and added a scripted teardown so clean reinstalls are straightforward, while keeping QNAP-aligned defaults in place.
-Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers now point to the new location. QNAP defaults were corrected and NAS guide rewritten in ASCII. Recent work hardened the NAS helper + Home Assistant installer to avoid surprises when data already exists.
+Last Updated: 2025-09-21 - Codex
+Session Focus: Tightened the Home Assistant uninstall/reset flow so `.env` secrets are scrubbed by default, added an opt-in keep flag, and synced documentation + test coverage.
+Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers stay aligned with QNAP defaults. Latest work focuses on polishing the Home Assistant teardown tooling, defaulting to delete `.env`/`.env.bootstrap`, adding `--keep-env`, and documenting the behaviour across README + test matrix.
 
 ## Immediate Context
 
@@ -19,7 +19,7 @@ Current Work
 - Legacy `nas/` directory removed; `home-assistant/mariadb/` is now the sole MariaDB source (see HISTORY entry).
 - `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.10 and the cleanup script)
 - `home-assistant/.env.example` deduplicated the installer behaviour section so the reuse flag guidance stays single-sourced
-- `home-assistant/uninstall-home-assistant.sh` new teardown helper for full resets (falls back to MARIADB_HOST/NAS_IP when NAS_SSH_HOST=localhost, respects MARIADB_CONTAINER_NAME + purge flags, v1.0.8)
+- `home-assistant/uninstall-home-assistant.sh` teardown helper now at v1.0.9 (removes `.env`/`.env.bootstrap` by default, adds `--keep-env`, keeps purge flags + docker lookup fallbacks)
 - `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`
 - `docs/llm/HISTORY.md` tracking latest helper + compose updates
 - Known gap: script still unvalidated on real QNAP after default change
@@ -28,7 +28,7 @@ Active Files
 - README.md (component map fix)
 - home-assistant/README.md (Quick Start aligned with curl workflow + inline comment guidance for reuse flag)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
-- home-assistant/uninstall-home-assistant.sh (new teardown helper, v1.0.7)
+- home-assistant/uninstall-home-assistant.sh (teardown helper, v1.0.9 with .env cleanup + keep flag)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.7 local/remote-aware helper)
 - home-assistant/mariadb/README.md (manual-first docs + security notes)
 - home-assistant/docker-compose.yml (version key removed)
@@ -48,12 +48,13 @@ Current Versions
 
 ## Top Priorities
 
-1) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}/data` (current default) or move to a different NAS path. Update README + `.env` if needed.
-2) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
-3) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).
-4) **LATER**: Execute full Home Assistant + NAS MariaDB flow with `ENABLE_MARIADB_CHECK=true` and document recorder migration.
-5) **ONGOING**: Keep HISTORY and HANDOFF current; document any new env vars or behavioural changes.
-6) **DOC**: Record the final decision on MariaDB data directory layout for future automation runs.
+1) **VERIFY**: Re-run `home-assistant/uninstall-home-assistant.sh` (interactive, pipeline, `--keep-env`, `--purge-local`) to confirm `.env` removal behaves as documented and that purge flags leave the Pi ready for reinstall.
+2) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}/data` (current default) or move to a different NAS path. Update README + `.env` if needed.
+3) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
+4) **NEXT**: Deploy Zigbee2MQTT on a fresh Pi for relay/device testing (same checklist as before).
+5) **LATER**: Execute full Home Assistant + NAS MariaDB flow with `ENABLE_MARIADB_CHECK=true` and document recorder migration.
+6) **ONGOING**: Keep HISTORY and HANDOFF current; document any new env vars or behavioural changes.
+7) **DOC**: Record the final decision on MariaDB data directory layout for future automation runs.
 
 ## Do Not Touch
 

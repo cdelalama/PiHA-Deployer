@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.8"
+VERSION="1.0.9"
 
 WORK_DIR=$(pwd)
 
@@ -22,6 +22,7 @@ Options:
   --skip-nas-ssh     Do not connect to NAS via SSH to clean MariaDB deployment
   --purge-local      Remove this working directory after cleanup
   --purge-images     Remove Home Assistant/Portainer Docker images from this Pi
+  --keep-env        Retain .env in working directory after cleanup
   -h, --help         Print this message
 
 The script stops the Home Assistant stack on this Pi, removes NAS-backed
@@ -338,6 +339,31 @@ purge_working_dir() {
   PURGED_LOCAL_DONE=true
 }
 
+cleanup_env_artifacts() {
+  if bool_true "$PURGED_LOCAL_DONE"; then
+    return
+  fi
+  if bool_true "$KEEP_ENV"; then
+    echo -e "${YELLOW}[WARN] Retaining .env in working directory (--keep-env).${NC}"
+    return
+  fi
+  if [ ! -d "$WORK_DIR" ]; then
+    return
+  fi
+  local removed_any=false
+  for file in ".env" ".env.bootstrap"; do
+    local target="${WORK_DIR}/${file}"
+    if [ -f "$target" ]; then
+      echo -e "${BLUE}Removing ${file} from working directory...${NC}"
+      rm -f "$target" || true
+      removed_any=true
+    fi
+  done
+  if [ "$removed_any" = false ]; then
+    echo -e "${YELLOW}[WARN] No .env artifacts found in working directory.${NC}"
+  fi
+}
+
 
 
 confirm_or_exit() {
@@ -362,12 +388,16 @@ FORCE=false
 SKIP_NAS_SSH=false
 PURGE_LOCAL=false
 PURGE_IMAGES=false
+KEEP_ENV=false
 PURGED_LOCAL_DONE=false
 if bool_true "${UNINSTALL_PURGE_LOCAL:-false}"; then
   PURGE_LOCAL=true
 fi
 if bool_true "${UNINSTALL_PURGE_IMAGES:-false}"; then
   PURGE_IMAGES=true
+fi
+if bool_true "${UNINSTALL_KEEP_ENV:-false}"; then
+  KEEP_ENV=true
 fi
 
 while [ $# -gt 0 ]; do
@@ -386,6 +416,10 @@ while [ $# -gt 0 ]; do
       ;;
     --purge-images)
       PURGE_IMAGES=true
+      shift
+      ;;
+    --keep-env)
+      KEEP_ENV=true
       shift
       ;;
     -h|--help)
@@ -464,4 +498,12 @@ fi
 
 purge_project_images
 purge_working_dir
-echo -e "${BLUE}Cleanup complete. You may now remove the working directory (e.g. rm -rf $(pwd)) if desired.${NC}"
+cleanup_env_artifacts
+
+if bool_true "$PURGED_LOCAL_DONE"; then
+  echo -e "${BLUE}Cleanup complete. Working directory ${WORK_DIR} removed (--purge-local).${NC}"
+elif bool_true "$KEEP_ENV"; then
+  echo -e "${BLUE}Cleanup complete. Working directory retained at ${WORK_DIR}; .env kept (--keep-env).${NC}"
+else
+  echo -e "${BLUE}Cleanup complete. Working directory retained at ${WORK_DIR}; .env removed.${NC}"
+fi

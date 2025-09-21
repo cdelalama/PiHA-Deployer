@@ -1,3 +1,20 @@
+## 2025-09-21 - Codex - Remove .env during HA uninstall
+
+Summary: Bumped the Home Assistant uninstaller to v1.0.9, deleting `.env`/`.env.bootstrap` by default, adding a `--keep-env` toggle, and clarifying docs/test coverage for the new behaviour.
+
+Files updated:
+- home-assistant/uninstall-home-assistant.sh (v1.0.9 with .env cleanup + --keep-env option)
+- home-assistant/.env.example (document UNINSTALL_KEEP_ENV)
+- home-assistant/README.md (reset section clarifies .env removal + new flag)
+- home-assistant/TEST_MATRIX.md (1G expectations cover .env cleanup)
+- docs/llm/HANDOFF.md (status/priorities refreshed)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.0.9)
+Notes: Unless `--keep-env`/`UNINSTALL_KEEP_ENV=true` is supplied, the uninstaller removes credential files but leaves the working dir unless `--purge-local` is requested.
+
+---
+
 ## 2025-09-20 - Codex - Ensure HA uninstaller finds docker on QNAP
 
 Summary: Tweaked the Home Assistant uninstaller to locate the docker binary on QNAP volumes, scope cleanups to the configurable MariaDB container, and optionally purge the Pi working directory and images.
