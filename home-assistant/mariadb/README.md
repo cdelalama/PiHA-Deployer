@@ -22,7 +22,7 @@ cd /share/Container/compose/mariadb
 
 ```
 
-2. Copy or create `.env` in that directory using the variables above (upload it via SFTP/Samba or generate it from your secrets manager). Use `home-assistant/mariadb/.env.example` as a template and fill in your values.
+2. Copy or create `.env` in that directory using the variables above (upload it via SFTP/Samba or generate it from your secrets manager). Use `home-assistant/mariadb/.env.example` as a template and fill in your values (you can copy the `home-assistant/.env` you already maintain for the installer).
 3. With `.env` in place, download and run the helper in a single command (it will honour the values in your `.env` and start the stack):
 
 ```sh

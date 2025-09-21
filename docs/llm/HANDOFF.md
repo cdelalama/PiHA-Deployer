@@ -12,7 +12,7 @@ Current Work
 - Finalized architecture restructure: MariaDB assets now under `home-assistant/mariadb/`
 - Root README component list updated to surface MariaDB subdirectory and NAS guide
 - `home-assistant/install-home-assistant.sh` now at v1.1.10: references the new MariaDB path, halts on existing NAS data, and falls back to parsing `.env` directly so pipelines honour `HA_ALLOW_EXISTING_DATA` even with inline comments or parsing edge cases (interactive prompt locally; pipelines rely on the flag).
-- `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing), forces compose to read the bundled file, and keeps remote/QNAP defaults; skips copying when source/destination match
+- `home-assistant/mariadb/setup-nas-mariadb.sh` now handles local execution (skips SSH & downloads compose when missing), forces compose to read the bundled file, and redownloads it when absent even in-place; keeps remote/QNAP defaults and skips copying when source/destination match
 - `home-assistant/mariadb/README.md` documents manual-first bootstrap, single-command helper, security notes, and highlights that MariaDB data lives at `MARIADB_DATA_DIR` (default `${NAS_DEPLOY_DIR}/data`)
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
@@ -43,7 +43,7 @@ Current Versions
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
 - home-assistant/install-home-assistant.sh: 1.1.10
-- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.8
+- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.9
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities

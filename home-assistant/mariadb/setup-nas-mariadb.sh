@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.8"
+VERSION="1.0.9"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -164,12 +164,15 @@ main() {
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
   if is_local_host; then
-    if [ "$same_dir" = "true" ]; then
+    local target="${NAS_DEPLOY_DIR}/docker-compose.yml"
+    if [ "$same_dir" = "true" ] && [ -f "$target" ]; then
       echo -e "${YELLOW}[WARN] docker-compose.yml already present in ${NAS_DEPLOY_DIR}; skipping copy.${NC}"
-    elif [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
-      cp "${SCRIPT_DIR}/docker-compose.yml" "${NAS_DEPLOY_DIR}/docker-compose.yml"
     else
-      curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/docker-compose.yml -o "${NAS_DEPLOY_DIR}/docker-compose.yml"
+      if [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
+        cp "${SCRIPT_DIR}/docker-compose.yml" "$target"
+      else
+        curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/docker-compose.yml -o "$target"
+      fi
     fi
   else
     scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/docker-compose.yml" >/dev/null

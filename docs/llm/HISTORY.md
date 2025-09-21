@@ -1,3 +1,18 @@
+## 2025-09-21 - Codex - Fix NAS helper compose copy
+
+Summary: When running setup-nas-mariadb.sh from the deployment directory the helper now redownloads docker-compose.yml if it is missing, preventing the 'stat ... no such file or directory' failure.
+
+Files updated:
+- home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.9 ensures compose file exists before skipping copy)
+- home-assistant/README.md (clarify `.env` reuse for MariaDB helper)
+- home-assistant/mariadb/README.md (explicitly mention copying home-assistant/.env)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.9)
+Notes: Running the helper in-place on the NAS now bootstraps docker-compose.yml automatically even after cleanup.
+
+---
+
 ## 2025-09-21 - Codex - Harden NAS helper compose defaults
 
 Summary: Tweaked the NAS MariaDB helper so `docker compose` always loads the local file and shipped a `.env.example` to simplify bootstrapping.

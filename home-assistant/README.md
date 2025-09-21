@@ -19,7 +19,7 @@ cd ~/piha-home-assistant
 ```
 
 2. Create a `common/` subdirectory here and drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
-3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`). You can copy `home-assistant/.env.example` as a template and fill in your secrets.
+3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`). You can copy `home-assistant/.env.example` as a template (or reuse your existing `home-assistant/.env`) and fill in your secrets.
 4. Run the installer directly from GitHub (requires `curl` and `sudo`):
 
 ```
