@@ -1,3 +1,17 @@
+## 2025-09-20 - ChatGPT - Remove legacy nas directory
+
+Summary: Deleted the obsolete `nas/` helper folder now that MariaDB lives under `home-assistant/mariadb/`. All references now point to the maintained location.
+
+Files updated:
+- docs/llm/HANDOFF.md (note on removal)
+- docs/llm/HISTORY.md (this entry)
+- Removed `nas/` directory from repository
+
+Version impact: none
+Notes: Historical entries referencing `nas/` remain for context; future updates must use `home-assistant/mariadb/`.
+
+---
+
 ## 2025-09-18 - Codex - Interactive reuse guard for Home Assistant
 
 Summary: Home Assistant installer v1.1.7 now prompts to reuse existing NAS data when a TTY is available, while keeping the HA_ALLOW_EXISTING_DATA override for non-interactive runs.
@@ -77,7 +91,7 @@ Files updated:
 - docs/llm/HISTORY.md (this entry)
 
 Version impact: yes (home-assistant/mariadb/setup-nas-mariadb.sh -> 1.0.1)
-Notes: Need to validate the QNAP defaults on real hardware and remove the legacy `nas/` copies once confirmed obsolete.
+Notes: Need to validate the QNAP defaults on real hardware and remove the legacy `nas/` copies once confirmed obsolete. (Resolved 2025-09-20: legacy `nas/` directory removed.)
 
 ---
 
