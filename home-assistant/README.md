@@ -27,6 +27,19 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 > Heads-up: if the NAS already contains previous Home Assistant data (e.g. `${HA_DATA_DIR}`), the installer detects it. When running interactively it will ask whether to reuse the data; in non-interactive runs (e.g. `curl ... | sudo bash`) the installer exits unless `HA_ALLOW_EXISTING_DATA=true` is set in `.env` (or you remove the directories for a clean install). Inline comments after the flag are fine (`HA_ALLOW_EXISTING_DATA=true  # reuse NAS data` will be honoured).
 
+## Reset / Uninstall
+
+If you need a full reset (containers, NAS data, and the NAS MariaDB deployment), run the uninstaller from your Home Assistant working directory:
+
+```
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash
+```
+
+- The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` on the NAS share.
+- By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB. Pass `--skip-nas-ssh` if you prefer to clean MariaDB manually.
+- It prompts before deleting unless you add `--force`.
+
+Afterwards you can remove the local working folder (e.g. `rm -rf ~/piha-home-assistant`) and rerun the installer for a clean deployment.
 ## What It Installs
 - Docker + Docker Compose plugin (if missing)
 - Portainer (local instance on this Raspberry Pi)
@@ -133,4 +146,6 @@ Notes:
 ## Notes
 - This setup uses a local Portainer per Raspberry Pi for simplicity. A centralized Portainer Server + Agents can be added later as an enhancement.
   - Future plan: move Portainer Server to NAS and install Portainer Agent on each Raspberry Pi.
+
+
 

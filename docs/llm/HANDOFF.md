@@ -3,7 +3,7 @@
 ## Current Status
 
 Last Updated: 2025-09-20 - Codex
-Session Focus: Hardened the Home Assistant installer reuse flow so non-interactive runs honour reuse flags even when env parsing is messy, while keeping QNAP-aligned defaults in place.
+Session Focus: Hardened the Home Assistant installer reuse flow and added a scripted teardown so clean reinstalls are straightforward, while keeping QNAP-aligned defaults in place.
 Status: Architectural move completed (MariaDB lives in `home-assistant/mariadb/`). Repository docs and installers now point to the new location. QNAP defaults were corrected and NAS guide rewritten in ASCII. Recent work hardened the NAS helper + Home Assistant installer to avoid surprises when data already exists.
 
 ## Immediate Context
@@ -17,8 +17,9 @@ Current Work
 - `home-assistant/README.md` Quick Start now mirrors the curl-based install workflow
 - `docs/NAS_CONFIGURATION.md` rewritten as vendor-agnostic ASCII guide with NAS prep snippet
 - Legacy `nas/` directory removed; `home-assistant/mariadb/` is now the sole MariaDB source (see HISTORY entry).
-- `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.9)
+- `home-assistant/TEST_MATRIX.md` documents the agreed test scenarios (updated for installer v1.1.10 and the cleanup script)
 - `home-assistant/.env.example` deduplicated the installer behaviour section so the reuse flag guidance stays single-sourced
+- `home-assistant/uninstall-home-assistant.sh` new teardown helper for full resets
 - `home-assistant/docker-compose.yml` / `home-assistant/mariadb/docker-compose.yml` drop deprecated compose `version`
 - `docs/llm/HISTORY.md` tracking latest helper + compose updates
 - Known gap: script still unvalidated on real QNAP after default change
@@ -27,6 +28,7 @@ Active Files
 - README.md (component map fix)
 - home-assistant/README.md (Quick Start aligned with curl workflow + inline comment guidance for reuse flag)
 - home-assistant/install-home-assistant.sh (path references + bootstrap hint)
+- home-assistant/uninstall-home-assistant.sh (new teardown helper, v1.0.0)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.7 local/remote-aware helper)
 - home-assistant/mariadb/README.md (manual-first docs + security notes)
 - home-assistant/docker-compose.yml (version key removed)
@@ -66,6 +68,7 @@ Current Versions
 ## Testing Notes
 
 During development you may copy files from Windows to the Pi using a Samba share on the Pi. For production, rely on GitHub-based installs.
+
 
 
 

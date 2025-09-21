@@ -1,3 +1,18 @@
+## 2025-09-20 - Codex - Add Home Assistant uninstaller
+
+Summary: Added a scripted teardown that stops the HA stack, removes NAS-hosted data directories, and (optionally) cleans the NAS MariaDB deployment over SSH to ease fresh reinstall workflows.
+
+Files updated:
+- home-assistant/uninstall-home-assistant.sh (new helper script, v1.0.0)
+- home-assistant/README.md (document reset instructions)
+- home-assistant/TEST_MATRIX.md (new scenario 1G for cleanup script)
+- docs/llm/HANDOFF.md (status + tooling update)
+
+Version impact: none
+Notes: The uninstaller prompts before deleting; pipelines can pass --force and --skip-nas-ssh when needed. MariaDB cleanup requires the NAS SSH variables to be set.
+
+---
+
 ## 2025-09-20 - Codex - Harden HA reuse flag parsing (v1.1.10)
 
 Summary: Made the Home Assistant installer tolerant to inline comments/extra tokens when reading `HA_ALLOW_EXISTING_DATA`, ensuring non-interactive runs honor the flag. Cleaned up the generated `.env.example` and refreshed the test matrix version.
@@ -5,13 +20,15 @@ Summary: Made the Home Assistant installer tolerant to inline comments/extra tok
 Files updated:
 - home-assistant/install-home-assistant.sh (boolean parser trims comments/whitespace and falls back to .env parsing, bumped to v1.1.10)
 - home-assistant/.env.example (deduplicated installer behaviour block)
-- home-assistant/TEST_MATRIX.md (reflects installer v1.1.9)
+- home-assistant/TEST_MATRIX.md (reflects installer v1.1.10)
 - docs/llm/HANDOFF.md (status/version refresh)
 
 Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.10)
 Notes: Pipeline command `curl ... | sudo bash` now respects `HA_ALLOW_EXISTING_DATA=true` even when comments follow the value; existing data reuse behaves consistently across scenarios.
 
----## 2025-09-20 - ChatGPT - Refine HA installer non-interactive behaviour
+---
+
+## 2025-09-20 - ChatGPT - Refine HA installer non-interactive behaviour
 
 Summary: Updated the Home Assistant installer to abort without prompting when run via pipeline unless `HA_ALLOW_EXISTING_DATA=true` is set, keeping the interactive prompt for local executions.
 
@@ -492,6 +509,8 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
+
 
 
 

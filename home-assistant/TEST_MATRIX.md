@@ -36,6 +36,11 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 - Missing MariaDB credentials (`ENABLE_MARIADB_CHECK=true` but incomplete `MARIADB_*`): expect abort with guidance.
 - NAS unreachable (`NAS_IP` incorrect): expect abort after `Checking NAS connectivity...`.
 
+### 1G. Cleanup / reset script
+- **Prep**: Ensure `.env` is present with the NAS SSH credentials (if you want MariaDB cleaned remotely). Leave existing data in place to observe deletions.
+- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash`
+- **Expect**: Script prompts for confirmation (unless `--force`), stops the stack, removes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, `${DOCKER_COMPOSE_DIR}` and removes `${NAS_DEPLOY_DIR}` via SSH. Re-running the installer afterwards should behave like a fresh install (scenarios 1A/1B).
+
 ## 2. MariaDB Helper (v1.0.7)
 
 ### 2A. Manual bootstrap directly on the NAS (recommended)
@@ -64,3 +69,4 @@ After each scenario, confirm:
 - **Home Assistant**: `docker ps` shows `homeassistant` + `portainer`. `docker logs homeassistant | grep Recorder` reveals whether MariaDB is in use.
 - **MariaDB**: `docker ps` includes `mariadb`. From the NAS run `docker exec -it mariadb mysql -u homeassistant -p` and check `SHOW TABLES;` or `SELECT COUNT(*) FROM events;`.
 - **NAS data**: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files.
+
