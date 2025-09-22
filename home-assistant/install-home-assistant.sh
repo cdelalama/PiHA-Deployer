@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.12"
+VERSION="1.1.13"
 
 # Colors
 BLUE='\033[0;36m'
@@ -315,7 +315,14 @@ EOF
   MARIADB_STATUS="configured"
   echo -e "${GREEN}[OK] Recorder configured to use MariaDB${NC}"
   if [ "$ha_running" = "true" ]; then
-    echo -e "${YELLOW}[NOTE] Home Assistant container already running; restart it so requirements.txt changes take effect.${NC}"
+    echo -e "${YELLOW}[NOTE] Home Assistant container already running; restarting it so requirements.txt changes take effect.${NC}"
+    local dc
+    dc=$(docker_compose_cmd)
+    if [ -n "$dc" ] && [ -f "${BASE_DIR}/docker-compose.yml" ]; then
+      sudo -E $dc -f "${BASE_DIR}/docker-compose.yml" restart homeassistant >/dev/null || true
+    else
+      sudo docker restart homeassistant >/dev/null || true
+    fi
   fi
 }
 

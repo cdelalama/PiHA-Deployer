@@ -4,7 +4,7 @@
 
 Goal: Automated deployment of home automation services on Raspberry Pi with NAS synchronization.
 
-Current Status: Node-RED component is complete and stable. Home Assistant installer v1.1.0 (with MariaDB validation) awaits on-device testing. Zigbee2MQTT component has been scaffolded for upcoming relay validation.
+Current Status: Node-RED component is complete and stable. Home Assistant installer v1.1.13 (with MariaDB validation and automatic restart) is awaiting full on-device regression with NAS. Zigbee2MQTT stack is deployed and running in production on a dedicated Pi (validated 2025-09-21).
 
 ## Architecture Overview
 
@@ -13,11 +13,11 @@ Core Components
   - Docker container with persistent data
   - Web interface for automation flows
   - Integration with Portainer and Syncthing
-- Home Assistant (planned)
+- Home Assistant (validation)
   - Similar Docker deployment pattern
   - Home automation hub
   - Integration with the same NAS sync system
-- Zigbee2MQTT (scaffolded)
+- Zigbee2MQTT (production)
   - Zigbee coordinator + Mosquitto broker + Portainer
   - Runs on dedicated Pi with SONOFF USB dongle and NAS-backed data
   - Provides MQTT bridge for Home Assistant automations
@@ -57,7 +57,7 @@ PiHA-Deployer/
 |   `-- docker-compose.yml         # Service definitions
 |-- home-assistant/                # Home Assistant deployment
 |   |-- README.md                  # Component overview
-|   |-- install-home-assistant.sh  # Main installer (v1.1.5)
+|   |-- install-home-assistant.sh  # Main installer (v1.1.13)
 |   |-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
 |   `-- mariadb/                   # MariaDB for recorder (runs on NAS)
 |       |-- README.md              # MariaDB setup guide
@@ -129,7 +129,8 @@ Environment files policy
 ## Component Links
 
 - Node-RED: node-red/README.md (current implementation)
-- Home Assistant: home-assistant/README.md (to be created)
+- Home Assistant: home-assistant/README.md
+- Zigbee2MQTT: zigbee2mqtt/README.md
 
 ## Technology Stack
 
@@ -142,4 +143,3 @@ Environment files policy
 ---
 
 Next: read docs/VERSIONING_RULES.md
-

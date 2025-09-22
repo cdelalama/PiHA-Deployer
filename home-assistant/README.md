@@ -98,8 +98,7 @@ Optional: MariaDB recorder validation
 - Provide `MARIADB_HOST` (defaults to `NAS_IP`), `MARIADB_PORT` (defaults to `3306`), `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`
 - Optionally set `MARIADB_CONTAINER_NAME` to customize the MariaDB container name (defaults to `mariadb`).
 - The installer uses `netcat-openbsd` and `mariadb-client` to verify port reachability and credentials
-- When MariaDB is enabled, the installer ensures `requirements.txt` inside `${HA_DATA_DIR}` contains `PyMySQL==1.1.0`, so the Recorder can load the MySQL driver automatically on restart.
-- If the Home Assistant container was already running, restart it after the installer finishes so the new dependency is picked up.
+- When MariaDB is enabled, the installer ensures `requirements.txt` inside `${HA_DATA_DIR}` contains `PyMySQL==1.1.0` and automatically restarts the `homeassistant` container when it was already running, so the Recorder picks up the MySQL driver without manual steps.
 
 Refer to this README and your existing environment. Do not edit `.env.example` (it is generated from `.env` by a plugin).
 

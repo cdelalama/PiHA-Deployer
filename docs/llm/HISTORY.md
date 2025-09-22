@@ -1,3 +1,46 @@
+## 2025-09-21 - Codex - Prepare HA reset test plan
+
+Summary: Updated the Home Assistant test matrix to v1.1.13 with the end-to-end reset scenario (1H) and refreshed HANDOFF priorities to point at executing the uninstall -> reinstall validation.
+
+Files updated:
+- home-assistant/TEST_MATRIX.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: no (documentation and coordination updates only).
+Notes: Scenario 1H now guides running the uninstaller followed by fresh installs 1A/1B to confirm PyMySQL restart messaging and clean environment before regression.
+
+---
+## 2025-09-21 - Codex - Align Zigbee2MQTT docs with production stack
+
+Summary: Documented that Zigbee2MQTT is already running on host cdelalamazigbee, refreshed component status, and updated HANDOFF priorities so future work captures the production footprint.
+
+Files updated:
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: no (documentation alignment only).
+Notes: Zigbee2MQTT stack validated with running containers (`zigbee2mqtt`, `mosquitto`, `portainer_z2m`) and MQTT exposed on 1883 with UI on 8080.
+
+---
+
+## 2025-09-21 - Codex - Auto-restart HA after PyMySQL injection
+
+Summary: Home Assistant installer v1.1.13 now restarts the running container when rewriting requirements for MariaDB recorder so users don?t have to reboot manually.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (v1.1.13 restarts homeassistant via docker compose restart)
+- home-assistant/README.md (clarify restart handled automatically)
+- home-assistant/TEST_MATRIX.md (reuse scenarios note the automatic restart)
+- docs/llm/HANDOFF.md (version/priorities refreshed)
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.13)
+Notes: re-running the installer over existing data now fully configures MariaDB without manual docker commands.
+
+---
+
 ## 2025-09-21 - Codex - Warn about restart when reusing HA stack
 
 Summary: Installer v1.1.12 now tells users to restart Home Assistant if the container was already running when MariaDB recorder config is updated, so the new requirements take effect automatically.
@@ -152,7 +195,7 @@ Files updated:
 - docs/llm/HANDOFF.md (version/status updated)
 
 Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.8)
-Notes: Pipeline runs (`curl … | sudo bash`) now exit immediately unless the reuse flag is set; interactive runs still prompt for confirmation.
+Notes: Pipeline runs (`curl ï¿½ | sudo bash`) now exit immediately unless the reuse flag is set; interactive runs still prompt for confirmation.
 
 ---
 
@@ -623,16 +666,3 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
-
-
-
-
-
-
-
-
-
-
-
-
-
