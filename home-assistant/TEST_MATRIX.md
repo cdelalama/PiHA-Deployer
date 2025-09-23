@@ -39,7 +39,8 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 ### 1G. Cleanup / reset script
 - **Prep**: Ensure `.env` is present with the NAS SSH credentials (if you want MariaDB cleaned remotely). Leave existing data in place to observe deletions.
 - **Run (interactive, recommended)**:
-  - `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh`
+  - `curl -fSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh && echo "Downloaded uninstall-home-assistant.sh; run sudo bash uninstall-home-assistant.sh next"`
+  - (The curl download now prints progress; the echoed message confirms success and points to the next command.)
   - `sudo bash uninstall-home-assistant.sh`
 - **Run (automation)**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash -s -- --force` (add `--skip-nas-ssh` when you do *not* want to clean MariaDB remotely; add `--purge-local` if you want the working directory removed, `--purge-images` to delete project images, and `--keep-env` when the `.env` file must stay in place).
 - **Expect**: The script stops the stack, removes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, `${DOCKER_COMPOSE_DIR}` and, unless you pass `--skip-nas-ssh`, deletes `${NAS_DEPLOY_DIR}` via SSH. By default it deletes `.env` (and `.env.bootstrap`) from the working directory once finished; verify with `ls` or set `UNINSTALL_KEEP_ENV=true` (or pass `--keep-env`) when you want to preserve it. If you use `--purge-local`, confirm the working directory is gone; otherwise validate that only support files remain. Afterwards scenarios 1A/1B behave like a fresh install; on the NAS run `docker ps -a | grep ${MARIADB_CONTAINER_NAME:-mariadb}` to confirm no project MariaDB container remains and ensure `${HA_DATA_DIR}/requirements.txt` is recreated with `PyMySQL==1.1.0` on the next installer run (and the script handles the restart automatically).
@@ -76,3 +77,4 @@ After each scenario, confirm:
 - **Home Assistant**: `docker ps` shows `homeassistant` + `portainer`. `docker logs homeassistant | grep Recorder` reveals whether MariaDB is in use.
 - **MariaDB**: `docker ps` includes `mariadb`. From the NAS run `docker exec -it mariadb mysql -u homeassistant -p` and check `SHOW TABLES;` or `SELECT COUNT(*) FROM events;`.
 - **NAS data**: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files.
+

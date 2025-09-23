@@ -10,7 +10,7 @@ Status: Zigbee2MQTT stack confirmed running on host `cdelalamazigbee` (Mosquitto
 
 Current Work
 - Home Assistant tooling hardened: installer v1.1.13 auto restarts after PyMySQL injection; uninstaller v1.0.9 scrubs `.env` by default with `--keep-env` opt-in; docs and test matrix highlight the new behaviours.
-- Home Assistant test matrix bumped to v1.1.13 with scenario 1H guiding the uninstall -> reinstall validation sequence.
+- Home Assistant test matrix bumped to v1.1.13 with scenario 1H guiding the uninstall -> reinstall validation sequence; curl command now uses -fSL so progress is visible and echoes the next action.
 - MariaDB helper (`home-assistant/mariadb/setup-nas-mariadb.sh` v1.0.9) supports local execution, forces docker compose to consume the bundled file, and the NAS guide is vendor-agnostic.
 - Zigbee2MQTT installer v1.1.3 is validated on production host `cdelalamazigbee`; containers `zigbee2mqtt`, `mosquitto`, and `portainer_z2m` are up with MQTT exposed on 1883 and the UI on 8080.
 
@@ -56,3 +56,4 @@ Current Versions
 ## Testing Notes
 
 During development you may copy files from Windows to the Pi using a Samba share on the Pi. For production, rely on GitHub-based installs.
+
