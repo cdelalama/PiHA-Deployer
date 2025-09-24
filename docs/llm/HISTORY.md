@@ -1,6 +1,6 @@
 ## 2025-09-21 - Codex - Prepare HA reset test plan
 
-Summary: Updated the Home Assistant test matrix to v1.1.13 with the end-to-end reset scenario (1H), switched the curl download to -fSL with an English confirmation message, and refreshed HANDOFF priorities to point at executing the uninstall -> reinstall validation.
+Summary: Updated the Home Assistant test matrix to v1.1.13 with the end-to-end reset scenario (1H), switched the curl download to -fSL with a blue English confirmation message, and refreshed HANDOFF priorities to point at executing the uninstall -> reinstall validation.
 
 Files updated:
 - home-assistant/TEST_MATRIX.md
@@ -8,7 +8,7 @@ Files updated:
 - docs/llm/HISTORY.md (this entry)
 
 Version impact: no (documentation and coordination updates only).
-Notes: Scenario 1H now guides running the uninstaller followed by fresh installs 1A/1B to confirm PyMySQL restart messaging; the curl command runs with -fSL (progress shown) and still emits a next-action reminder when the download completes.
+Notes: Scenario 1H now guides running the uninstaller followed by fresh installs 1A/1B to confirm PyMySQL restart messaging; the curl command runs with -fSL (progress shown) and prints a blue reminder when the download completes.
 
 ---
 ## 2025-09-21 - Codex - Align Zigbee2MQTT docs with production stack
@@ -666,4 +666,5 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
 
