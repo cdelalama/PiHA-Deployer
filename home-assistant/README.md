@@ -45,7 +45,7 @@ sudo bash uninstall-home-assistant.sh
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash -s -- --force
 ```
 
-Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_DIR}` on the NAS via SSH. Pass `--purge-local` if you also want the script to remove this working directory once cleanup finishes, `--purge-images` to delete the Home Assistant/Portainer Docker images from the Pi, and `--keep-env` to retain `.env` in the working directory after the run (set `UNINSTALL_PURGE_LOCAL/UNINSTALL_PURGE_IMAGES/UNINSTALL_KEEP_ENV` in `.env` to make these the defaults).
+Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_DIR}` on the NAS via SSH. In interactive runs the uninstaller now asks (after the confirmation) whether to delete this working directory and remove the Home Assistant/Portainer Docker images; answer `y` to apply. Automation can continue to pass `--purge-local`, `--purge-images`, or set the `UNINSTALL_PURGE_LOCAL/UNINSTALL_PURGE_IMAGES` env vars; use `--keep-env`/`UNINSTALL_KEEP_ENV` when you need `.env` to survive the cleanup.
 
 - The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` on the NAS share.
 - By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB.

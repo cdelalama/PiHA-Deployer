@@ -1,3 +1,19 @@
+## 2025-09-21 - Codex - Add interactive purge prompts to HA uninstaller
+
+Summary: Bumped `home-assistant/uninstall-home-assistant.sh` to v1.1.0 so interactive runs ask about purging the working directory and project images while keeping automation flags available. Updated README/test matrix guidance and synced HANDOFF with the new workflow.
+
+Files updated:
+- home-assistant/uninstall-home-assistant.sh (v1.1.0 interactive purge prompts)
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.1.0)
+Notes: Interactive runs now display a blue curl confirmation message, prompt about purging the workspace/images, and still default to removing `.env` unless `--keep-env` is chosen.
+
+---
+
 ## 2025-09-21 - Codex - Prepare HA reset test plan
 
 Summary: Updated the Home Assistant test matrix to v1.1.13 with the end-to-end reset scenario (1H), switched the curl download to -fSL with a blue English confirmation message, and refreshed HANDOFF priorities to point at executing the uninstall -> reinstall validation.

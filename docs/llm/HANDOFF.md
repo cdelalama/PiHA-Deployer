@@ -3,14 +3,14 @@
 ## Current Status
 
 Last Updated: 2025-09-21 - Codex
-Session Focus: Aligned documentation with the live Zigbee2MQTT deployment and refreshed the component status snapshot.
+Session Focus: Documented the live Zigbee2MQTT deployment and added interactive purge prompts to the Home Assistant teardown flow.
 Status: Zigbee2MQTT stack confirmed running on host `cdelalamazigbee` (Mosquitto + Zigbee2MQTT + Portainer) with MQTT on 1883 and UI on 8080. Home Assistant installers/uninstallers remain the active focus for validation and NAS MariaDB alignment.
 
 ## Immediate Context
 
 Current Work
-- Home Assistant tooling hardened: installer v1.1.13 auto restarts after PyMySQL injection; uninstaller v1.0.9 scrubs `.env` by default with `--keep-env` opt-in; docs and test matrix highlight the new behaviours.
-- Home Assistant test matrix bumped to v1.1.13 with scenario 1H guiding the uninstall -> reinstall validation sequence; curl command now uses -fSL and prints a blue success message describing the next action.
+- Home Assistant tooling hardened: installer v1.1.13 auto restarts after PyMySQL injection; uninstaller v1.1.0 scrubs `.env` by default, now prompts interactively to purge the working directory/images, and still honours the automation flags; docs and test matrix highlight the new behaviours.
+- Home Assistant test matrix bumped to v1.1.13 with scenario 1H guiding the uninstall -> reinstall validation sequence; curl command now uses -fSL with a blue success message and the checklist calls out the new purge prompts.
 - MariaDB helper (`home-assistant/mariadb/setup-nas-mariadb.sh` v1.0.9) supports local execution, forces docker compose to consume the bundled file, and the NAS guide is vendor-agnostic.
 - Zigbee2MQTT installer v1.1.3 is validated on production host `cdelalamazigbee`; containers `zigbee2mqtt`, `mosquitto`, and `portainer_z2m` are up with MQTT exposed on 1883 and the UI on 8080.
 
@@ -19,9 +19,9 @@ Active Files
 - docs/llm/HANDOFF.md (this file)
 - docs/llm/HISTORY.md (recent session log)
 - home-assistant/install-home-assistant.sh (v1.1.13 auto restart)
-- home-assistant/uninstall-home-assistant.sh (v1.0.9 env scrub + keep flag)
+- home-assistant/uninstall-home-assistant.sh (v1.1.0 env scrub + interactive purge prompts)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.9 local/remote aware)
-- home-assistant/TEST_MATRIX.md (v1.1.13 scenarios incl. 1H reset)
+- home-assistant/TEST_MATRIX.md (v1.1.13 scenarios incl. 1H reset + curl guidance)
 - zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 production-proven)
 
 Current Versions
@@ -35,7 +35,7 @@ Current Versions
 
 ## Top Priorities
 
-1) **VERIFY**: Execute Test Matrix scenario 1H (run the uninstaller, then fresh installs 1A/1B) to confirm `.env` removal, directory cleanup, automatic PyMySQL restart messaging, and container health on a clean run.
+1) **VERIFY**: Execute Test Matrix scenario 1H (run the uninstaller, then fresh installs 1A/1B) to confirm `.env` removal, the new purge prompts (local dir/images), directory cleanup, automatic PyMySQL restart messaging, and container health on a clean run.
 2) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}/data` (current default) or move to a different NAS path. Update README + `.env` if needed.
 3) **VALIDATE**: Run `home-assistant/mariadb/setup-nas-mariadb.sh` against the QNAP with the new defaults to confirm directories and permissions.
 4) **DOCUMENT**: Capture the production Zigbee2MQTT deployment footprint (host `cdelalamazigbee`, NAS paths, monitoring/log rotation) and fold it into component docs/ops notes.

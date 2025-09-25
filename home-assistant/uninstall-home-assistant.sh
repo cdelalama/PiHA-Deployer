@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.9"
+VERSION="1.1.0"
 
 WORK_DIR=$(pwd)
 
@@ -28,6 +28,7 @@ Options:
 The script stops the Home Assistant stack on this Pi, removes NAS-backed
 directories for Home Assistant/Portainer, and (unless skipped) removes the
 MariaDB deployment directory on the NAS via SSH.
+Interactive runs ask whether to purge the working directory and project images when no flags are provided; automation can set CLI flags or env vars to skip the prompts.
 EOF
 }
 
@@ -384,20 +385,81 @@ confirm_or_exit() {
   exit 1
 }
 
+ask_yes_no() {
+  local prompt="$1"
+  local default_answer="${2:-N}"
+  local reply
+  while true; do
+    if ! printf "%b" "$prompt" > /dev/tty; then
+      return 1
+    fi
+    if ! read -r reply < /dev/tty; then
+      return 1
+    fi
+    if [ -z "$reply" ]; then
+      reply="$default_answer"
+    fi
+    reply="${reply,,}"
+    case "$reply" in
+      y|yes)
+        return 0
+        ;;
+      n|no)
+        return 1
+        ;;
+      *)
+        echo "Please answer y or n." > /dev/tty
+        ;;
+    esac
+  done
+}
+
+prompt_optional_actions() {
+  if bool_true "$FORCE"; then
+    return
+  fi
+  if [ "$PURGE_LOCAL" != "true" ] && [ "$PURGE_LOCAL_ENV_SET" != "true" ] && [ "$PURGE_LOCAL_CLI_SET" != "true" ]; then
+    if ask_yes_no "${YELLOW}Delete this working directory (${WORK_DIR}) after cleanup? [y/N]: ${NC}"; then
+      PURGE_LOCAL=true
+    fi
+  fi
+  if [ "$PURGE_IMAGES" != "true" ] && [ "$PURGE_IMAGES_ENV_SET" != "true" ] && [ "$PURGE_IMAGES_CLI_SET" != "true" ]; then
+    if ask_yes_no "${YELLOW}Remove Home Assistant/Portainer Docker images from this Pi? [y/N]: ${NC}"; then
+      PURGE_IMAGES=true
+    fi
+  fi
+}
+
 FORCE=false
 SKIP_NAS_SSH=false
 PURGE_LOCAL=false
 PURGE_IMAGES=false
 KEEP_ENV=false
 PURGED_LOCAL_DONE=false
-if bool_true "${UNINSTALL_PURGE_LOCAL:-false}"; then
-  PURGE_LOCAL=true
+PURGE_LOCAL_ENV_SET=false
+PURGE_IMAGES_ENV_SET=false
+KEEP_ENV_ENV_SET=false
+PURGE_LOCAL_CLI_SET=false
+PURGE_IMAGES_CLI_SET=false
+KEEP_ENV_CLI_SET=false
+
+if [ "${UNINSTALL_PURGE_LOCAL+x}" ]; then
+  PURGE_LOCAL_ENV_SET=true
+  if bool_true "${UNINSTALL_PURGE_LOCAL}"; then
+    PURGE_LOCAL=true
+  fi
 fi
-if bool_true "${UNINSTALL_PURGE_IMAGES:-false}"; then
-  PURGE_IMAGES=true
+if [ "${UNINSTALL_PURGE_IMAGES+x}" ]; then
+  PURGE_IMAGES_ENV_SET=true
+  if bool_true "${UNINSTALL_PURGE_IMAGES}"; then
+    PURGE_IMAGES=true
+  fi
 fi
-if bool_true "${UNINSTALL_KEEP_ENV:-false}"; then
-  KEEP_ENV=true
+if [ "${UNINSTALL_KEEP_ENV+x}" ]; then
+  KEEP_ENV_ENV_SET=true
+  if bool_true "${UNINSTALL_KEEP_ENV}"; then
+    KEEP_ENV=true
+  fi
 fi
 
 while [ $# -gt 0 ]; do
@@ -412,14 +474,17 @@ while [ $# -gt 0 ]; do
       ;;
     --purge-local)
       PURGE_LOCAL=true
+      PURGE_LOCAL_CLI_SET=true
       shift
       ;;
     --purge-images)
       PURGE_IMAGES=true
+      PURGE_IMAGES_CLI_SET=true
       shift
       ;;
     --keep-env)
       KEEP_ENV=true
+      KEEP_ENV_CLI_SET=true
       shift
       ;;
     -h|--help)
@@ -455,6 +520,8 @@ if [ -z "$PORTAINER_DATA_DIR" ]; then
 fi
 
 confirm_or_exit "$FORCE"
+
+prompt_optional_actions
 
 mount_nas
 
