@@ -2,14 +2,38 @@
 
 This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`home-assistant/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
 
-## 1. Home Assistant Installer (v1.1.13)
+## 1. Home Assistant Installer (v1.1.14)
 
 ### 1A. Fresh install without MariaDB
 
-- __Prep__: Create a clean working dir (`mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`). Populate `common/common.env` with shared defaults (copy from template if needed) and `.env` _without_ `ENABLE_MARIADB_CHECK` (or set it to `false`). Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` do not exist or are empty.
-- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
-- **Expect**: Installer completes, Home Assistant and Portainer containers running, recorder remains on SQLite.
+**Prep**
+```bash
+mkdir -p ~/piha-home-assistant
+cd ~/piha-home-assistant
+```
+- Ensure `common/common.env` and `.env` are populated with NAS credentials and host overrides; omit `ENABLE_MARIADB_CHECK` (or set it to `false`).
+- Confirm `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` do not exist on the NAS (clean slate).
 
+**Run**
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
+```
+
+**Expect**
+- Installer prints `Waiting 5s for NAS writes to settle... (SQLite on CIFS guard)` before `Launching stack...`.
+- `homeassistant` and `portainer` containers reach `running` status.
+
+**Checks**
+```bash
+sudo docker compose ps
+sudo docker logs homeassistant --tail 50
+sudo docker logs portainer --tail 20
+mount | grep /mnt/piha
+```
+
+**Notes**
+- The 5-second cooldown prevents CIFS locks from triggering `database is locked` during the recorder bootstrap; override with `NAS_COOLDOWN_SECONDS=<seconds>` (set `0` only when the data path is local storage).
+- If SQLite still reports `database is locked`, stop the stack and remove `${HA_DATA_DIR}/home-assistant_v2.db*` before rerunning, as documented in `home-assistant/README.md`.
 ### 1B. Fresh install with MariaDB
 
 - __Prep__: Same as 1A but set `ENABLE_MARIADB_CHECK=true` and provide `MARIADB_*` values that point to a running MariaDB instance (see Section 2). Directories on NAS must be empty.
@@ -56,7 +80,7 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 ### 1H. End-to-end reset regression
 
 - **Flow**: Execute 1G (uninstall with desired flags), then 1A (fresh install without MariaDB) followed by 1B (fresh install with MariaDB) if database validation is required.
-- **Checks**: After 1G confirm `.env` is gone unless `--keep-env` was passed, directories listed by the uninstaller are absent, and `docker ps` no longer shows `homeassistant` nor `portainer`. After 1A/1B verify the installer log prints `[OK] Restarting homeassistant to apply requirements.txt` when MariaDB is enabled, and that the UI is reachable at port 8123 while Portainer responds on 9000.
+- **Checks**: After 1G confirm `.env` is gone unless `--keep-env` was passed, directories listed by the uninstaller are absent, and `docker ps` no longer shows `homeassistant` nor `portainer`. After 1A/1B verify the installer output includes `Waiting 5s for NAS writes to settle...`, and when MariaDB is enabled the log prints `[OK] Restarting homeassistant to apply requirements.txt`. Confirm the UI at port 8123 and Portainer at 9000 respond.
 - **Artifacts**: Capture timestamps or screenshots for each phase to attach to the session notes (HANDOFF/HISTORY).
 
 ## 2. MariaDB Helper (v1.0.9)

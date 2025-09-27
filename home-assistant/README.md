@@ -26,6 +26,8 @@ cd ~/piha-home-assistant
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
 ```
 
+- The installer waits 5 seconds for NAS writes to settle (configurable via `NAS_COOLDOWN_SECONDS`) to prevent SQLite lock errors on CIFS shares.
+
 > Heads-up: if the NAS already contains previous Home Assistant data (e.g. `${HA_DATA_DIR}`), the installer detects it. When running interactively it will ask whether to reuse the data; in non-interactive runs (e.g. `curl ... | sudo bash`) the installer exits unless `HA_ALLOW_EXISTING_DATA=true` is set in `.env` (or you remove the directories for a clean install). Inline comments after the flag are fine (`HA_ALLOW_EXISTING_DATA=true  # reuse NAS data` will be honoured).
 
 ## Reset / Uninstall
@@ -155,6 +157,7 @@ docker compose -f "${BASE_DIR}/docker-compose.yml" up -d --force-recreate homeas
 
 Notes:
 - Keep MariaDB data on a local NAS filesystem (not on SMB/CIFS).
+- The installer issues a NAS cooldown (`NAS_COOLDOWN_SECONDS`, default 5s) before launching containers to minimise CIFS locking issues.
 - If you previously had SQLite on SMB, remove `home-assistant_v2.db*` from `${HA_DATA_DIR}`.
 - If the installer reports that MariaDB is missing or misconfigured, fix it using the one-liner above and rerun the script. See `home-assistant/mariadb/README.md` for detailed setup instructions.
 

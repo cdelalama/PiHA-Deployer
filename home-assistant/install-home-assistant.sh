@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.13"
+VERSION="1.1.14"
 
 # Colors
 BLUE='\033[0;36m'
@@ -258,6 +258,17 @@ copy_compose_and_env() {
   cp docker-compose.yml "${BASE_DIR}/docker-compose.yml"
   cp .env "${BASE_DIR}/.env"
 }
+nas_write_cooldown() {
+  local delay="${NAS_COOLDOWN_SECONDS:-5}"
+  if ! [[ $delay =~ ^[0-9]+$ ]]; then
+    delay=5
+  fi
+  if [ "$delay" -gt 0 ]; then
+    echo -e "${BLUE}Waiting ${delay}s for NAS writes to settle... (SQLite on CIFS guard)${NC}"
+    sync
+    sleep "$delay"
+  fi
+}
 
 configure_home_assistant_mariadb() {
   echo -e "${BLUE}Configuring Home Assistant recorder for MariaDB...${NC}"
@@ -504,6 +515,7 @@ if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
 fi
 write_portainer_secret
 copy_compose_and_env
+nas_write_cooldown
 
 echo -e "${BLUE}Launching stack...${NC}"
 start_stack
