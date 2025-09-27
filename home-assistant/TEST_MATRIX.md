@@ -11,8 +11,8 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
 ```
-- Ensure `common/common.env` and `.env` are populated with NAS credentials and host overrides; omit `ENABLE_MARIADB_CHECK` (or set it to `false`).
-- Confirm `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` do not exist on the NAS (clean slate).
+- Populate `common/common.env` and `.env` with NAS credentials and host overrides (leave `ENABLE_MARIADB_CHECK` unset or `false`).
+- Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` are absent on the NAS.
 
 **Run**
 ```bash
@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 **Expect**
 - Installer prints `Waiting 5s for NAS writes to settle... (SQLite on CIFS guard)` before `Launching stack...`.
-- `homeassistant` and `portainer` containers reach `running` status.
+- Containers `homeassistant` and `portainer` reach `running` state.
 
 **Checks**
 ```bash
@@ -32,79 +32,150 @@ mount | grep /mnt/piha
 ```
 
 **Notes**
-- The 5-second cooldown prevents CIFS locks from triggering `database is locked` during the recorder bootstrap; override with `NAS_COOLDOWN_SECONDS=<seconds>` (set `0` only when the data path is local storage).
-- If SQLite still reports `database is locked`, stop the stack and remove `${HA_DATA_DIR}/home-assistant_v2.db*` before rerunning, as documented in `home-assistant/README.md`.
+- Override the cooldown with `NAS_COOLDOWN_SECONDS=<seconds>` (use `0` only when data lives on local storage).
+- If `database is locked` still appears, stop the stack, remove `${HA_DATA_DIR}/home-assistant_v2.db*`, and rerun.
+
 ### 1B. Fresh install with MariaDB
 
-- __Prep__: Same as 1A but set `ENABLE_MARIADB_CHECK=true` and provide `MARIADB_*` values that point to a running MariaDB instance (see Section 2). Directories on NAS must be empty.
-- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
-- __Expect__: Installer verifies MariaDB, writes recorder config, starts both containers, and populates `${HA_DATA_DIR}/requirements.txt` with `PyMySQL==1.1.0` and restarts `homeassistant` when needed.
+**Prep**
+- Reuse the **Prep** steps from 1A.
+- Set `.env` with `ENABLE_MARIADB_CHECK=true` plus valid `MARIADB_*` credentials for the target MariaDB instance.
+- Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` are empty on the NAS.
+
+**Run**
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
+```
+
+**Expect**
+- MariaDB check succeeds and the installer prints `[OK] Restarting homeassistant to apply requirements.txt`.
+- Recorder uses `PyMySQL==1.1.0` and containers remain `running`.
+
+**Checks**
+```bash
+sudo docker compose ps
+sudo docker logs homeassistant --tail 80 | grep -E 'MariaDB|Recorder'
+```
 
 ### 1C. Existing data - interactive run
 
-- __Prep__: Download the script locally (`curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh -o install-home-assistant.sh`). Ensure `common/common.env` and `.env` remain populated. Leave content in `${HA_DATA_DIR}`, `${BASE_DIR}`, `${PORTAINER_DATA_DIR}`.
-- **Run**: `sudo bash install-home-assistant.sh`
-- **Expect**: Prompt `Continue and reuse these directories? [y/N]`.
-   - Reply `y`: installer reuses directories and proceeds.
-   - Reply `n` (or press Enter): installer aborts and lists directories to remove.
+**Prep**
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh -o install-home-assistant.sh
+```
+- Leave `common/common.env` and `.env` populated with their existing values.
+- Keep existing data inside `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}`.
+
+**Run**
+```bash
+sudo bash install-home-assistant.sh
+```
+
+**Expect**
+- Prompt `Continue and reuse these directories? [y/N]`.
+  - Reply `y` to reuse the data and proceed.
+  - Reply `n` (or press Enter) to abort and list the directories to clean.
 
 ### 1D. Existing data - non-interactive, reuse not declared
 
-- __Prep__: Same data setup as 1C (keep `common/common.env` + `.env` intact). `.env` must __not__ contain `HA_ALLOW_EXISTING_DATA=true`.
-- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
-- __Expect__: Installer aborts, prints the list of directories, and instructs to set `HA_ALLOW_EXISTING_DATA=true` or remove them.
+**Prep**
+- Keep the data directories populated (same as 1C).
+- Ensure `.env` does not include `HA_ALLOW_EXISTING_DATA=true`.
+
+**Run**
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
+```
+
+**Expect**
+- Installer aborts and lists the directories to remove or advises adding `HA_ALLOW_EXISTING_DATA=true`.
 
 ### 1E. Existing data - non-interactive with reuse flag
 
-- __Prep__: Same as 1D, but add `HA_ALLOW_EXISTING_DATA=true` to `.env`.
-- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash`
-- **Expect**: Warning about existing data, then installer proceeds without prompting.
-- __Note__: Inline comments after the flag are ignored (e.g., `HA_ALLOW_EXISTING_DATA=true  # reuse NAS data`).
+**Prep**
+- Keep the data directories populated.
+- Set `.env` with `HA_ALLOW_EXISTING_DATA=true` (inline comments remain supported).
+
+**Run**
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
+```
+
+**Expect**
+- Installer warns about existing data and continues without prompting.
 
 ### 1F. Failure checks (optional)
 
-- Missing MariaDB credentials (`ENABLE_MARIADB_CHECK=true` but incomplete `MARIADB_*`): expect abort with guidance.
-- NAS unreachable (`NAS_IP` incorrect): expect abort after `Checking NAS connectivity...`.
+**Suggested scenarios**
+- `ENABLE_MARIADB_CHECK=true` with incomplete credentials.
+- `NAS_IP` set to an unreachable host.
+
+**Expected result**
+- Installer aborts with clear remediation guidance.
 
 ### 1G. Cleanup / reset script
 
-- **Prep**: Ensure `.env` is present with the NAS SSH credentials (if you want MariaDB cleaned remotely). Leave existing data in place to observe deletions.
-- **Run (interactive, recommended)**:
-   - `curl -fSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh && printf '\033[0;34mDownloaded uninstall-home-assistant.sh; run sudo bash uninstall-home-assistant.sh next\033[0m\n'`
-   - (The curl download now prints progress; the blue message confirms success and points to the next command.)
-   - `sudo bash uninstall-home-assistant.sh`
+**Prep**
+- `.env` present with NAS and SSH credentials.
+- Leave existing data in place to observe deletions.
 
-- **Run (automation)**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash -s -- --force` (add `--skip-nas-ssh` when you do *not* want to clean MariaDB remotely; add `--purge-local` if you want the working directory removed, `--purge-images` to delete project images, and `--keep-env` when the `.env` file must stay in place).
-- __Expect__: The script stops the stack, removes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, `${DOCKER_COMPOSE_DIR}` and, unless you pass `--skip-nas-ssh`, deletes `${NAS_DEPLOY_DIR}` via SSH. By default it deletes `.env` (and `.env.bootstrap`) from the working directory once finished; verify with `ls` or set `UNINSTALL_KEEP_ENV=true` (or pass `--keep-env`) when you want to preserve it. After the main confirmation the script now prompts about purging this working directory and removing the project images when no flags/env defaults were supplied; answer `y` to enable the behaviour. If you use `--purge-local`, confirm the working directory is gone; otherwise validate that only support files remain. Afterwards scenarios 1A/1B behave like a fresh install; on the NAS run `docker ps -a | grep ${MARIADB_CONTAINER_NAME:-mariadb}` to confirm no project MariaDB container remains and ensure `${HA_DATA_DIR}/requirements.txt` is recreated with `PyMySQL==1.1.0` on the next installer run (and the script handles the restart automatically).
+**Interactive download**
+```bash
+curl -fSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh
+printf '\033[0;34mDownloaded uninstall-home-assistant.sh; run sudo bash uninstall-home-assistant.sh next\033[0m\n'
+```
+
+**Interactive run**
+```bash
+sudo bash uninstall-home-assistant.sh
+```
+- Answer the prompts to remove the working directory and Docker images as needed.
+
+**Automation**
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh | sudo bash -s -- --force [--skip-nas-ssh] [--purge-local] [--purge-images] [--keep-env]
+```
+
+**Checks**
+```bash
+sudo docker ps -a | grep -E 'homeassistant|portainer'
+sudo ls ${HA_DATA_DIR}
+```
+- On the NAS, confirm `${NAS_DEPLOY_DIR}` and any MariaDB containers are removed.
 
 ### 1H. End-to-end reset regression
 
-- **Flow**: Execute 1G (uninstall with desired flags), then 1A (fresh install without MariaDB) followed by 1B (fresh install with MariaDB) if database validation is required.
-- **Checks**: After 1G confirm `.env` is gone unless `--keep-env` was passed, directories listed by the uninstaller are absent, and `docker ps` no longer shows `homeassistant` nor `portainer`. After 1A/1B verify the installer output includes `Waiting 5s for NAS writes to settle...`, and when MariaDB is enabled the log prints `[OK] Restarting homeassistant to apply requirements.txt`. Confirm the UI at port 8123 and Portainer at 9000 respond.
-- **Artifacts**: Capture timestamps or screenshots for each phase to attach to the session notes (HANDOFF/HISTORY).
+**Flow**
+1. Run 1G with the desired options.
+2. Run 1A (without MariaDB).
+3. Run 1B (with MariaDB) if required.
+
+**Checks**
+- After 1G: `.env` absent unless `--keep-env` was used; directories removed; `docker ps` shows no `homeassistant`/`portainer`.
+- After 1A/1B: installer output shows `Waiting 5s for NAS writes to settle...` and, when MariaDB is enabled, `[OK] Restarting homeassistant to apply requirements.txt`.
+- Home Assistant reachable at `http://<pi>:8123` and Portainer at `http://<pi>:9000`.
+
+**Artifacts**
+- Collect timestamps/logs for HANDOFF and HISTORY.
 
 ## 2. MariaDB Helper (v1.0.9)
 
 ### 2A. Manual bootstrap directly on the NAS (recommended)
-
-- __Prep__: `ssh <nas-user>@<NAS_IP>`, then `mkdir -p /share/Container/compose/mariadb && cd /share/Container/compose/mariadb`. Provide `.env` with SSH + DB variables.
+- **Prep**: `ssh <nas-user>@<NAS_IP>`, then `mkdir -p /share/Container/compose/mariadb && cd /share/Container/compose/mariadb`. Provide `.env` with SSH + DB variables.
 - **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh`
 - **Expect**: Script detects local execution, preserves `.env` in `.env.bootstrap`, downloads compose if missing, starts container.
 
 ### 2B. Remote bootstrap from a Pi/PC clone
-
 - **Prep**: In the repo clone, configure `home-assistant/mariadb/.env` with NAS SSH credentials.
 - **Run**: `bash home-assistant/mariadb/setup-nas-mariadb.sh`
 - **Expect**: SSH session creates directories, copies compose/.env, and runs `docker compose up` remotely.
 
 ### 2C. Re-run helper on existing deployment
-
 - **Prep**: Execute 2A or 2B first. Ensure `.env.bootstrap` exists in the target directory.
 - **Run**: Repeat 2A or 2B.
 - **Expect**: Handles existing files gracefully, refreshes `.env`, leaves `.env.bootstrap` untouched, restarts container if needed.
 
 ### 2D. Manual fallback
-
 - **Prep**: On the NAS, place `docker-compose.yml` and `.env` manually in the target directory.
 - **Run**: `docker compose up -d`
 - **Expect**: Container starts; useful for verifying the compose file independent of the helper.
@@ -112,9 +183,6 @@ mount | grep /mnt/piha
 ## 3. Verification steps
 
 After each scenario, confirm:
-
 - **Home Assistant**: `docker ps` shows `homeassistant` + `portainer`. `docker logs homeassistant | grep Recorder` reveals whether MariaDB is in use.
 - **MariaDB**: `docker ps` includes `mariadb`. From the NAS run `docker exec -it mariadb mysql -u homeassistant -p` and check `SHOW TABLES;` or `SELECT COUNT(*) FROM events;`.
 - __NAS data__: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files.
-
-
