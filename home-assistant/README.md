@@ -28,6 +28,15 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 - The installer waits 5 seconds for NAS writes to settle (configurable via `NAS_COOLDOWN_SECONDS`) to prevent SQLite lock errors on CIFS shares.
 
+**Post-install checks**
+```bash
+sudo docker compose ps
+sudo docker logs homeassistant --tail 50
+sudo docker logs portainer --tail 20
+mount | grep /mnt/piha
+```
+- Home Assistant reachable at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
+
 > Heads-up: if the NAS already contains previous Home Assistant data (e.g. `${HA_DATA_DIR}`), the installer detects it. When running interactively it will ask whether to reuse the data; in non-interactive runs (e.g. `curl ... | sudo bash`) the installer exits unless `HA_ALLOW_EXISTING_DATA=true` is set in `.env` (or you remove the directories for a clean install). Inline comments after the flag are fine (`HA_ALLOW_EXISTING_DATA=true  # reuse NAS data` will be honoured).
 
 ## Reset / Uninstall
@@ -37,7 +46,8 @@ If you need a full reset (containers, NAS data, and the NAS MariaDB deployment),
 **Recommended (keeps the confirmation prompt):**
 
 ```
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh
+curl -fSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/uninstall-home-assistant.sh -o uninstall-home-assistant.sh
+printf '\033[0;34mDownloaded uninstall-home-assistant.sh; run sudo bash uninstall-home-assistant.sh next\033[0m\n'
 sudo bash uninstall-home-assistant.sh
 ```
 
