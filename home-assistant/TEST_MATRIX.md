@@ -2,7 +2,7 @@
 
 This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`home-assistant/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
 
-## 1. Home Assistant Installer (v1.1.15)
+## 1. Home Assistant Installer (v1.1.16)
 
 ### 1A. Fresh install without MariaDB
 
@@ -12,7 +12,7 @@ mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
 ```
 - Populate `common/common.env` and `.env` with NAS credentials and host overrides (leave `ENABLE_MARIADB_CHECK` unset or `false`).
-- Set `HA_DATA_DIR=/var/lib/piha/home-assistant` (or define `SQLITE_DATA_DIR`) so the recorder stays on local storage; ensure the directory is empty (`sudo rm -rf /var/lib/piha/home-assistant/*`).
+- Set `HA_STORAGE_MODE=sqlite_local` (optionally define `SQLITE_DATA_DIR`; default local path is `/var/lib/piha/home-assistant`) and ensure the directory is empty (`sudo rm -rf /var/lib/piha/home-assistant/*`).
 - Ensure `${BASE_DIR}` and `${PORTAINER_DATA_DIR}` are absent on the NAS.
 
 **Run**
@@ -34,7 +34,7 @@ mount | grep /mnt/piha
 
 **Notes**
 - Override the cooldown with `NAS_COOLDOWN_SECONDS=<seconds>` (use `0` only when data lives on local storage).
-- If `database is locked` still appears, stop the stack, remove `${HA_DATA_DIR}/home-assistant_v2.db*`, and rerun.
+- If `database is locked` still appears, confirm `HA_STORAGE_MODE=sqlite_local` and remove `/var/lib/piha/home-assistant/home-assistant_v2.db*` before rerunning.
 
 ### 1B. Fresh install with MariaDB
 

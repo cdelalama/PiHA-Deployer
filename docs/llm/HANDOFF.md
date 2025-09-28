@@ -3,14 +3,14 @@
 ## Current Status
 
 Last Updated: 2025-09-27 - Codex
-Session Focus: Moved the SQLite recorder (scenario 1A) to local storage and refreshed docs/test matrix to match; cooldown remains for NAS-only flows.
-Status: Zigbee2MQTT stack remains stable on `cdelalamazigbee`; Home Assistant installer/uninstaller now drive SQLite to `/var/lib/piha/home-assistant` for scenario 1A while MariaDB flows stay NAS-backed.
+Session Focus: Added the `HA_STORAGE_MODE` switch so scenario 1A runs SQLite locally and refreshed docs/test matrix to match; cooldown remains for NAS-only flows.
+Status: Zigbee2MQTT stack remains stable on `cdelalamazigbee`; Home Assistant installer/uninstaller now rely on `HA_STORAGE_MODE=sqlite_local` for scenario 1A while MariaDB flows stay NAS-backed.
 
 ## Immediate Context
 
 Current Work
-- Home Assistant installer v1.1.14 now defaults `HA_DATA_DIR` to `/var/lib/piha/home-assistant` when MariaDB is disabled, in addition to the 5s NAS cooldown (`NAS_COOLDOWN_SECONDS` override); uninstaller v1.1.0 still scrubs `.env` and honours purge prompts.
-- Home Assistant test matrix updated to v1.1.14: scenario 1A walks through the local SQLite path, highlights the cooldown message, and 1H explicitly checks both behaviours.
+- Home Assistant installer v1.1.16 introduces `HA_STORAGE_MODE` (defaults `sqlite_local` to `/var/lib/piha/home-assistant`) alongside the 5s NAS cooldown; uninstaller v1.1.0 still scrubs `.env` and honours purge prompts.
+- Home Assistant test matrix updated to v1.1.16: scenario 1A walks through the local SQLite path and the new flag, and 1H explicitly checks both behaviours.
 - MariaDB helper (`home-assistant/mariadb/setup-nas-mariadb.sh` v1.0.9) supports local execution, forces docker compose to consume the bundled file, and the NAS guide is vendor-agnostic.
 - Zigbee2MQTT installer v1.1.3 is validated on production host `cdelalamazigbee`; containers `zigbee2mqtt`, `mosquitto`, and `portainer_z2m` are up with MQTT exposed on 1883 and the UI on 8080.
 
@@ -18,10 +18,10 @@ Active Files
 - docs/PROJECT_CONTEXT.md (component status updated for production Zigbee2MQTT)
 - docs/llm/HANDOFF.md (this file)
 - docs/llm/HISTORY.md (recent session log)
-- home-assistant/install-home-assistant.sh (v1.1.15 local SQLite default + NAS cooldown)
+- home-assistant/install-home-assistant.sh (v1.1.16 HA_STORAGE_MODE + NAS cooldown)
 - home-assistant/uninstall-home-assistant.sh (v1.1.0 env scrub + interactive purge prompts)
 - home-assistant/mariadb/setup-nas-mariadb.sh (v1.0.9 local/remote aware)
-- home-assistant/TEST_MATRIX.md (v1.1.15 local SQLite prep + cooldown checks)
+- home-assistant/TEST_MATRIX.md (v1.1.16 local SQLite prep + cooldown checks)
 - zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 production-proven)
 
 Current Versions
@@ -29,7 +29,7 @@ Current Versions
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.1.15
+- home-assistant/install-home-assistant.sh: 1.1.16
 - home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.9
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 

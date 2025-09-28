@@ -20,7 +20,7 @@ cd ~/piha-home-assistant
 
 2. Create a `common/` subdirectory here and drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
 3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`). You can copy `home-assistant/.env.example` as a template (or reuse your existing `home-assistant/.env`) and fill in your secrets.
-   - For the SQLite-only flow (scenario 1A), the installer defaults `/config` to `/var/lib/piha/home-assistant` on the Pi; override it by setting `SQLITE_DATA_DIR` or `HA_DATA_DIR` in `.env`.
+   - For the SQLite-only flow (scenario 1A), set `HA_STORAGE_MODE=sqlite_local`; optionally override the local path with `SQLITE_DATA_DIR` (defaults to `/var/lib/piha/home-assistant`).
 4. Run the installer directly from GitHub (requires `curl` and `sudo`):
 
 ```
@@ -82,7 +82,7 @@ Both commands should return empty lists (or only show other services you have in
 - SMB/CIFS mounting to store all container data on the NAS
 
 ## Data Persistence Model
-- **SQLite (scenario 1A)**: Home Assistant /config lives on the Pi (default /var/lib/piha/home-assistant). Back it up or rsync it manually if you need to migrate.
+- **SQLite (scenario 1A)**: Home Assistant `/config` lives on the Pi (default `/var/lib/piha/home-assistant`). Enable it by setting `HA_STORAGE_MODE=sqlite_local`; back it up or rsync it manually if you need to migrate.
 - **MariaDB (scenario 1B)**: the NAS share is mounted and used for configuration; the recorder data sits in MariaDB on the NAS.
 - Portainer and compose metadata continue to live on the NAS for both scenarios (unless you override the paths).
 ## Default Ports
@@ -94,18 +94,20 @@ Both commands should return empty lists (or only show other services you have in
 1. Create a `.env` file and add required variables (you may base it on your Node-RED `.env` conventions)
 2. Required variables:
    - Host and paths: `HOST_ID`, `BASE_DIR`, `DOCKER_USER_ID`, `DOCKER_GROUP_ID`, `DOCKER_COMPOSE_DIR`, `HA_DATA_DIR`, `PORTAINER_DATA_DIR`
+     - If you set `HA_STORAGE_MODE=sqlite_local`, you may omit `HA_DATA_DIR`; the installer will default to `/var/lib/piha/home-assistant` (or `SQLITE_DATA_DIR`).
    - Ports and network: `HA_PORT` (default 8123)
    - NAS (CIFS): `NAS_IP`, `NAS_SHARE_NAME`, `NAS_USERNAME`, `NAS_PASSWORD`, `NAS_MOUNT_DIR`
    - Portainer admin: `PORTAINER_PASS`
 
 Recommended paths:
-- **SQLite (scenario 1A)**: set `HA_DATA_DIR=/var/lib/piha/home-assistant` (local on the Pi). Override with `SQLITE_DATA_DIR` if you prefer a different local path.
+- **SQLite (scenario 1A)**: set `HA_STORAGE_MODE=sqlite_local`. The local directory defaults to `/var/lib/piha/home-assistant`; override it with `SQLITE_DATA_DIR` if needed.
 - **MariaDB (scenario 1B)**: keep NAS-backed directories:
   - `HA_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant`
   - `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
   - `DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose`
 Variables to consider as well:
-- `TZ` (optional timezone, e.g., `Europe/Madrid`) used by Home Assistant container
+- `HA_STORAGE_MODE` (`sqlite_local` or `nas`; defaults to `nas` unless MariaDB validation succeeds).
+- `TZ` (optional timezone, e.g., `Europe/Madrid`) used by Home Assistant container.
 - `SQLITE_DATA_DIR` (optional override for the local SQLite directory; defaults to `/var/lib/piha/home-assistant`).
 Optional: MariaDB recorder validation
 

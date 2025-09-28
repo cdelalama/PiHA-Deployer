@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.15"
+VERSION="1.1.16"
 
 # Colors
 BLUE='\033[0;36m'
@@ -504,16 +504,35 @@ fi
 if [ -z "$PORTAINER_DATA_DIR" ]; then
   PORTAINER_DATA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer"
 fi
+DEFAULT_NAS_HA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant"
+STORAGE_MODE="${HA_STORAGE_MODE:-}"
 if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
-  if [ -z "$HA_DATA_DIR" ]; then
-    HA_DATA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant"
+  if [ "${STORAGE_MODE}" = "sqlite_local" ]; then
+    echo -e "${YELLOW}[WARN] HA_STORAGE_MODE=sqlite_local ignored because MariaDB validation is enabled.${NC}"
+  fi
+  if [ -z "$HA_DATA_DIR" ] || [ "${STORAGE_MODE}" = "sqlite_local" ]; then
+    HA_DATA_DIR="$DEFAULT_NAS_HA_DIR"
   fi
 else
-  if [ -z "$HA_DATA_DIR" ]; then
-    HA_DATA_DIR="${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant}"
-  fi
-  echo -e "${BLUE}[INFO] Using local SQLite configuration directory: ${HA_DATA_DIR}${NC}"
+  case "${STORAGE_MODE}" in
+    ""|"nas")
+      if [ -z "$HA_DATA_DIR" ]; then
+        HA_DATA_DIR="$DEFAULT_NAS_HA_DIR"
+      fi
+      ;;
+    "sqlite_local")
+      HA_DATA_DIR="${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant}"
+      echo -e "${BLUE}[INFO] Using local SQLite configuration directory: ${HA_DATA_DIR}${NC}"
+      ;;
+    *)
+      echo -e "${YELLOW}[WARN] Unknown HA_STORAGE_MODE=${STORAGE_MODE}; defaulting to NAS-backed storage.${NC}"
+      if [ -z "$HA_DATA_DIR" ]; then
+        HA_DATA_DIR="$DEFAULT_NAS_HA_DIR"
+      fi
+      ;;
+  esac
 fi
+
 check_existing_data
 setup_dirs
 if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
