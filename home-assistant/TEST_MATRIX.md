@@ -2,7 +2,7 @@
 
 This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`home-assistant/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
 
-## 1. Home Assistant Installer (v1.1.14)
+## 1. Home Assistant Installer (v1.1.15)
 
 ### 1A. Fresh install without MariaDB
 
@@ -12,7 +12,8 @@ mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
 ```
 - Populate `common/common.env` and `.env` with NAS credentials and host overrides (leave `ENABLE_MARIADB_CHECK` unset or `false`).
-- Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` are absent on the NAS.
+- Set `HA_DATA_DIR=/var/lib/piha/home-assistant` (or define `SQLITE_DATA_DIR`) so the recorder stays on local storage; ensure the directory is empty (`sudo rm -rf /var/lib/piha/home-assistant/*`).
+- Ensure `${BASE_DIR}` and `${PORTAINER_DATA_DIR}` are absent on the NAS.
 
 **Run**
 ```bash

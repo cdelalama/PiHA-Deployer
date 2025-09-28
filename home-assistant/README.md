@@ -20,6 +20,7 @@ cd ~/piha-home-assistant
 
 2. Create a `common/` subdirectory here and drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
 3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`). You can copy `home-assistant/.env.example` as a template (or reuse your existing `home-assistant/.env`) and fill in your secrets.
+   - For the SQLite-only flow (scenario 1A), the installer defaults `/config` to `/var/lib/piha/home-assistant` on the Pi; override it by setting `SQLITE_DATA_DIR` or `HA_DATA_DIR` in `.env`.
 4. Run the installer directly from GitHub (requires `curl` and `sudo`):
 
 ```
@@ -59,7 +60,7 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_DIR}` on the NAS via SSH. In interactive runs the uninstaller now asks (after the confirmation) whether to delete this working directory and remove the Home Assistant/Portainer Docker images; answer `y` to apply. Automation can continue to pass `--purge-local`, `--purge-images`, or set the `UNINSTALL_PURGE_LOCAL/UNINSTALL_PURGE_IMAGES` env vars; use `--keep-env`/`UNINSTALL_KEEP_ENV` when you need `.env` to survive the cleanup.
 
-- The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` on the NAS share.
+- The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` from their configured locations (NAS or local).
 - By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB.
 - Unless `--keep-env` (or `UNINSTALL_KEEP_ENV=true`) is set, the run deletes `.env` (and `.env.bootstrap` when present) from the working directory so credentials are not left behind.
 - Staying in interactive mode (recommended) gives you a final confirmation before deleting.
@@ -81,9 +82,9 @@ Both commands should return empty lists (or only show other services you have in
 - SMB/CIFS mounting to store all container data on the NAS
 
 ## Data Persistence Model
-- The NAS share is mounted locally and bind-mounted into containers so data lives on the NAS.
-- Reinstall scenario: flash OS, configure `.env`, run the installer; data is reused from the NAS.
-
+- **SQLite (scenario 1A)**: Home Assistant /config lives on the Pi (default /var/lib/piha/home-assistant). Back it up or rsync it manually if you need to migrate.
+- **MariaDB (scenario 1B)**: the NAS share is mounted and used for configuration; the recorder data sits in MariaDB on the NAS.
+- Portainer and compose metadata continue to live on the NAS for both scenarios (unless you override the paths).
 ## Default Ports
 - Home Assistant: 8123 (host network)
 - Portainer: 9000 (mapped from `${PORTAINER_PORT}`, default 9000)
@@ -97,15 +98,17 @@ Both commands should return empty lists (or only show other services you have in
    - NAS (CIFS): `NAS_IP`, `NAS_SHARE_NAME`, `NAS_USERNAME`, `NAS_PASSWORD`, `NAS_MOUNT_DIR`
    - Portainer admin: `PORTAINER_PASS`
 
-Recommended NAS paths (group by host):
-- `HA_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant`
-- `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
-- `DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose`
-
+Recommended paths:
+- **SQLite (scenario 1A)**: set `HA_DATA_DIR=/var/lib/piha/home-assistant` (local on the Pi). Override with `SQLITE_DATA_DIR` if you prefer a different local path.
+- **MariaDB (scenario 1B)**: keep NAS-backed directories:
+  - `HA_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant`
+  - `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
+  - `DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose`
 Variables to consider as well:
 - `TZ` (optional timezone, e.g., `Europe/Madrid`) used by Home Assistant container
-
+- `SQLITE_DATA_DIR` (optional override for the local SQLite directory; defaults to `/var/lib/piha/home-assistant`).
 Optional: MariaDB recorder validation
+
 - Set `ENABLE_MARIADB_CHECK=true` to have the installer verify MariaDB before deployment
 - Provide `MARIADB_HOST` (defaults to `NAS_IP`), `MARIADB_PORT` (defaults to `3306`), `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`
 - Optionally set `MARIADB_CONTAINER_NAME` to customize the MariaDB container name (defaults to `mariadb`).

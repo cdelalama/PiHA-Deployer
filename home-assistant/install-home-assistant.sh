@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.14"
+VERSION="1.1.15"
 
 # Colors
 BLUE='\033[0;36m'
@@ -110,7 +110,7 @@ check_existing_data() {
     return
   fi
 
-  echo -e "${RED}[ERROR] Existing Home Assistant data detected in the NAS directories shown below.${NC}"
+  echo -e "${RED}[ERROR] Existing Home Assistant data detected in the directories shown below.${NC}"
   for dir in "${existing_dirs[@]}"; do
     echo -e "${YELLOW}  - ${dir}${NC}"
   done
@@ -501,13 +501,19 @@ mount_nas
 if [ -z "$DOCKER_COMPOSE_DIR" ]; then
   DOCKER_COMPOSE_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose"
 fi
-if [ -z "$HA_DATA_DIR" ]; then
-  HA_DATA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant"
-fi
 if [ -z "$PORTAINER_DATA_DIR" ]; then
   PORTAINER_DATA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer"
 fi
-
+if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
+  if [ -z "$HA_DATA_DIR" ]; then
+    HA_DATA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant"
+  fi
+else
+  if [ -z "$HA_DATA_DIR" ]; then
+    HA_DATA_DIR="${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant}"
+  fi
+  echo -e "${BLUE}[INFO] Using local SQLite configuration directory: ${HA_DATA_DIR}${NC}"
+fi
 check_existing_data
 setup_dirs
 if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
