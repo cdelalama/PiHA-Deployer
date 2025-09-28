@@ -1,3 +1,19 @@
+## 2025-09-28 - Codex - Enforce recorder backend switch and block SQLite-on-NAS
+
+Summary: Introduced `RECORDER_BACKEND` in the Home Assistant installer (v1.2.0) to derive the recorder backend, forbid SQLite-on-NAS, and refreshed documentation/test matrix accordingly.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (v1.2.0 recorder backend normalization)
+- README.md
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.2.0)
+Notes: Install runs now choose between `RECORDER_BACKEND=sqlite` (local `/var/lib/piha/home-assistant`) and `RECORDER_BACKEND=mariadb` for NAS; legacy `ENABLE_MARIADB_CHECK` is still honoured but maps to the new backend value.
+
+---
 ## 2025-09-21 - Codex - Add interactive purge prompts to HA uninstaller
 
 Summary: Bumped `home-assistant/uninstall-home-assistant.sh` to v1.1.0 so interactive runs ask about purging the working directory and project images while keeping automation flags available. Updated README/test matrix guidance and synced HANDOFF with the new workflow.

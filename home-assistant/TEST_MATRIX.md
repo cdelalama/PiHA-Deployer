@@ -2,7 +2,7 @@
 
 This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`home-assistant/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
 
-## 1. Home Assistant Installer (v1.1.16)
+## 1. Home Assistant Installer (v1.2.0)
 
 ### 1A. Fresh install without MariaDB
 
@@ -11,8 +11,8 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
 ```
-- Populate `common/common.env` and `.env` with NAS credentials and host overrides (leave `ENABLE_MARIADB_CHECK` unset or `false`).
-- Set `HA_STORAGE_MODE=sqlite_local` (optionally define `SQLITE_DATA_DIR`; default local path is `/var/lib/piha/home-assistant`) and ensure the directory is empty (`sudo rm -rf /var/lib/piha/home-assistant/*`).
+- Populate `common/common.env` and `.env` with NAS credentials and host overrides (keep `RECORDER_BACKEND=sqlite`).
+- Optionally set `SQLITE_DATA_DIR`; ensure `/var/lib/piha/home-assistant` is empty (`sudo rm -rf /var/lib/piha/home-assistant/*`).
 - Ensure `${BASE_DIR}` and `${PORTAINER_DATA_DIR}` are absent on the NAS.
 
 **Run**
@@ -40,7 +40,7 @@ mount | grep /mnt/piha
 
 **Prep**
 - Reuse the **Prep** steps from 1A.
-- Set `.env` with `ENABLE_MARIADB_CHECK=true` plus valid `MARIADB_*` credentials for the target MariaDB instance.
+- Set `.env` with `RECORDER_BACKEND=mariadb` plus valid `MARIADB_*` credentials for the target MariaDB instance.
 - Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` are empty on the NAS.
 
 **Run**
@@ -108,7 +108,7 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 ### 1F. Failure checks (optional)
 
 **Suggested scenarios**
-- `ENABLE_MARIADB_CHECK=true` with incomplete credentials.
+- `RECORDER_BACKEND=mariadb` with incomplete `MARIADB_*` credentials.
 - `NAS_IP` set to an unreachable host.
 
 **Expected result**

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.16"
+VERSION="1.2.0"
 
 # Colors
 BLUE='\033[0;36m'
@@ -410,7 +410,7 @@ print_mariadb_followup() {
       echo -e "${YELLOW}[WARN] MariaDB port reachable but credential check skipped (mysql client missing). Install 'mariadb-client' or run manual tests if needed.${NC}"
       ;;
     not_requested)
-      echo -e "${BLUE}[INFO] MariaDB validation not requested. Enable it by setting ENABLE_MARIADB_CHECK=true if you plan to use the NAS MariaDB recorder.${NC}"
+      echo -e "${BLUE}[INFO] MariaDB validation not requested. Set RECORDER_BACKEND=mariadb (or ENABLE_MARIADB_CHECK=true for legacy configs) to use the NAS MariaDB recorder.${NC}"
       echo -e "${BLUE}Refer to home-assistant/mariadb/README.md when ready.${NC}"
       ;;
     auth_failed)
@@ -421,7 +421,7 @@ print_mariadb_followup() {
       print_mariadb_bootstrap_hint
       ;;
     skipped)
-      echo -e "${YELLOW}[WARN] MariaDB validation skipped. Set ENABLE_MARIADB_CHECK=true and provide MARIADB_* variables in .env to enable automated checks.${NC}"
+      echo -e "${YELLOW}[WARN] MariaDB validation skipped. Set RECORDER_BACKEND=mariadb (and provide MARIADB_* variables) to enable automated checks.${NC}"
       echo -e "${BLUE}Refer to home-assistant/mariadb/README.md for setup instructions.${NC}"
       print_mariadb_bootstrap_hint
       ;;
@@ -458,12 +458,62 @@ verify_running() {
 # Main
 load_env
 post_load_fallbacks
+
+# Normalize recorder backend selection and storage mode
+if [ -z "${RECORDER_BACKEND:-}" ]; then
+  if bool_true "${ENABLE_MARIADB_CHECK:-false}"; then
+    echo -e "${YELLOW}[WARN] ENABLE_MARIADB_CHECK=true is deprecated; set RECORDER_BACKEND=mariadb instead.${NC}"
+    RECORDER_BACKEND="mariadb"
+  else
+    RECORDER_BACKEND="sqlite"
+  fi
+fi
+RECORDER_BACKEND="$(printf '%s' "${RECORDER_BACKEND}" | tr '[:upper:]' '[:lower:]')"
+case "${RECORDER_BACKEND}" in
+  sqlite|mariadb) ;;
+  *)
+    echo -e "${RED}[ERROR] Unsupported RECORDER_BACKEND=${RECORDER_BACKEND}. Use 'sqlite' or 'mariadb'.${NC}"
+    exit 1
+    ;;
+esac
+
+if bool_true "${ENABLE_MARIADB_CHECK:-false}" && [ "${RECORDER_BACKEND}" = "sqlite" ]; then
+  echo -e "${YELLOW}[WARN] ENABLE_MARIADB_CHECK=true conflicts with RECORDER_BACKEND=sqlite; ignoring ENABLE_MARIADB_CHECK.${NC}"
+fi
+
+if [ "${RECORDER_BACKEND}" = "mariadb" ]; then
+  ENABLE_MARIADB_CHECK=true
+else
+  ENABLE_MARIADB_CHECK=false
+fi
+
+if [ "${RECORDER_BACKEND}" = "sqlite" ]; then
+  if [ -z "${HA_STORAGE_MODE:-}" ]; then
+    HA_STORAGE_MODE="sqlite_local"
+  fi
+  STORAGE_MODE_NORMALIZED="$(printf '%s' "${HA_STORAGE_MODE}" | tr '[:upper:]' '[:lower:]')"
+  if [ "${STORAGE_MODE_NORMALIZED}" != "sqlite_local" ]; then
+    echo -e "${RED}[ERROR] RECORDER_BACKEND=sqlite requires HA_STORAGE_MODE=sqlite_local. SQLite on NAS is unsupported.${NC}"
+    exit 1
+  fi
+  HA_STORAGE_MODE="sqlite_local"
+else
+  if [ -n "${HA_STORAGE_MODE:-}" ]; then
+    STORAGE_MODE_NORMALIZED="$(printf '%s' "${HA_STORAGE_MODE}" | tr '[:upper:]' '[:lower:]')"
+    if [ "${STORAGE_MODE_NORMALIZED}" = "sqlite_local" ]; then
+      echo -e "${YELLOW}[WARN] HA_STORAGE_MODE=sqlite_local ignored because RECORDER_BACKEND=mariadb requires NAS-backed storage.${NC}"
+      HA_STORAGE_MODE="nas"
+    else
+      HA_STORAGE_MODE="${STORAGE_MODE_NORMALIZED}"
+    fi
+  fi
+fi
+
 require_vars \
   BASE_DIR DOCKER_USER_ID DOCKER_GROUP_ID HOST_ID \
   HA_PORT \
   NAS_IP NAS_SHARE_NAME NAS_USERNAME NAS_PASSWORD NAS_MOUNT_DIR \
   PORTAINER_PASS
-
 ensure_packages
 ensure_docker
 
@@ -508,7 +558,7 @@ DEFAULT_NAS_HA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant"
 STORAGE_MODE="${HA_STORAGE_MODE:-}"
 if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
   if [ "${STORAGE_MODE}" = "sqlite_local" ]; then
-    echo -e "${YELLOW}[WARN] HA_STORAGE_MODE=sqlite_local ignored because MariaDB validation is enabled.${NC}"
+    echo -e "${YELLOW}[WARN] HA_STORAGE_MODE=sqlite_local ignored because RECORDER_BACKEND=mariadb requires NAS-backed storage.${NC}"
   fi
   if [ -z "$HA_DATA_DIR" ] || [ "${STORAGE_MODE}" = "sqlite_local" ]; then
     HA_DATA_DIR="$DEFAULT_NAS_HA_DIR"

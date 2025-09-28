@@ -20,7 +20,9 @@ cd ~/piha-home-assistant
 
 2. Create a `common/` subdirectory here and drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
 3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`). You can copy `home-assistant/.env.example` as a template (or reuse your existing `home-assistant/.env`) and fill in your secrets.
-   - For the SQLite-only flow (scenario 1A), set `HA_STORAGE_MODE=sqlite_local`; optionally override the local path with `SQLITE_DATA_DIR` (defaults to `/var/lib/piha/home-assistant`).
+   - Set `RECORDER_BACKEND=sqlite` (default) to keep `/config` on the Pi. This enforces `HA_STORAGE_MODE=sqlite_local`; override the directory with `SQLITE_DATA_DIR` if needed (defaults to `/var/lib/piha/home-assistant`).
+   - Set `RECORDER_BACKEND=mariadb` to store recorder history on the NAS. Leave `HA_STORAGE_MODE` unset/`nas` and provide the full `MARIADB_*` block so the installer can validate the database before launching.
+   - `ENABLE_MARIADB_CHECK` is still supported for legacy setups but is now derived automatically from `RECORDER_BACKEND`.
 4. Run the installer directly from GitHub (requires `curl` and `sudo`):
 
 ```
@@ -79,10 +81,10 @@ Both commands should return empty lists (or only show other services you have in
 - Docker + Docker Compose plugin (if missing)
 - Portainer (local instance on this Raspberry Pi)
 - Home Assistant container
-- SMB/CIFS mounting to store all container data on the NAS
-
 ## Data Persistence Model
-- **SQLite (scenario 1A)**: Home Assistant `/config` lives on the Pi (default `/var/lib/piha/home-assistant`). Enable it by setting `HA_STORAGE_MODE=sqlite_local`; back it up or rsync it manually if you need to migrate.
+- **SQLite (`RECORDER_BACKEND=sqlite`)**: Home Assistant `/config` stays on the Pi (default `/var/lib/piha/home-assistant`). The installer enforces `HA_STORAGE_MODE=sqlite_local`; override the directory with `SQLITE_DATA_DIR` if needed.
+- **MariaDB (`RECORDER_BACKEND=mariadb`)**: Configuration lives on the NAS share and recorder history sits in the NAS MariaDB instance. The installer validates connectivity and credentials before launching containers.
+- Portainer and compose metadata continue to live on the NAS for both scenarios (unless you override the paths).
 - **MariaDB (scenario 1B)**: the NAS share is mounted and used for configuration; the recorder data sits in MariaDB on the NAS.
 - Portainer and compose metadata continue to live on the NAS for both scenarios (unless you override the paths).
 ## Default Ports
@@ -98,20 +100,21 @@ Both commands should return empty lists (or only show other services you have in
    - Ports and network: `HA_PORT` (default 8123)
    - NAS (CIFS): `NAS_IP`, `NAS_SHARE_NAME`, `NAS_USERNAME`, `NAS_PASSWORD`, `NAS_MOUNT_DIR`
    - Portainer admin: `PORTAINER_PASS`
-
-Recommended paths:
-- **SQLite (scenario 1A)**: set `HA_STORAGE_MODE=sqlite_local`. The local directory defaults to `/var/lib/piha/home-assistant`; override it with `SQLITE_DATA_DIR` if needed.
-- **MariaDB (scenario 1B)**: keep NAS-backed directories:
+- **SQLite (`RECORDER_BACKEND=sqlite`)**: `HA_STORAGE_MODE` is forced to `sqlite_local`; override the local directory with `SQLITE_DATA_DIR` if needed (defaults to `/var/lib/piha/home-assistant`).
+- **MariaDB (`RECORDER_BACKEND=mariadb`)**: keep NAS-backed directories:
   - `HA_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant`
   - `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
   - `DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose`
+  - `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
 Variables to consider as well:
-- `HA_STORAGE_MODE` (`sqlite_local` or `nas`; defaults to `nas` unless MariaDB validation succeeds).
+- `RECORDER_BACKEND` (`sqlite` by default; set to `mariadb` to enable the NAS recorder).
+- `HA_STORAGE_MODE` (auto-managed: `sqlite_local` when `RECORDER_BACKEND=sqlite`, `nas` when `RECORDER_BACKEND=mariadb`).
 - `TZ` (optional timezone, e.g., `Europe/Madrid`) used by Home Assistant container.
 - `SQLITE_DATA_DIR` (optional override for the local SQLite directory; defaults to `/var/lib/piha/home-assistant`).
-Optional: MariaDB recorder validation
+Optional: Recorder backend configuration
 
-- Set `ENABLE_MARIADB_CHECK=true` to have the installer verify MariaDB before deployment
+- Set `RECORDER_BACKEND=mariadb` to have the installer verify MariaDB before deployment.
+- `ENABLE_MARIADB_CHECK=true` is still honoured for legacy runs but the installer now derives it from `RECORDER_BACKEND`.
 - Provide `MARIADB_HOST` (defaults to `NAS_IP`), `MARIADB_PORT` (defaults to `3306`), `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`
 - Optionally set `MARIADB_CONTAINER_NAME` to customize the MariaDB container name (defaults to `mariadb`).
 - The installer uses `netcat-openbsd` and `mariadb-client` to verify port reachability and credentials
@@ -144,7 +147,7 @@ Important:
 
 Running Recorder on MariaDB avoids SQLite-on-SMB corruption and preserves UI history across Pi reinstalls.
 
-> Set `ENABLE_MARIADB_CHECK=true` plus all `MARIADB_*` variables in `.env` if you want MariaDB. The installer will stop if the database is unavailable (printing the bootstrap command) and will write `secrets.yaml` + a managed `recorder` block automatically when the database is reachable.
+> Set `RECORDER_BACKEND=mariadb` (and include the full `MARIADB_*` block) to run Recorder on the NAS. The installer stops if the database is unavailable, prints the bootstrap command, and writes managed `secrets.yaml`/`configuration.yaml` entries when it succeeds. Legacy configs with `ENABLE_MARIADB_CHECK=true` continue to work.
 
 1) Deploy MariaDB on your NAS (via SSH)
 - Option A: run `home-assistant/mariadb/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
