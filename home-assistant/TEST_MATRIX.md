@@ -2,7 +2,7 @@
 
 This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`home-assistant/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
 
-## 1. Home Assistant Installer (v1.2.0)
+## 1. Home Assistant Installer (v1.3.0)
 
 ### 1A. Fresh install without MariaDB
 
@@ -12,7 +12,7 @@ mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
 ```
 - Populate `common/common.env` and `.env` with NAS credentials and host overrides (keep `RECORDER_BACKEND=sqlite`).
-- Optionally set `SQLITE_DATA_DIR`; ensure `/var/lib/piha/home-assistant` is empty (`sudo rm -rf /var/lib/piha/home-assistant/*`).
+- Optionally set `SQLITE_DATA_DIR`; ensure the local recorder path (default `/var/lib/piha/home-assistant/sqlite`) is empty (`sudo rm -rf ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}/*`).
 - Ensure `${BASE_DIR}` and `${PORTAINER_DATA_DIR}` are absent on the NAS.
 
 **Run**
@@ -34,7 +34,7 @@ mount | grep /mnt/piha
 
 **Notes**
 - Override the cooldown with `NAS_COOLDOWN_SECONDS=<seconds>` (use `0` only when data lives on local storage).
-- If `database is locked` still appears, confirm `HA_STORAGE_MODE=sqlite_local` and remove `/var/lib/piha/home-assistant/home-assistant_v2.db*` before rerunning.
+- Confirm `${HA_DATA_DIR}` is created on the NAS and `${SQLITE_DATA_DIR}` now contains `home-assistant_v2.db*` (the installer logs the paths when it runs).
 
 ### 1B. Fresh install with MariaDB
 
@@ -42,6 +42,7 @@ mount | grep /mnt/piha
 - Reuse the **Prep** steps from 1A.
 - Set `.env` with `RECORDER_BACKEND=mariadb` plus valid `MARIADB_*` credentials for the target MariaDB instance.
 - Ensure `${HA_DATA_DIR}`, `${BASE_DIR}`, and `${PORTAINER_DATA_DIR}` are empty on the NAS.
+- Confirm `${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}` is reachable from the Pi (the installer creates it automatically if missing).
 
 **Run**
 ```bash
@@ -142,7 +143,7 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 sudo docker ps -a | grep -E 'homeassistant|portainer'
 sudo ls ${HA_DATA_DIR}
 ```
-- On the NAS, confirm `${NAS_DEPLOY_DIR}` and any MariaDB containers are removed.
+- On the NAS, confirm `${NAS_DEPLOY_DIR}` and any MariaDB containers are removed; on the Pi, verify `${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}` is empty when purge flags are used.
 
 ### 1H. End-to-end reset regression
 
@@ -186,4 +187,4 @@ sudo ls ${HA_DATA_DIR}
 After each scenario, confirm:
 - **Home Assistant**: `docker ps` shows `homeassistant` + `portainer`. `docker logs homeassistant | grep Recorder` reveals whether MariaDB is in use.
 - **MariaDB**: `docker ps` includes `mariadb`. From the NAS run `docker exec -it mariadb mysql -u homeassistant -p` and check `SHOW TABLES;` or `SELECT COUNT(*) FROM events;`.
-- __NAS data__: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files.
+- __NAS data__: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files; `${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}` stores the SQLite recorder when `RECORDER_BACKEND=sqlite`.

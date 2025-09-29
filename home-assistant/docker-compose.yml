@@ -24,3 +24,4 @@ services:
       - TZ=${TZ:-Europe/Madrid}
     volumes:
       - ${HA_DATA_DIR}:/config
+      - ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}:/config/.sqlite-local

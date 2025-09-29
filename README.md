@@ -46,17 +46,22 @@ EOF
 (Adjust the values to match your NAS; this file is gitignored and must be created per host.)
 
 3. Create the component `.env` with host-specific values (see `home-assistant/README.md` for the full list; at minimum set `HOST_ID`, `BASE_DIR`, `HA_DATA_DIR`, ports).
-   - Choose the recorder backend with `RECORDER_BACKEND`: `sqlite` (default) keeps Home Assistant data on the Pi, `mariadb` uses the NAS database.
-   - With `RECORDER_BACKEND=sqlite`, ensure `HA_STORAGE_MODE=sqlite_local` (default) and optionally override `SQLITE_DATA_DIR` (defaults to `/var/lib/piha/home-assistant`).
-   - With `RECORDER_BACKEND=mariadb`, leave `HA_STORAGE_MODE` unset/`nas` and provide the full `MARIADB_*` block; the installer aborts if the database is unreachable.
+   - Choose the recorder backend with `RECORDER_BACKEND`: `sqlite` (default, keeps configuration on the NAS and stores the SQLite database locally) or `mariadb` (recorder data on the NAS).
+   - When `RECORDER_BACKEND=sqlite`, optionally set `SQLITE_DATA_DIR` (defaults to `/var/lib/piha/home-assistant/sqlite`) if you want the database somewhere other than the default local path.
+   - When `RECORDER_BACKEND=mariadb`, provide the full `MARIADB_*` block; the installer aborts if the database is unreachable.
    - `ENABLE_MARIADB_CHECK` is still read for legacy setups but the installer now derives it from `RECORDER_BACKEND`.
 4. Run the installer directly from GitHub (requires `curl` and `sudo`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
+```
+
 
 - The script auto-downloads `docker-compose.yml` if missing.
 - When `RECORDER_BACKEND=mariadb`, the installer validates MariaDB:
   - When the database is reachable, it configures `secrets.yaml` and `configuration.yaml` automatically.
   - When the database is missing or misconfigured, it prints the bootstrap command and **aborts**, so you can provision the database and rerun.
-- Keep `RECORDER_BACKEND=sqlite` to stay on the local SQLite backend (the installer enforces `HA_STORAGE_MODE=sqlite_local`).
+- Keep `RECORDER_BACKEND=sqlite` to use the managed hybrid mode (config on NAS, SQLite database local); switch to `mariadb` for a fully NAS-hosted recorder.
 5. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
 
 ### MariaDB on the NAS

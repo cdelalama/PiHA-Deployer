@@ -298,6 +298,14 @@ EOF
 setup_zigbee2mqtt_config() {
   echo -e "${BLUE}Setting up Zigbee2MQTT configuration...${NC}"
   local config_file="${Z2M_DATA_DIR}/configuration.yaml"
+  local config_dir
+
+  config_dir=$(dirname "$config_file")
+  sudo mkdir -p "$config_dir"
+  if [ -f "$config_file" ] && [ -s "$config_file" ]; then
+    echo -e "${YELLOW}[WARN] Existing Zigbee2MQTT configuration detected at ${config_file}; leaving it unchanged.${NC}"
+    return
+  fi
 
   # MQTT server URL
   local mqtt_server="mqtt://mosquitto:1883"

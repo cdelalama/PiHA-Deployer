@@ -1,10 +1,32 @@
-## 2025-09-28 - Codex - Enforce recorder backend switch and block SQLite-on-NAS
+## 2025-10-03 - ChatGPT - Hybrid SQLite layout for HA + preserve Zigbee config
 
-Summary: Introduced `RECORDER_BACKEND` in the Home Assistant installer (v1.2.0) to derive the recorder backend, forbid SQLite-on-NAS, and refreshed documentation/test matrix accordingly.
+Summary: Home Assistant installer v1.3.0 now keeps configuration on the NAS while mounting the SQLite recorder locally, migrates legacy installs, and ensures the uninstaller cleans the new directory; Zigbee2MQTT installer skips rewriting configuration.yaml after the first run. Documentation, compose, and test matrix updated to reflect the hybrid behaviour.
+
+Files updated:
+- home-assistant/install-home-assistant.sh (hybrid SQLite mode, migration helpers, version 1.3.0)
+- home-assistant/docker-compose.yml (bind mount ${SQLITE_DATA_DIR} into /config/.sqlite-local)
+- home-assistant/uninstall-home-assistant.sh (v1.1.1 removes local recorder directory)
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md (v1.3.0 scenarios)
+- home-assistant/.env.example
+- README.md
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+- zigbee2mqtt/install-zigbee2mqtt.sh (preserve configuration.yaml when present)
+- zigbee2mqtt/README.md
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.3.0, home-assistant/uninstall-home-assistant.sh -> 1.1.1)
+
+---`n## 2025-09-28 - Codex - Enforce recorder backend switch and block SQLite-on-NAS
+
+Summary: Introduced `RECORDER_BACKEND` in the Home Assistant installer (v1.2.0) to derive the recorder backend, removed `HA_STORAGE_MODE`, forbade SQLite-on-NAS, and refreshed documentation/test matrix accordingly.
 
 Files updated:
 - home-assistant/install-home-assistant.sh (v1.2.0 recorder backend normalization)
 - README.md
+- home-assistant/.env.example
+- home-assistant/.env (session-only update: set RECORDER_BACKEND=sqlite)
 - home-assistant/README.md
 - home-assistant/TEST_MATRIX.md
 - docs/llm/HANDOFF.md

@@ -4,7 +4,7 @@
 
 Goal: Automated deployment of home automation services on Raspberry Pi with NAS synchronization.
 
-Current Status: Node-RED component is complete and stable. Home Assistant installer v1.1.13 (with MariaDB validation and automatic restart) is awaiting full on-device regression with NAS. Zigbee2MQTT stack is deployed and running in production on a dedicated Pi (validated 2025-09-21).
+Current Status: Node-RED component is complete and stable. Home Assistant installer v1.3.0 adds the hybrid SQLite mode (NAS-hosted configuration with a local database) and keeps MariaDB validation; full on-device regression is still pending. Zigbee2MQTT stack is deployed and running in production on a dedicated Pi (validated 2025-09-21).
 
 ## Architecture Overview
 
@@ -57,7 +57,7 @@ PiHA-Deployer/
 |   `-- docker-compose.yml         # Service definitions
 |-- home-assistant/                # Home Assistant deployment
 |   |-- README.md                  # Component overview
-|   |-- install-home-assistant.sh  # Main installer (v1.1.13)
+|   |-- install-home-assistant.sh  # Main installer (v1.3.0)
 |   |-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
 |   `-- mariadb/                   # MariaDB for recorder (runs on NAS)
 |       |-- README.md              # MariaDB setup guide

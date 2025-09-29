@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 WORK_DIR=$(pwd)
 
@@ -545,6 +545,9 @@ TARGETS=()
 TARGETS+=("${HA_DATA_DIR}:::Home Assistant data directory")
 TARGETS+=("${PORTAINER_DATA_DIR}:::Portainer data directory")
 TARGETS+=("${DOCKER_COMPOSE_DIR}:::Compose directory")
+if [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
+  TARGETS+=("${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}:::SQLite recorder directory")
+fi
 
 for entry in "${TARGETS[@]}"; do
   path="${entry%%:::*}"
