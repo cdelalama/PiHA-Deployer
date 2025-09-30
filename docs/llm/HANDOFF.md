@@ -4,7 +4,7 @@
 
 Last Updated: 2025-10-03 - ChatGPT
 Session Focus: Added hybrid SQLite storage for Home Assistant and prevented Zigbee2MQTT from overwriting existing configuration files.
-Status: Home Assistant installer 1.3.0 now keeps configuration on the NAS while isolating the SQLite database locally; the uninstaller 1.1.1 removes the new recorder directory when requested. Zigbee2MQTT installer 1.1.3 preserves `configuration.yaml` after the first run; production stack on `cdelalamazigbee` remains healthy.
+Status: Home Assistant installer 1.3.0 now keeps configuration on the NAS while isolating the SQLite database locally; the uninstaller 1.1.1 removes the recorder directory when wiping and lets you preserve NAS config. Zigbee2MQTT installer 1.1.3 preserves `configuration.yaml` after the first run; production stack on `cdelalamazigbee` remains healthy.
 
 ## Immediate Context
 
@@ -19,7 +19,7 @@ Active Files
 - docs/llm/HANDOFF.md (this file)
 - docs/llm/HISTORY.md (recent session log)
 - home-assistant/install-home-assistant.sh (v1.3.0 hybrid SQLite)
-- home-assistant/uninstall-home-assistant.sh (v1.1.1 recorder dir cleanup)
+- home-assistant/uninstall-home-assistant.sh (v1.1.1 recorder dir cleanup + keep-config prompt)
 - home-assistant/TEST_MATRIX.md (v1.3.0 scenario updates)
 - README.md (root) & home-assistant/README.md (doc alignment)
 - zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 config preservation)
@@ -37,7 +37,7 @@ Current Versions
 
 ## Top Priorities
 
-1) **VERIFY**: Execute Test Matrix scenario 1A + 1H on real hardware to confirm the new hybrid SQLite layout (config reused from NAS, database recreated under `${SQLITE_DATA_DIR}`) and the uninstaller's cleaning of the recorder directory.
+1) **VERIFY**: Execute Test Matrix scenario 1A + 1H on real hardware to confirm the new hybrid SQLite layout (config reused from NAS, database recreated under `${SQLITE_DATA_DIR}`) and the uninstaller's keep-config branch vs full wipe, plus recorder directory cleanup.
 2) **CHECK**: Re-run Zigbee2MQTT installer on `cdelalamazigbee` (or a lab box) to ensure `configuration.yaml` is left untouched after the first deployment.
 3) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}`/data (current default) or move to a different NAS path. Update README + `.env` if needed.
 4) **VALIDATE**: Run home-assistant/mariadb/setup-nas-mariadb.sh against the QNAP with the new defaults to confirm directories and permissions.

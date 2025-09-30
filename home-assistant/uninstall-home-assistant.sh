@@ -428,6 +428,11 @@ prompt_optional_actions() {
       PURGE_IMAGES=true
     fi
   fi
+  if [ "$KEEP_CONFIG" != "true" ] && [ "$KEEP_CONFIG_ENV_SET" != "true" ]; then
+    if ask_yes_no "${YELLOW}Keep Home Assistant configuration on the NAS (${HA_DATA_DIR})? [y/N]: ${NC}"; then
+      KEEP_CONFIG=true
+    fi
+  fi
 }
 
 FORCE=false
@@ -442,6 +447,8 @@ KEEP_ENV_ENV_SET=false
 PURGE_LOCAL_CLI_SET=false
 PURGE_IMAGES_CLI_SET=false
 KEEP_ENV_CLI_SET=false
+KEEP_CONFIG=false
+KEEP_CONFIG_ENV_SET=false
 
 if [ "${UNINSTALL_PURGE_LOCAL+x}" ]; then
   PURGE_LOCAL_ENV_SET=true
@@ -460,6 +467,12 @@ if [ "${UNINSTALL_KEEP_ENV+x}" ]; then
   if bool_true "${UNINSTALL_KEEP_ENV}"; then
     KEEP_ENV=true
   fi
+if [ "${UNINSTALL_KEEP_CONFIG+x}" ]; then
+  KEEP_CONFIG_ENV_SET=true
+  if bool_true "${UNINSTALL_KEEP_CONFIG}"; then
+    KEEP_CONFIG=true
+  fi
+fi
 fi
 
 while [ $# -gt 0 ]; do
@@ -542,10 +555,14 @@ if docker ps -a | grep -q portainer; then
 fi
 
 TARGETS=()
-TARGETS+=("${HA_DATA_DIR}:::Home Assistant data directory")
+if bool_true "$KEEP_CONFIG"; then
+  echo -e "${BLUE}Preserving Home Assistant data directory ${HA_DATA_DIR} (keep config).${NC}"
+else
+  TARGETS+=("${HA_DATA_DIR}:::Home Assistant data directory")
+fi
 TARGETS+=("${PORTAINER_DATA_DIR}:::Portainer data directory")
 TARGETS+=("${DOCKER_COMPOSE_DIR}:::Compose directory")
-if [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
+if [ "${RECORDER_BACKEND,,}" = "sqlite" ] && ! bool_true "$KEEP_CONFIG"; then
   TARGETS+=("${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}:::SQLite recorder directory")
 fi
 
@@ -560,7 +577,9 @@ if [ -d "$NAS_MOUNT_DIR" ]; then
   sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$NAS_MOUNT_DIR" || true
 fi
 
-if ! bool_true "$SKIP_NAS_SSH"; then
+if bool_true "$KEEP_CONFIG"; then
+  echo -e "${BLUE}Preserving NAS MariaDB deployment (keep config).${NC}"
+elif ! bool_true "$SKIP_NAS_SSH"; then
   run_remote_cleanup
 else
   echo -e "${YELLOW}[WARN] Skipping NAS SSH cleanup as requested.${NC}"
@@ -576,4 +595,10 @@ elif bool_true "$KEEP_ENV"; then
   echo -e "${BLUE}Cleanup complete. Working directory retained at ${WORK_DIR}; .env kept (--keep-env).${NC}"
 else
   echo -e "${BLUE}Cleanup complete. Working directory retained at ${WORK_DIR}; .env removed.${NC}"
+fi
+if bool_true "$KEEP_CONFIG"; then
+  echo -e "${BLUE}Home Assistant configuration preserved at ${HA_DATA_DIR}.${NC}"
+  if [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
+    echo -e "${BLUE}SQLite recorder retained at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}.${NC}"
+  fi
 fi

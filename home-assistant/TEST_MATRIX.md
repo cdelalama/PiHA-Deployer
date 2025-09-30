@@ -131,7 +131,7 @@ printf '\033[0;34mDownloaded uninstall-home-assistant.sh; run sudo bash uninstal
 ```bash
 sudo bash uninstall-home-assistant.sh
 ```
-- Answer the prompts to remove the working directory and Docker images as needed.
+- Answer the prompts (purge working dir/images) and choose whether to keep the NAS configuration when asked.
 
 **Automation**
 ```bash
@@ -153,7 +153,7 @@ sudo ls ${HA_DATA_DIR}
 3. Run 1B (with MariaDB) if required.
 
 **Checks**
-- After 1G: `.env` absent unless `--keep-env` was used; directories removed; `docker ps` shows no `homeassistant`/`portainer`.
+- After 1G: `.env` absent unless `--keep-env` was used; directories removed unless you opted to keep the NAS configuration (in which case `${HA_DATA_DIR}`/`${SQLITE_DATA_DIR}` remain); `docker ps` shows no `homeassistant`/`portainer`.
 - After 1A/1B: installer output shows `Waiting 5s for NAS writes to settle...` and, when MariaDB is enabled, `[OK] Restarting homeassistant to apply requirements.txt`.
 - Home Assistant reachable at `http://<pi>:8123` and Portainer at `http://<pi>:9000`.
 
