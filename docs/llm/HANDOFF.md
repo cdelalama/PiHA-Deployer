@@ -9,7 +9,8 @@ Status: Home Assistant installer 1.3.0 keeps configuration on the NAS while isol
 ## Immediate Context
 
 Current Work
-- Home Assistant installer v1.3.0 keeps YAML/configuration on the NAS and mounts `${SQLITE_DATA_DIR}` locally for the recorder, migrating legacy installs automatically; uninstaller v1.2.0 now offers keep-config/keep-db prompts and still cleans the local recorder directory when wiping.
+- Home Assistant uninstaller v1.2.0 prompts interactively to keep configuration and recorder data (no env overrides); SQLite helper still cleans local recorder when wiped.
+- Home Assistant installer v1.3.0 keeps YAML/configuration on the NAS and mounts `${SQLITE_DATA_DIR}` locally for the recorder, migrating legacy installs automatically.
 - Home Assistant test matrix updated to v1.3.0 to cover the hybrid SQLite mode (config on NAS, DB local) alongside the MariaDB scenarios.
 - MariaDB helper (home-assistant/mariadb/setup-nas-mariadb.sh v1.0.9) unchanged; NAS guide still vendor-agnostic.
 - Zigbee2MQTT installer v1.1.3 now seeds `configuration.yaml` only when missing so customised deployments persist; production host `cdelalamazigbee` remains stable (containers: zigbee2mqtt, mosquitto, portainer_z2m).

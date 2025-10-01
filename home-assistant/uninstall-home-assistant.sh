@@ -436,7 +436,9 @@ ask_yes_no() {
 }
 
 prompt_optional_actions() {
-  if bool_true "$FORCE"; then
+  if bool_true "$FORCE" || [ ! -t 0 ]; then
+    KEEP_CONFIG=false
+    KEEP_DB=false
     return
   fi
 
@@ -452,30 +454,27 @@ prompt_optional_actions() {
     fi
   fi
 
-  if [ "$KEEP_CONFIG" != "true" ] && [ "$KEEP_CONFIG_ENV_SET" != "true" ]; then
-    if ask_yes_no "${YELLOW}Keep Home Assistant configuration on the NAS (${HA_DATA_DIR}) (automations, dashboards, secrets)? [y/N]: ${NC}"; then
-      KEEP_CONFIG=true
-    fi
+  if ask_yes_no "${YELLOW}Keep Home Assistant configuration on the NAS (${HA_DATA_DIR}) (automations, dashboards, secrets)? [y/N]: ${NC}"; then
+    KEEP_CONFIG=true
+  else
+    KEEP_CONFIG=false
   fi
 
+  KEEP_DB=false
   if bool_true "$KEEP_CONFIG"; then
     local recorder="${RECORDER_BACKEND,,}"
-
     if [ "$recorder" = "sqlite" ]; then
-      if [ "$KEEP_DB" != "true" ] && [ "$KEEP_DB_ENV_SET" != "true" ]; then
-        if ask_yes_no "${YELLOW}Keep SQLite recorder data at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}? [y/N]: ${NC}"; then
-          KEEP_DB=true
-        fi
+      if ask_yes_no "${YELLOW}Keep SQLite recorder data at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}? [y/N]: ${NC}"; then
+        KEEP_DB=true
       fi
     elif [ "$recorder" = "mariadb" ]; then
-      if [ "$KEEP_DB" != "true" ] && [ "$KEEP_DB_ENV_SET" != "true" ]; then
-        if ask_yes_no "${YELLOW}Keep NAS MariaDB deployment (${NAS_DEPLOY_DIR})? [y/N]: ${NC}"; then
-          KEEP_DB=true
-        fi
+      if ask_yes_no "${YELLOW}Keep NAS MariaDB deployment (${NAS_DEPLOY_DIR})? [y/N]: ${NC}"; then
+        KEEP_DB=true
       fi
     fi
   fi
 }
+
 
 
 FORCE=false
@@ -491,9 +490,7 @@ PURGE_LOCAL_CLI_SET=false
 PURGE_IMAGES_CLI_SET=false
 KEEP_ENV_CLI_SET=false
 KEEP_CONFIG=false
-KEEP_CONFIG_ENV_SET=false
 KEEP_DB=false
-KEEP_DB_ENV_SET=false
 
 if [ "${UNINSTALL_PURGE_LOCAL+x}" ]; then
   PURGE_LOCAL_ENV_SET=true
@@ -511,19 +508,6 @@ if [ "${UNINSTALL_KEEP_ENV+x}" ]; then
   KEEP_ENV_ENV_SET=true
   if bool_true "${UNINSTALL_KEEP_ENV}"; then
     KEEP_ENV=true
-  fi
-fi
-fi
-if [ "${UNINSTALL_KEEP_CONFIG+x}" ]; then
-  KEEP_CONFIG_ENV_SET=true
-  if bool_true "${UNINSTALL_KEEP_CONFIG}"; then
-    KEEP_CONFIG=true
-  fi
-fi
-if [ "${UNINSTALL_KEEP_DB+x}" ]; then
-  KEEP_DB_ENV_SET=true
-  if bool_true "${UNINSTALL_KEEP_DB}"; then
-    KEEP_DB=true
   fi
 fi
 

@@ -1,6 +1,6 @@
 ## 2025-10-03 - ChatGPT - Hybrid SQLite layout for HA + preserve Zigbee config
 
-Summary: Home Assistant installer v1.3.0 now keeps configuration on the NAS while mounting the SQLite recorder locally, migrates legacy installs, and the uninstaller v1.2.0 lets you choose whether to keep the configuration and recorder (SQLite or MariaDB). Zigbee2MQTT installer skips rewriting configuration.yaml after the first run. Documentation, compose, and test matrix updated to reflect the hybrid behaviour.
+Summary: Home Assistant installer v1.3.0 now keeps configuration on the NAS while mounting the SQLite recorder locally, migrates legacy installs, and the uninstaller v1.2.0 now prompts interactively (no env overrides) to keep the configuration and recorder (SQLite or MariaDB). Zigbee2MQTT installer skips rewriting configuration.yaml after the first run. Documentation, compose, and test matrix updated to reflect the hybrid behaviour.
 
 Files updated:
 - home-assistant/install-home-assistant.sh (hybrid SQLite mode, migration helpers, version 1.3.0)

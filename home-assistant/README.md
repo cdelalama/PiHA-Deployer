@@ -68,7 +68,7 @@ Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_D
 - By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB; this step is skipped only when you keep both the configuration and the MariaDB deployment.
 - Unless `--keep-env` (or `UNINSTALL_KEEP_ENV=true`) is set, the run deletes `.env` (and `.env.bootstrap` when present) from the working directory so credentials are not left behind.
 - Staying in interactive mode (recommended) gives you a final confirmation before deleting.
-- Automation can set `UNINSTALL_KEEP_CONFIG=true` (and optionally `UNINSTALL_KEEP_DB=true`) to mirror the interactive choices when running non-interactively.
+- Non-interactive runs (e.g., piping the script or using `--force`) default to a full wipe: configuration removed, recorder reset, and NAS MariaDB cleaned.
 
 Afterwards recreate your working folder (e.g. `mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`) and repopulate both `common/common.env` and `.env` from your secrets backup before rerunning the installer.
 
