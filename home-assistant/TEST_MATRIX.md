@@ -131,7 +131,8 @@ printf '\033[0;34mDownloaded uninstall-home-assistant.sh; run sudo bash uninstal
 ```bash
 sudo bash uninstall-home-assistant.sh
 ```
-- Answer the prompts (purge working dir/images) and choose whether to keep the NAS configuration when asked.
+- Answer the prompts (purge working dir/images), choose whether to keep the NAS configuration, and decide whether to retain the recorder data when prompted.
+- Capture both branches during testing (keep configuration + keep recorder, keep configuration + wipe recorder) to ensure the prompts behave as expected for SQLite and MariaDB.
 
 **Automation**
 ```bash

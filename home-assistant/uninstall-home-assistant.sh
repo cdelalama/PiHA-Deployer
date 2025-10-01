@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.1.1"
+VERSION="1.2.0"
 
 WORK_DIR=$(pwd)
 
@@ -133,6 +133,27 @@ delete_path() {
   sudo rm -rf "$target"
   echo -e "${GREEN}[OK] Removed ${label}${NC}"
 }
+
+purge_sqlite_recorder() {
+  local dir="${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}"
+  local base="${SQLITE_DB_FILENAME:-home-assistant_v2.db}"
+  local removed=false
+
+  for suffix in "" "-shm" "-wal"; do
+    local file="${dir}/${base}${suffix}"
+    if [ -f "$file" ]; then
+      sudo rm -f "$file" || true
+      removed=true
+    fi
+  done
+
+  if [ "$removed" = true ]; then
+    echo -e "${BLUE}SQLite recorder reset under ${dir}.${NC}"
+  else
+    echo -e "${YELLOW}[WARN] No SQLite recorder files found under ${dir}.${NC}"
+  fi
+}
+
 
 run_remote_cleanup() {
   local host="${NAS_SSH_HOST:-}"
@@ -418,22 +439,44 @@ prompt_optional_actions() {
   if bool_true "$FORCE"; then
     return
   fi
+
   if [ "$PURGE_LOCAL" != "true" ] && [ "$PURGE_LOCAL_ENV_SET" != "true" ] && [ "$PURGE_LOCAL_CLI_SET" != "true" ]; then
     if ask_yes_no "${YELLOW}Delete this working directory (${WORK_DIR}) after cleanup? [y/N]: ${NC}"; then
       PURGE_LOCAL=true
     fi
   fi
+
   if [ "$PURGE_IMAGES" != "true" ] && [ "$PURGE_IMAGES_ENV_SET" != "true" ] && [ "$PURGE_IMAGES_CLI_SET" != "true" ]; then
     if ask_yes_no "${YELLOW}Remove Home Assistant/Portainer Docker images from this Pi? [y/N]: ${NC}"; then
       PURGE_IMAGES=true
     fi
   fi
+
   if [ "$KEEP_CONFIG" != "true" ] && [ "$KEEP_CONFIG_ENV_SET" != "true" ]; then
-    if ask_yes_no "${YELLOW}Keep Home Assistant configuration on the NAS (${HA_DATA_DIR})? [y/N]: ${NC}"; then
+    if ask_yes_no "${YELLOW}Keep Home Assistant configuration on the NAS (${HA_DATA_DIR}) (automations, dashboards, secrets)? [y/N]: ${NC}"; then
       KEEP_CONFIG=true
     fi
   fi
+
+  if bool_true "$KEEP_CONFIG"; then
+    local recorder="${RECORDER_BACKEND,,}"
+
+    if [ "$recorder" = "sqlite" ]; then
+      if [ "$KEEP_DB" != "true" ] && [ "$KEEP_DB_ENV_SET" != "true" ]; then
+        if ask_yes_no "${YELLOW}Keep SQLite recorder data at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}? [y/N]: ${NC}"; then
+          KEEP_DB=true
+        fi
+      fi
+    elif [ "$recorder" = "mariadb" ]; then
+      if [ "$KEEP_DB" != "true" ] && [ "$KEEP_DB_ENV_SET" != "true" ]; then
+        if ask_yes_no "${YELLOW}Keep NAS MariaDB deployment (${NAS_DEPLOY_DIR})? [y/N]: ${NC}"; then
+          KEEP_DB=true
+        fi
+      fi
+    fi
+  fi
 }
+
 
 FORCE=false
 SKIP_NAS_SSH=false
@@ -449,6 +492,8 @@ PURGE_IMAGES_CLI_SET=false
 KEEP_ENV_CLI_SET=false
 KEEP_CONFIG=false
 KEEP_CONFIG_ENV_SET=false
+KEEP_DB=false
+KEEP_DB_ENV_SET=false
 
 if [ "${UNINSTALL_PURGE_LOCAL+x}" ]; then
   PURGE_LOCAL_ENV_SET=true
@@ -467,12 +512,19 @@ if [ "${UNINSTALL_KEEP_ENV+x}" ]; then
   if bool_true "${UNINSTALL_KEEP_ENV}"; then
     KEEP_ENV=true
   fi
+fi
+fi
 if [ "${UNINSTALL_KEEP_CONFIG+x}" ]; then
   KEEP_CONFIG_ENV_SET=true
   if bool_true "${UNINSTALL_KEEP_CONFIG}"; then
     KEEP_CONFIG=true
   fi
 fi
+if [ "${UNINSTALL_KEEP_DB+x}" ]; then
+  KEEP_DB_ENV_SET=true
+  if bool_true "${UNINSTALL_KEEP_DB}"; then
+    KEEP_DB=true
+  fi
 fi
 
 while [ $# -gt 0 ]; do
@@ -565,24 +617,60 @@ TARGETS+=("${DOCKER_COMPOSE_DIR}:::Compose directory")
 if [ "${RECORDER_BACKEND,,}" = "sqlite" ] && ! bool_true "$KEEP_CONFIG"; then
   TARGETS+=("${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}:::SQLite recorder directory")
 fi
-
 for entry in "${TARGETS[@]}"; do
   path="${entry%%:::*}"
   label="${entry##*:::}"
   delete_path "$path" "$label"
 done
 
+if bool_true "$KEEP_CONFIG" && [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
+  if bool_true "$KEEP_DB"; then
+    echo -e "${BLUE}SQLite recorder retained at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}.${NC}"
+  else
+    purge_sqlite_recorder
+  fi
+fi
+
 if [ -d "$NAS_MOUNT_DIR" ]; then
   echo -e "${BLUE}Ensuring NAS mount point ownership...${NC}"
   sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$NAS_MOUNT_DIR" || true
 fi
 
-if bool_true "$KEEP_CONFIG"; then
-  echo -e "${BLUE}Preserving NAS MariaDB deployment (keep config).${NC}"
-elif ! bool_true "$SKIP_NAS_SSH"; then
-  run_remote_cleanup
+cleanup_mariadb=true
+if [ "${RECORDER_BACKEND,,}" = "mariadb" ]; then
+  if bool_true "$KEEP_CONFIG" && bool_true "$KEEP_DB"; then
+    echo -e "${BLUE}MariaDB deployment preserved at ${NAS_DEPLOY_DIR}.${NC}"
+    cleanup_mariadb=false
+  fi
 else
-  echo -e "${YELLOW}[WARN] Skipping NAS SSH cleanup as requested.${NC}"
+  if bool_true "$KEEP_CONFIG"; then
+    cleanup_mariadb=false
+  fi
+fi
+
+if [ "$cleanup_mariadb" = true ]; then
+  if bool_true "$SKIP_NAS_SSH"; then
+    echo -e "${YELLOW}[WARN] Skipping NAS SSH cleanup as requested.${NC}"
+  else
+    run_remote_cleanup
+  fi
+fi
+
+if bool_true "$KEEP_CONFIG"; then
+  echo -e "${BLUE}Home Assistant configuration preserved at ${HA_DATA_DIR}.${NC}"
+  if [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
+    if bool_true "$KEEP_DB"; then
+      echo -e "${BLUE}SQLite recorder retained at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}.${NC}"
+    else
+      echo -e "${BLUE}SQLite recorder reset; a fresh database will be created on next install.${NC}"
+    fi
+  elif [ "${RECORDER_BACKEND,,}" = "mariadb" ]; then
+    if bool_true "$KEEP_DB"; then
+      echo -e "${BLUE}MariaDB deployment preserved at ${NAS_DEPLOY_DIR}.${NC}"
+    else
+      echo -e "${BLUE}MariaDB deployment removed from ${NAS_DEPLOY_DIR}; rerun the installer to bootstrap a new database.${NC}"
+    fi
+  fi
 fi
 
 purge_project_images
@@ -595,10 +683,4 @@ elif bool_true "$KEEP_ENV"; then
   echo -e "${BLUE}Cleanup complete. Working directory retained at ${WORK_DIR}; .env kept (--keep-env).${NC}"
 else
   echo -e "${BLUE}Cleanup complete. Working directory retained at ${WORK_DIR}; .env removed.${NC}"
-fi
-if bool_true "$KEEP_CONFIG"; then
-  echo -e "${BLUE}Home Assistant configuration preserved at ${HA_DATA_DIR}.${NC}"
-  if [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
-    echo -e "${BLUE}SQLite recorder retained at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}.${NC}"
-  fi
 fi

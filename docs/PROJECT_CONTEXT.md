@@ -4,7 +4,7 @@
 
 Goal: Automated deployment of home automation services on Raspberry Pi with NAS synchronization.
 
-Current Status: Node-RED component is complete and stable. Home Assistant installer v1.3.0 adds the hybrid SQLite mode (NAS-hosted configuration with a local database) and keeps MariaDB validation; full on-device regression is still pending. Zigbee2MQTT stack is deployed and running in production on a dedicated Pi (validated 2025-09-21).
+Current Status: Node-RED component is complete and stable. Home Assistant installer v1.3.0 adds the hybrid SQLite mode (NAS-hosted configuration with a local database) and keeps MariaDB validation; the uninstaller v1.2.0 now lets you keep the configuration and optionally reset the recorder; full on-device regression is still pending. Zigbee2MQTT stack is deployed and running in production on a dedicated Pi (validated 2025-09-21).
 
 ## Architecture Overview
 

@@ -62,12 +62,13 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-a
 
 Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_DIR}` on the NAS via SSH. In interactive runs the uninstaller now asks (after the confirmation) whether to delete this working directory and remove the Home Assistant/Portainer Docker images; answer `y` to apply. Automation can continue to pass `--purge-local`, `--purge-images`, or set the `UNINSTALL_PURGE_LOCAL/UNINSTALL_PURGE_IMAGES` env vars; use `--keep-env`/`UNINSTALL_KEEP_ENV` when you need `.env` to survive the cleanup.
 
-- After confirmation the interactive run asks whether you want to keep the NAS configuration (`${HA_DATA_DIR}`). Answer `y` to preserve it (this also keeps `${SQLITE_DATA_DIR}` when using SQLite and skips the MariaDB cleanup) or `n` for a full wipe.
-- The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` unless you chose to keep the configuration.
-- By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB; this step is skipped when configuration retention is requested.
+- After confirmation the interactive run asks whether you want to keep the NAS configuration (`${HA_DATA_DIR}`). Answer `y` to preserve it or `n` for a full wipe.
+- When the configuration is kept, a follow-up question lets you retain the recorder data (SQLite under `${SQLITE_DATA_DIR}` or the NAS MariaDB deployment) or reset it before reinstalling.
+- The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` unless you chose to keep the configuration (when preserved, the recorder is handled according to your follow-up answer).
+- By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB; this step is skipped only when you keep both the configuration and the MariaDB deployment.
 - Unless `--keep-env` (or `UNINSTALL_KEEP_ENV=true`) is set, the run deletes `.env` (and `.env.bootstrap` when present) from the working directory so credentials are not left behind.
 - Staying in interactive mode (recommended) gives you a final confirmation before deleting.
-- Automation can set `UNINSTALL_KEEP_CONFIG=true` to preserve the NAS configuration in non-interactive runs.
+- Automation can set `UNINSTALL_KEEP_CONFIG=true` (and optionally `UNINSTALL_KEEP_DB=true`) to mirror the interactive choices when running non-interactively.
 
 Afterwards recreate your working folder (e.g. `mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant`) and repopulate both `common/common.env` and `.env` from your secrets backup before rerunning the installer.
 
