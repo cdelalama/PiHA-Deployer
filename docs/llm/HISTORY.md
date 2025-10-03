@@ -1,3 +1,18 @@
+## 2025-10-05 - Codex - Prune empty host directories on HA uninstall
+
+Summary: Bumped the Home Assistant uninstaller to v1.2.1 so full wipes remove the host-level NAS directory when it ends up empty, keeping the NAS tree clean. Updated component docs and test matrix to mention the behaviour.
+
+Files updated:
+- home-assistant/uninstall-home-assistant.sh (v1.2.1 removes empty host directories after wiping config)
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md
+- docs/PROJECT_CONTEXT.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md (this entry)
+
+Version impact: yes (home-assistant/uninstall-home-assistant.sh -> 1.2.1)
+Notes: Choosing not to keep configuration now deletes `${NAS_MOUNT_DIR}/hosts/${HOST_ID}` when it becomes empty; interactive prompts remain unchanged.
+
 ## 2025-10-03 - ChatGPT - Hybrid SQLite layout for HA + preserve Zigbee config
 
 Summary: Home Assistant installer v1.3.0 now keeps configuration on the NAS while mounting the SQLite recorder locally, migrates legacy installs, and the uninstaller v1.2.0 now prompts interactively (no env overrides) to keep the configuration and recorder (SQLite or MariaDB). Zigbee2MQTT installer skips rewriting configuration.yaml after the first run. Documentation, compose, and test matrix updated to reflect the hybrid behaviour.

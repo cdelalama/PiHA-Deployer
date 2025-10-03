@@ -10,6 +10,13 @@ This checklist covers the scenarios we expect to exercise when validating the Ho
 ```bash
 mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
+mkdir -p common
+
+# Create configuration files with secure permissions
+touch .env
+chmod 600 .env
+touch common/common.env
+chmod 600 common/common.env
 ```
 - Populate `common/common.env` and `.env` with NAS credentials and host overrides (keep `RECORDER_BACKEND=sqlite`).
 - Optionally set `SQLITE_DATA_DIR`; ensure the local recorder path (default `/var/lib/piha/home-assistant/sqlite`) is empty (`sudo rm -rf ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}/*`).
@@ -146,6 +153,7 @@ sudo docker ps -a | grep -E 'homeassistant|portainer'
 sudo ls ${HA_DATA_DIR}
 ```
 - On the NAS, confirm `${NAS_DEPLOY_DIR}` and any MariaDB containers are removed; on the Pi, verify `${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}` is empty when purge flags are used.
+- When the configuration is wiped, `${NAS_MOUNT_DIR}/hosts/${HOST_ID}` should no longer be present unless other stacks recreated it (empty host directories are pruned automatically).
 
 ### 1H. End-to-end reset regression
 

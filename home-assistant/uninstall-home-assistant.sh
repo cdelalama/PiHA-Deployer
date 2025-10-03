@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.2.0"
+VERSION="1.2.1"
 
 WORK_DIR=$(pwd)
 
@@ -152,6 +152,34 @@ purge_sqlite_recorder() {
   else
     echo -e "${YELLOW}[WARN] No SQLite recorder files found under ${dir}.${NC}"
   fi
+}
+
+
+maybe_remove_host_dir() {
+  if bool_true "$KEEP_CONFIG"; then
+    return
+  fi
+  local ha_dir="${HA_DATA_DIR:-}"
+  if [ -z "$ha_dir" ]; then
+    return
+  fi
+  local host_dir
+  host_dir="$(dirname "$ha_dir")"
+  if [ -z "$host_dir" ] || [ ! -d "$host_dir" ]; then
+    return
+  fi
+  local normalized_mount="${NAS_MOUNT_DIR%/}"
+  case "$host_dir" in
+    "${normalized_mount}/hosts"/*) ;;
+    *)
+      return
+      ;;
+  esac
+  if find "$host_dir" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null | grep -q .; then
+    return
+  fi
+  echo -e "${BLUE}Removing empty host directory ${host_dir}.${NC}"
+  sudo rmdir "$host_dir" 2>/dev/null || sudo rm -rf "$host_dir" || true
 }
 
 
@@ -606,6 +634,8 @@ for entry in "${TARGETS[@]}"; do
   label="${entry##*:::}"
   delete_path "$path" "$label"
 done
+
+maybe_remove_host_dir
 
 if bool_true "$KEEP_CONFIG" && [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
   if bool_true "$KEEP_DB"; then

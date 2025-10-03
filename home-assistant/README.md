@@ -13,12 +13,24 @@ Note: This installer will install Docker and the Docker Compose plugin if missin
 ## Quick Start
 1. SSH into the Home Assistant Pi and create the working directory:
 
-```
+```bash
 mkdir -p ~/piha-home-assistant
 cd ~/piha-home-assistant
+mkdir -p common
 ```
 
-2. Create a `common/` subdirectory here and drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
+2. Create configuration files with secure permissions and populate them:
+
+```bash
+# Create configuration files with secure permissions (600)
+touch .env
+chmod 600 .env
+touch common/common.env
+chmod 600 common/common.env
+```
+
+Drop your shared defaults in `common/common.env` (NAS credentials, mount path, UID/GID, Portainer password, etc.). You can copy from `common/common.env.example` in this repo and adjust values.
+
 3. Place the component-specific `.env` in the working directory (only the Home Assistant overrides live here; the installer loads `common/common.env` first and then `.env`). You can copy `home-assistant/.env.example` as a template (or reuse your existing `home-assistant/.env`) and fill in your secrets.
    - Set `RECORDER_BACKEND=sqlite` (default) to keep Home Assistant configuration on the NAS while storing the SQLite database locally under `SQLITE_DATA_DIR` (defaults to `/var/lib/piha/home-assistant/sqlite`). The installer migrates existing local configs to the NAS automatically when possible.
    - Set `RECORDER_BACKEND=mariadb` to store recorder history on the NAS and provide the full `MARIADB_*` block so the installer can validate the database before launching.
@@ -65,6 +77,7 @@ Add `--skip-nas-ssh` when you do *not* want the script to remove `${NAS_DEPLOY_D
 - After confirmation the interactive run asks whether you want to keep the NAS configuration (`${HA_DATA_DIR}`). Answer `y` to preserve it or `n` for a full wipe.
 - When the configuration is kept, a follow-up question lets you retain the recorder data (SQLite under `${SQLITE_DATA_DIR}` or the NAS MariaDB deployment) or reset it before reinstalling.
 - The script loads your `.env`, stops the stack, and deletes `${HA_DATA_DIR}`, `${PORTAINER_DATA_DIR}`, and `${DOCKER_COMPOSE_DIR}` unless you chose to keep the configuration (when preserved, the recorder is handled according to your follow-up answer).
+- When you wipe the configuration, the script also removes an empty host directory `${NAS_MOUNT_DIR}/hosts/${HOST_ID}` so the NAS tree stays tidy.
 - By default it also connects to the NAS via SSH (using `NAS_SSH_*`) to remove `${NAS_DEPLOY_DIR}` for MariaDB; this step is skipped only when you keep both the configuration and the MariaDB deployment.
 - Unless `--keep-env` (or `UNINSTALL_KEEP_ENV=true`) is set, the run deletes `.env` (and `.env.bootstrap` when present) from the working directory so credentials are not left behind.
 - Staying in interactive mode (recommended) gives you a final confirmation before deleting.
