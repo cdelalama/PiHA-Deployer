@@ -66,8 +66,8 @@ Reorganize PiHA-Deployer to implement the NAS-orchestrated architecture: shared 
 | 1 | Document Docker standby role | Codex | Completed | See `application/home-assistant/docker-standby/README.md` |
 | 3 | Draft MQTT leadership contract | Codex | Completed | Contract defined in `application/home-assistant/leadership/README.md` |
 | 3 | Define config sync policy | Codex | In progress | High-level policy documented; implementation pending |
-| 2 | Migrate MariaDB docs | TBA | Blocked | Wait for contract finalisation |
-| 2 | Migrate Mosquitto docs | TBA | Blocked | Coordinate with Zigbee2MQTT schedule |
+| 2 | Migrate MariaDB docs | Codex | In progress | README scaffolded in infrastructure/mariadb/; scripts pending move |
+| 2 | Migrate Mosquitto docs | Codex | In progress | MQTT service plan documented; extraction pending |
 | 2 | Migrate Zigbee2MQTT assets | TBA | Blocked | Production host remains active |
 | 3 | Build control-plane scaffolding | TBA | Blocked | Depends on leadership tooling implementation |
 | 4 | PoE control automation | TBA | Blocked | Requires switch API research |
@@ -75,7 +75,9 @@ Reorganize PiHA-Deployer to implement the NAS-orchestrated architecture: shared 
 | 5 | Remove legacy layout | TBA | Blocked | Final clean-up step |
 
 ## Immediate Next Actions
-1. Start migrating MariaDB documentation and scripts into `infrastructure/mariadb/` (include backup/restore guidance).
-2. Mirror the leadership contract for Mosquitto/Node-RED gating once assets move to `infrastructure/` and `application/` respectively.
+1. Move MariaDB scripts (`setup-nas-mariadb.sh`, compose) into `infrastructure/mariadb/` and add backup/restore playbook.
+2. Extract Mosquitto service from Zigbee2MQTT into `infrastructure/mqtt/` with ACL updates matching the leadership contract.
 3. Outline NAS control-plane responsibilities and PoE workflow in `application/control-plane/README.md`.
 4. Design the delayed Git replication automation (repo structure, freeze flag implementation).
+
+

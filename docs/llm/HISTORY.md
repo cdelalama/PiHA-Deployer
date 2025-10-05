@@ -1,3 +1,15 @@
+## 2025-10-05 - Codex - Outline infrastructure migration for MariaDB and Mosquitto
+
+Summary: Added migration plans for MariaDB and Mosquitto under the new infrastructure tree and updated the restructure tracker accordingly.
+
+Files updated:
+- infrastructure/mariadb/README.md
+- infrastructure/mqtt/README.md
+- docs/RESTRUCTURE_PLAN.md
+- docs/llm/HANDOFF.md
+
+Version impact: no (documentation planning only)
+Notes: Actual script relocation pending; see restructure plan for next actions.
 ## 2025-10-05 - Codex - Define Home Assistant leadership MQTT contract
 
 Summary: Documented the MQTT topic/payload schema, heartbeats, and promotion rules for Home Assistant failover, and updated the restructure plan/hand-off to reflect the new progress.
@@ -779,6 +791,7 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
 
 
 
