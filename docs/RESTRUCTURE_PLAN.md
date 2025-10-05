@@ -1,7 +1,7 @@
 # PiHA Replatforming Plan
 
 ## Objective
-Reorganize PiHA-Deployer to follow the new architecture: a resilient, NAS-orchestrated automation stack with clear separation between shared infrastructure services and application failover roles.
+Reorganize PiHA-Deployer to implement the NAS-orchestrated architecture: shared infrastructure services separated from application roles, with controlled leadership and remote recovery.
 
 ## Target Repository Layout (Top Level)
 - `infrastructure/`
@@ -16,62 +16,66 @@ Reorganize PiHA-Deployer to follow the new architecture: a resilient, NAS-orches
 - `application/`
   - `README.md`
   - `home-assistant/`
-    - `haos/` (primary instance guidance, snapshot workflows, import/export helpers)
-    - `docker-standby/` (installer + tooling for the standby instance)
+    - `haos/` (primary appliance guidance, snapshot workflows, import/export helpers)
+    - `docker-standby/` (standby installer/tooling, observer safeguards)
     - `leadership/` (MQTT contract, promotion scripts, tests)
-  - `control-plane/` (NAS orchestration logic, leadership arbitration)
+  - `control-plane/` (NAS orchestration logic, decision engine, PoE actions)
 - `docs/`
   - `OPERATIONS/` (runbooks: failover, return-to-primary, backup validation)
-  - `RESTRUCTURE_PLAN.md` (this file ? living tracker)
+  - `RESTRUCTURE_PLAN.md` (this document)
   - Existing reference docs updated to align with the new split
 - `_legacy/` (temporary parking for old paths until migration completes)
 
 ## Configuration Contract
-- Central secrets file managed per environment (NAS) exposing:
-  - Database DSN, MQTT endpoint, leadership topics/retained payloads
-  - PoE switch credentials and port map
-  - VPN endpoints for off-site control
-- Application profiles consume read-only configuration, writing only when designated leader.
-- Synchronization of Home Assistant configuration via Git mirror with intentional delay (24?48h) and freeze flag.
+- Central secrets file managed on the NAS containing:
+  - Recorder DSN (MariaDB), MQTT endpoint, leadership topics/retained payload schema
+  - PoE switch credentials and port mapping
+  - VPN endpoints/credentials for remote administration
+- Application profiles consume configuration read-only and write only when acting as leader.
+- Configuration sync relies on a Git mirror with deliberate delay (24?48 hours) and a freeze flag to pause replication during risky windows.
 
 ## Work Phases
-1. **Documentation & Structure** (in progress)
+1. **Documentation & Structure**
    - Publish target layout & contracts
-   - Update existing docs (README, PROJECT_CONTEXT, HANDOFF) to reference the new architecture
-   - Create placeholder READMEs for new directories
+   - Update core documentation (README, PROJECT_CONTEXT, HANDOFF)
+   - Create initial READMEs for new directories and application roles
 2. **Infrastructure Consolidation**
-   - Move MariaDB & Mosquitto under `infrastructure/`
+   - Migrate MariaDB & Mosquitto assets under `infrastructure/`
    - Extract NAS health checks, monitoring, VPN, PoE control scaffolding
-   - Document backup & restore procedures + validation drills
+   - Document backup & restore procedures plus validation drills
 3. **Application Realignment**
-   - Split Home Assistant assets into HAOS guidance vs Docker standby
-   - Define MQTT leadership protocol & implement control-plane scripts
-   - Introduce Node-RED leadership gates mirroring the HA pattern
+   - Move Home Assistant scripts into `application/home-assistant/docker-standby/`
+   - Flesh out MQTT leadership protocol & control-plane automation
+   - Add Node-RED leadership gates mirroring the Home Assistant pattern
 4. **Failover Tooling & Testing**
    - Implement NAS watchdog (HTTP + MQTT heartbeat)
    - Automate promotion/demotion workflows with manual override
    - Document and exercise runbooks (failover, rollback, Zigbee coordinator swap)
 5. **Decommission Legacy Layout**
-   - Remove `_legacy/` once every script & doc references the new structure
-   - Refresh `.env` templates to match central contract
+   - Retire `_legacy/` and old directories once migration concludes
+   - Refresh `.env` templates to match the central configuration contract
 
 ## Progress Tracker
 | Phase | Item | Owner | Status | Notes |
 |-------|------|-------|--------|-------|
-| 1 | Define target layout & plan | Codex | In progress | This document captures the structure |
-| 1 | Update PROJECT_CONTEXT.md | Codex | Pending | Must replace old per-Pi description |
-| 1 | Update root README.md | Codex | Pending | Needs new navigation and scope |
-| 1 | Refresh HANDOFF/HISTORY | Codex | Pending | Align with restructure plan |
-| 2 | Migrate MariaDB docs | TBA | Blocked | Wait for phase 1 completion |
-| 2 | Migrate Zigbee2MQTT assets | TBA | Blocked | Keep production host notes |
-| 3 | Draft HA leadership contract | TBA | Blocked | Requires MQTT topics decision |
-| 3 | Define config sync policy | TBA | Blocked | Document Git + freeze flag |
-| 4 | PoE control automation | TBA | Blocked | Needs switch API research |
-| 4 | Failover drill playbook | TBA | Blocked | Depends on leadership tooling |
+| 1 | Define target layout & plan | Codex | Completed | Plan published in this document |
+| 1 | Update PROJECT_CONTEXT.md | Codex | Completed | Matches new architecture |
+| 1 | Update root README.md | Codex | Completed | Navigation reflects new layers |
+| 1 | Refresh HANDOFF/HISTORY | Codex | Completed | Handoff describes restructure status |
+| 1 | Document HAOS primary guidance | Codex | Completed | See `application/home-assistant/haos/README.md` |
+| 1 | Document Docker standby role | Codex | Completed | See `application/home-assistant/docker-standby/README.md` |
+| 3 | Draft MQTT leadership contract | Codex | Completed | Contract defined in `application/home-assistant/leadership/README.md` |
+| 3 | Define config sync policy | Codex | In progress | High-level policy documented; implementation pending |
+| 2 | Migrate MariaDB docs | TBA | Blocked | Wait for contract finalisation |
+| 2 | Migrate Mosquitto docs | TBA | Blocked | Coordinate with Zigbee2MQTT schedule |
+| 2 | Migrate Zigbee2MQTT assets | TBA | Blocked | Production host remains active |
+| 3 | Build control-plane scaffolding | TBA | Blocked | Depends on leadership tooling implementation |
+| 4 | PoE control automation | TBA | Blocked | Requires switch API research |
+| 4 | Failover drill runbook | TBA | Blocked | Needs tooling in place |
 | 5 | Remove legacy layout | TBA | Blocked | Final clean-up step |
 
 ## Immediate Next Actions
-1. Rewrite `docs/PROJECT_CONTEXT.md` to reflect the new architecture and link to this plan.
-2. Update root `README.md` with the infrastructure/application split and navigation.
-3. Document initial leadership & synchronization concepts in `application/home-assistant/README.md` scaffolding.
-4. Sync `docs/llm/HANDOFF.md` so future sessions continue from this plan.
+1. Start migrating MariaDB documentation and scripts into `infrastructure/mariadb/` (include backup/restore guidance).
+2. Mirror the leadership contract for Mosquitto/Node-RED gating once assets move to `infrastructure/` and `application/` respectively.
+3. Outline NAS control-plane responsibilities and PoE workflow in `application/control-plane/README.md`.
+4. Design the delayed Git replication automation (repo structure, freeze flag implementation).

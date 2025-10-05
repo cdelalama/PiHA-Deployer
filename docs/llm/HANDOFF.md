@@ -3,30 +3,23 @@
 ## Current Status
 
 Last Updated: 2025-10-05 - Codex
-Session Focus: Kick-off of the repository restructure (infrastructure vs application split) and documentation realignment.
-Status: Target layout published with scaffolded directories under `infrastructure/` and `application/`; restructure plan and core docs updated. Legacy installers remain in place until migration phases move them.
+Session Focus: Formalised the MQTT leadership contract for Home Assistant failover and updated the restructure tracker accordingly.
+Status: Leadership topic/payload schema documented; doc scaffolding for HAOS and standby complete. Infrastructure migration (MariaDB/Mosquitto) and control-plane drafts still pending.
 
 ## Immediate Context
 
-- `docs/RESTRUCTURE_PLAN.md` captures the target tree, configuration contract, phased roadmap, and progress tracker.
-- `docs/PROJECT_CONTEXT.md` and the root `README.md` now describe the layered architecture and reference the restructure plan.
-- Placeholder READMEs created for new directories (infrastructure services, application roles, operations runbooks).
-- Legacy component READMEs include a notice pointing to the ongoing migration.
-- No scripts or compose files have been relocated yet; functional behaviour is unchanged.
+- `application/home-assistant/leadership/README.md` now defines topics, payloads, timeouts, and actor responsibilities for leadership arbitration.
+- `docs/RESTRUCTURE_PLAN.md` progress tracker marks the contract complete and lists new next actions (migrate MariaDB, outline control plane, design sync automation).
+- No scripts changed yet; legacy installers continue operating from the root `home-assistant/` directory.
+- Upcoming work: move services into `infrastructure/`, describe NAS control-plane workflow, document delayed Git replication.
 
 ## Active Files
-- docs/RESTRUCTURE_PLAN.md (new)
-- docs/PROJECT_CONTEXT.md (rewritten for new architecture)
-- README.md (root navigation updated)
-- infrastructure/** (scaffolding)
-- application/** (scaffolding)
-- docs/OPERATIONS/README.md (placeholder)
-- home-assistant/README.md (restructure notice)
-- node-red/README.md (restructure notice)
-- zigbee2mqtt/README.md (restructure notice)
+- application/home-assistant/leadership/README.md (new detailed contract)
+- docs/RESTRUCTURE_PLAN.md (tracker update)
+- docs/llm/HISTORY.md (session log)
 
 ## Current Versions
-- node-red/install-node-red.sh: 1.0.67 (no changes)
+- node-red/install-node-red.sh: 1.0.67
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
@@ -36,21 +29,21 @@ Status: Target layout published with scaffolded directories under `infrastructur
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities
-1. **Docs**: Flesh out `application/home-assistant/` (HAOS vs Docker standby) and document MQTT leadership contract + delayed sync policy.
-2. **Infrastructure Migration**: Move MariaDB and Mosquitto assets into `infrastructure/` with refreshed guidance and cross-links.
-3. **Control Plane**: Draft the NAS orchestration workflow (health checks, heartbeat topics, PoE integration) inside `application/control-plane/`.
-4. **Runbooks**: Populate `docs/OPERATIONS/` with failover, return-to-primary, backup validation, and Zigbee coordinator swap procedures.
-5. **Testing**: Plan validation strategy for leadership promotion/demotion and recorder integrity once tooling lands.
+1. Migrate MariaDB documentation/scripts into `infrastructure/mariadb/` with backup/restore instructions.
+2. Align Mosquitto guidance (leadership topics, auth) inside `infrastructure/mqtt/`.
+3. Draft NAS control-plane overview in `application/control-plane/README.md` (health checks, PoE workflow, command publishing).
+4. Document the delayed Git replication mechanism and freeze flag behaviour.
+5. Populate runbooks in `docs/OPERATIONS/` once the above pieces exist.
 
 ## Do Not Touch
-- Existing installer/uninstaller logic until documentation under the new structure is ready to replace it.
-- Zigbee2MQTT production configuration files (coordinate with user before modifications).
+- Production Zigbee2MQTT configuration until migration plan approved.
+- Legacy installers/uninstallers logic unless the new directories are ready to replace them.
 
 ## Open Questions
-- MQTT topic hierarchy and payload schema for leadership heartbeats.
-- Git repository layout for delayed config sync (one repo per host vs monorepo).
-- PoE switch API specifics (model, authentication, rate limits).
+- Command acknowledgement strategy for `piha/leader/home-assistant/cmd`.
+- Shared `events` schema across services (include duration, previous leader?).
+- NAS control-plane implementation stack (Bash vs Python vs Node-RED flow).
 
 ## Testing Notes
-- No automated or manual tests were run in this session (documentation-only changes).
-- Once control plane scripts exist, design mock/simulated environments for promotion drills before touching production hardware.
+- No automated/manual tests yet; focus was documentation.
+- Need to design simulated promotion/demotion tests once the control-plane prototype exists.

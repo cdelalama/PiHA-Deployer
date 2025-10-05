@@ -1,3 +1,26 @@
+## 2025-10-05 - Codex - Define Home Assistant leadership MQTT contract
+
+Summary: Documented the MQTT topic/payload schema, heartbeats, and promotion rules for Home Assistant failover, and updated the restructure plan/hand-off to reflect the new progress.
+
+Files updated:
+- application/home-assistant/leadership/README.md
+- docs/RESTRUCTURE_PLAN.md
+- docs/llm/HANDOFF.md
+
+Version impact: no (documentation updates only)
+Notes: Implementation of the control plane and service migrations remain pending.
+## 2025-10-05 - Codex - Document HAOS primary and Docker standby roles
+
+Summary: Added detailed guidance for the HAOS primary appliance and the Docker standby instance, including MQTT leadership draft, snapshot policy, and observer safeguards. Updated the restructure plan and handoff to reflect the new documentation.
+
+Files updated:
+- application/home-assistant/haos/README.md
+- application/home-assistant/docker-standby/README.md
+- docs/RESTRUCTURE_PLAN.md
+- docs/llm/HANDOFF.md
+
+Version impact: no (documentation updates only)
+Notes: Leadership schema still needs final confirmation and control-plane tooling remains pending.
 ## 2025-10-05 - Codex - Begin infrastructure/application restructure
 
 Summary: Published the target repository layout, scaffolded the new infrastructure/application directories, and rewrote core docs to describe the NAS-led architecture. Added restructure notices to legacy components and updated the handoff for the migration roadmap.
@@ -756,6 +779,8 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
+
 
 
 
