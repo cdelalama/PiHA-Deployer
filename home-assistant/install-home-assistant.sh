@@ -450,7 +450,7 @@ print_mariadb_bootstrap_hint() {
   echo -e "${BLUE}[INFO] MariaDB was not detected on the NAS.${NC}"
   echo -e "${BLUE}[INFO] Manual bootstrap (recommended for fresh installs):${NC}"
   echo -e "${BLUE}  1) ssh <nas-user>@${host_hint}${NC}"
-  echo -e "${BLUE}  2) mkdir -p /share/Container/compose/mariadb && cd /share/Container/compose/mariadb${NC}"
+  echo -e "${BLUE}  2) mkdir -p /share/Container/compose/piha-homeassistant-mariadb && cd /share/Container/compose/piha-homeassistant-mariadb${NC}"
   echo -e "${BLUE}  3) Place .env in that directory (see infrastructure/mariadb/README.md for required keys).${NC}"
   echo -e "${BLUE}  4) Run: curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh${NC}"
   echo -e "${BLUE}  5) From the Pi, verify connectivity with: nc -vz ${host_hint} 3306${NC}"

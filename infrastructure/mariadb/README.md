@@ -14,7 +14,7 @@ Managed deployment of MariaDB on the NAS for Home Assistant Recorder. This repla
 | `NAS_SSH_USER` | User with permission to run Docker on the NAS |
 | `NAS_SSH_PORT` | SSH port (default `22`) |
 | `NAS_SSH_USE_SUDO` | `true` if `docker` requires sudo on NAS |
-| `NAS_DEPLOY_DIR` | Directory on NAS for compose files (default `/share/Container/compose/mariadb`) |
+| `NAS_DEPLOY_DIR` | Directory on NAS for compose files (default `/share/Container/compose/piha-homeassistant-mariadb`) |
 | `MARIADB_DATA_DIR` | Data directory on NAS (default `${NAS_DEPLOY_DIR}/data`) |
 | `MARIADB_ROOT_PASSWORD` | Root password for MariaDB |
 | `MARIADB_DATABASE` | Database name for Home Assistant (`homeassistant`) |
@@ -27,8 +27,8 @@ Managed deployment of MariaDB on the NAS for Home Assistant Recorder. This repla
 ### Option A ? Run on the NAS (recommended)
 ```bash
 ssh <nas-user>@<NAS_IP>
-mkdir -p /share/Container/compose/mariadb
-cd /share/Container/compose/mariadb
+mkdir -p /share/Container/compose/piha-homeassistant-mariadb
+cd /share/Container/compose/piha-homeassistant-mariadb
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh
 bash setup-nas-mariadb.sh
 ```
@@ -68,6 +68,8 @@ recorder:
 ## Migration Notes
 - Legacy directory `home-assistant/mariadb/` now contains compatibility stubs that call these scripts.
 - Update all documentation/instructions to use `infrastructure/mariadb`. See `docs/RESTRUCTURE_PLAN.md` for status.
+
+
 
 
 

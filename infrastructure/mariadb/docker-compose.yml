@@ -10,10 +10,7 @@ services:
       - MYSQL_DATABASE=${MARIADB_DATABASE}
       - MYSQL_USER=${MARIADB_USER}
       - MYSQL_PASSWORD=${MARIADB_PASSWORD}
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    healthcheck:\n      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"${MARIADB_ROOT_PASSWORD}\" || exit 1"]\n      interval: 10s\n      timeout: 5s\n      retries: 5
     volumes:
       - ${MARIADB_DATA_DIR}:/var/lib/mysql
+
