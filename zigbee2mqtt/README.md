@@ -9,6 +9,8 @@ This component deploys:
 - **Mosquitto**: MQTT broker for device communication
 - **Portainer**: Container management interface
 
+> **Shared MQTT broker:** A NAS-hosted Mosquitto deployment now lives under `infrastructure/mqtt/`. Keep the embedded broker during migration and plan to repoint Zigbee2MQTT once the shared service is validated.
+
 All data is stored on NAS following the Group-by-Host convention.
 
 ## Requirements
@@ -220,4 +222,6 @@ sudo mount -t cifs //NAS_IP/SHARE /mnt/test
 For project documentation and LLM coordination, see:
 - [LLM_START_HERE.md](../LLM_START_HERE.md)
 - [docs/PROJECT_CONTEXT.md](../docs/PROJECT_CONTEXT.md)
+
+
 

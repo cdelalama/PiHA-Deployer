@@ -3,19 +3,23 @@
 ## Current Status
 
 Last Updated: 2025-10-05 - Codex
-Session Focus: Documented the infrastructure migration plan for MariaDB and Mosquitto as part of the new repository layout.
-Status: Infrastructure READMEs outline how MariaDB and Mosquitto will move into `infrastructure/`; scripts remain in legacy paths pending migration.
+Session Focus: Migrated the shared Mosquitto broker into `infrastructure/mqtt/` while leaving production Zigbee2MQTT untouched.
+Status: Central MQTT deployment now lives under the infrastructure layer with installer, compose, and documentation; next step is to draft the NAS control plane.
 
 ## Immediate Context
 
-- `infrastructure/mariadb/README.md` describes the upcoming relocation of MariaDB assets and the required backup/restore playbook.
-- `infrastructure/mqtt/README.md` captures the plan to extract Mosquitto from the Zigbee2MQTT stack and enforce leadership ACLs.
-- `docs/RESTRUCTURE_PLAN.md` tracker updated (MariaDB/Mosquitto rows set to ?In progress?).
-- No scripts moved yet; production services continue using legacy directories.
+- `infrastructure/mqtt/` contains the README, `.env.example`, compose file, and `setup-mosquitto.sh` helper (v1.0.0) for the NAS-hosted broker.
+- Zigbee2MQTT README notes the forthcoming switch to the shared broker; the existing compose still includes Mosquitto until validation.
+- `docs/RESTRUCTURE_PLAN.md` marks the Mosquitto migration complete and updates the next actions (control plane, Git sync, runbooks, Zigbee switchover planning).
+- MariaDB relocation completed earlier; both shared services now live under `infrastructure/`.
 
 ## Active Files
-- infrastructure/mariadb/README.md
+- infrastructure/mariadb/** (unchanged since last handoff)
 - infrastructure/mqtt/README.md
+- infrastructure/mqtt/.env.example
+- infrastructure/mqtt/docker-compose.yml
+- infrastructure/mqtt/setup-mosquitto.sh
+- zigbee2mqtt/README.md (shared broker note)
 - docs/RESTRUCTURE_PLAN.md
 
 ## Current Versions
@@ -25,25 +29,25 @@ Status: Infrastructure READMEs outline how MariaDB and Mosquitto will move into 
 - node-red/load_env_vars.sh: 1.0.4
 - home-assistant/install-home-assistant.sh: 1.3.0
 - home-assistant/uninstall-home-assistant.sh: 1.2.1
-- home-assistant/mariadb/setup-nas-mariadb.sh: 1.0.9
+- infrastructure/mariadb/setup-nas-mariadb.sh: 1.1.0
+- infrastructure/mqtt/setup-mosquitto.sh: 1.0.0
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities
-1. Physically move MariaDB scripts/compose into `infrastructure/mariadb/` and document backup/restore procedures.
-2. Extract Mosquitto assets into `infrastructure/mqtt/` with ACL and credential alignment.
-3. Draft NAS control-plane overview (`application/control-plane/README.md`).
-4. Design delayed Git sync automation and freeze flag mechanism.
-5. Populate operations runbooks once tooling is in place.
+1. Outline NAS control-plane responsibilities and PoE workflow in `application/control-plane/README.md`.
+2. Design the delayed Git replication automation and freeze flag implementation.
+3. Populate `docs/OPERATIONS/` with failover/backup runbooks once control-plane scaffolding exists.
+4. Plan the Zigbee2MQTT switchover from embedded Mosquitto to the shared broker (validation steps, rollback).
 
 ## Do Not Touch
-- Production Zigbee2MQTT deployment until Mosquitto migration plan is executed with care.
-- Legacy installer logic until new paths are wired and tested.
+- Production Zigbee2MQTT compose (contains Mosquitto) until the shared broker is validated and a cut-over plan is approved.
+- Legacy installers beyond the updated path references.
 
 ## Open Questions
-- Final directory layout for NAS backups (where to store MariaDB dumps, MQTT configs).
-- Whether Mosquitto will remain dockerized on NAS or move to dedicated VM/container stack.
-- Automation tooling for control plane (language/runtime decision).
+- Final credential scheme and ACL rules for leadership topics (multiple users vs shared account).
+- TLS requirements for the shared broker.
+- Control-plane tooling stack (Bash vs Python vs Node-RED).
 
 ## Testing Notes
-- No tests executed this session (documentation only).
-- Plan for validation once services relocate (MariaDB connectivity, MQTT ACL enforcement).
+- No automated/manual tests executed; focus was file relocation and documentation.
+- Plan validation sequence once control-plane and Zigbee switchover tasks are scheduled.

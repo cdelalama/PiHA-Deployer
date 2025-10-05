@@ -36,3 +36,4 @@ Each folder contains a README with detailed instructions and `.env` expectations
 
 ## Contact & Support
 For operational questions during the transition, rely on the runbooks and trackers referenced above. The goal is a system that can recover remotely: NAS-led promotion, PoE power-cycle, and deliberate configuration sync with freeze control.
+

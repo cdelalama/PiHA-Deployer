@@ -1,29 +1,65 @@
-# Mosquitto MQTT Broker (Infrastructure Layer)
+# Mosquitto Broker (Infrastructure Layer)
 
-This directory will aggregate the assets for the NAS-hosted Mosquitto broker that supports Home Assistant leadership arbitration, Zigbee2MQTT traffic, and other automation services. The production broker currently ships inside the legacy `zigbee2mqtt/` component; migration will split it out so MQTT becomes a shared service with its own backups and monitoring.
+Managed deployment of the shared Mosquitto MQTT broker running on the NAS. This replaces the broker that currently rides inside the Zigbee2MQTT stack and becomes the coordination hub for leadership heartbeats, Zigbee traffic, and other automations.
 
-## Current State
-- Mosquitto is deployed alongside Zigbee2MQTT using `zigbee2mqtt/docker-compose.yml` with NAS-backed config/data directories.
-- Authentication, ACLs, and listener configuration are defined through the legacy installer.
-- Leadership contract topics (`piha/leader/...`) are defined in `application/home-assistant/leadership/README.md` but not yet enforced in the Mosquitto configuration.
+> The Zigbee2MQTT Pi still ships with its own Mosquitto container. Keep it running until this shared broker is deployed and validated; afterward, the Zigbee stack will be repointed and the embedded broker removed.
 
-## Migration Plan
-1. **Extract Compose & Config**
-   - Copy the Mosquitto service definition and configuration templates from `zigbee2mqtt/` into this folder.
-   - Introduce a standalone installer/bootstrap script for Mosquitto if required.
-2. **Harden Configuration**
-   - Ensure TLS/username-password policies align with the central secrets contract.
-   - Add ACL entries for leadership topics, restricting write access to HAOS, standby, and NAS control plane.
-3. **Monitoring & Backups**
-   - Configure log rotation and metrics (e.g., Telegraf/Prometheus exporters).
-   - Document backup strategy for configuration and retained messages (if needed).
-4. **Update Dependents**
-   - Point Zigbee2MQTT and the Home Assistant scripts to the new MQTT service path.
-   - Remove the Mosquitto service from `zigbee2mqtt/docker-compose.yml` once a shared broker is in place.
+## Files
+- `setup-mosquitto.sh` - bootstrap helper (runs locally on the NAS or over SSH)
+- `docker-compose.yml` - Mosquitto service definition (Docker on NAS)
+- `.env.example` - template with required variables (copy to `.env` and fill in secrets)
 
-## Immediate Tasks (Phase 2)
-- Define MQTT credential storage within the shared secrets file (`PIHA_MQTT_USER`, `PIHA_MQTT_PASS`).
-- Draft ACL rules for `piha/leader/#`, Zigbee2MQTT topics, and any future services.
-- Specify how the NAS control plane will publish commands (`piha/leader/home-assistant/cmd`).
+## Environment Variables (`.env`)
+| Variable | Description |
+|----------|-------------|
+| `NAS_SSH_HOST` | NAS host/IP for SSH (`localhost` when running script directly on NAS) |
+| `NAS_SSH_USER` | NAS user with permission to run Docker |
+| `NAS_SSH_PORT` | SSH port (default `22`) |
+| `NAS_SSH_USE_SUDO` | `true` if Docker commands on NAS require sudo |
+| `NAS_DEPLOY_DIR` | Directory on NAS for compose files (default `/share/Container/compose/mqtt`) |
+| `MQTT_CONFIG_DIR` | NAS path for Mosquitto configuration (`/mosquitto/config` inside container) |
+| `MQTT_DATA_DIR` | NAS path for persistence files (`/mosquitto/data` inside container) |
+| `MQTT_LOG_DIR` | NAS path for logs (`/mosquitto/log` inside container) |
+| `MQTT_USER` | Primary automation user (optional but recommended) |
+| `MQTT_PASSWORD` | Password for `MQTT_USER` |
+| `MQTT_ALLOW_ANONYMOUS` | `false` to enforce auth (default), `true` to keep anonymous access |
+| `MQTT_PERSISTENCE` | `true`/`false` (defaults to `true`) |
+| `PUBLISHED_PORT` | TCP port exposed (default `1883`) |
+| `MQTT_CONTAINER_NAME` | Container name (default `mosquitto`) |
+| `TZ` | Timezone inside the container |
 
-Until the migration completes, continue managing Mosquitto through the legacy Zigbee2MQTT stack. Track progress in `docs/RESTRUCTURE_PLAN.md`.
+## Deployment
+### Option A ? Run on the NAS (recommended)
+```bash
+ssh <nas-user>@<NAS_IP>
+mkdir -p /share/Container/compose/mqtt
+cd /share/Container/compose/mqtt
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/setup-mosquitto.sh -o setup-mosquitto.sh
+bash setup-mosquitto.sh
+```
+
+### Option B ? Run remotely from your PiHA-Deployer clone
+```bash
+cp infrastructure/mqtt/.env.example infrastructure/mqtt/.env  # fill in secrets
+bash infrastructure/mqtt/setup-mosquitto.sh
+```
+The helper reads `.env`, copies `docker-compose.yml` to the NAS if missing, writes `mosquitto.conf`, creates password/ACL files when credentials are provided, and launches the service with Docker Compose.
+
+## Configuration Notes
+- **Leadership topics**: the generated `mosquitto.conf` references an ACL file (`/mosquitto/config/acl`). By default the script grants the primary `MQTT_USER` full access and allows read access to `piha/leader/#` for all authenticated users. Edit `${MQTT_CONFIG_DIR}/acl` to add granular rules (e.g., read-only observers for the standby instance and control plane).
+- **Authentication**: when `MQTT_USER`/`MQTT_PASSWORD` are set, anonymous access is disabled and `passwd` is generated via `mosquitto_passwd`. Leave them empty only for temporary lab setups.
+- **TLS**: not enabled by default. Extend `mosquitto.conf` and mount certificates under `${MQTT_CONFIG_DIR}` if encrypted transport is required.
+
+## Backup & Restore
+- **Config**: snapshot `${MQTT_CONFIG_DIR}` (contains `mosquitto.conf`, `passwd`, `acl`).
+- **Persistence**: snapshot `${MQTT_DATA_DIR}` if you rely on retained messages or persistence.
+- **Retention**: keep at least seven daily copies of the config directory; persistence backups depend on operational needs.
+- **Restore drill**: quarterly, restore the config onto a disposable Mosquitto container and verify clients can authenticate and publish to leadership topics.
+
+## Integration Plan
+1. Deploy this broker on the NAS and configure Home Assistant (HAOS + standby) to point at it.
+2. Update Zigbee2MQTT installer/compose to use the shared broker instead of its bundled container.
+3. Remove the Mosquitto service from `zigbee2mqtt/docker-compose.yml` once testing completes.
+4. Update runbooks (`docs/OPERATIONS/`) with failover procedures and ACL management.
+
+Track progress and ownership in `docs/RESTRUCTURE_PLAN.md`.

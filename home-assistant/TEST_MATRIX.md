@@ -1,6 +1,6 @@
 # Home Assistant + MariaDB Test Matrix
 
-This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`home-assistant/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
+This checklist covers the scenarios we expect to exercise when validating the Home Assistant installer (`home-assistant/install-home-assistant.sh`) and the NAS helper (`infrastructure/mariadb/setup-nas-mariadb.sh`). Run the ones that match the change you want to verify.
 
 ## 1. Home Assistant Installer (v1.3.0)
 
@@ -174,12 +174,12 @@ sudo ls ${HA_DATA_DIR}
 
 ### 2A. Manual bootstrap directly on the NAS (recommended)
 - **Prep**: `ssh <nas-user>@<NAS_IP>`, then `mkdir -p /share/Container/compose/mariadb && cd /share/Container/compose/mariadb`. Provide `.env` with SSH + DB variables.
-- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh`
+- **Run**: `curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh`
 - **Expect**: Script detects local execution, preserves `.env` in `.env.bootstrap`, downloads compose if missing, starts container.
 
 ### 2B. Remote bootstrap from a Pi/PC clone
-- **Prep**: In the repo clone, configure `home-assistant/mariadb/.env` with NAS SSH credentials.
-- **Run**: `bash home-assistant/mariadb/setup-nas-mariadb.sh`
+- **Prep**: In the repo clone, configure `infrastructure/mariadb/.env` with NAS SSH credentials.
+- **Run**: `bash infrastructure/mariadb/setup-nas-mariadb.sh`
 - **Expect**: SSH session creates directories, copies compose/.env, and runs `docker compose up` remotely.
 
 ### 2C. Re-run helper on existing deployment
@@ -198,3 +198,4 @@ After each scenario, confirm:
 - **Home Assistant**: `docker ps` shows `homeassistant` + `portainer`. `docker logs homeassistant | grep Recorder` reveals whether MariaDB is in use.
 - **MariaDB**: `docker ps` includes `mariadb`. From the NAS run `docker exec -it mariadb mysql -u homeassistant -p` and check `SHOW TABLES;` or `SELECT COUNT(*) FROM events;`.
 - __NAS data__: `${HA_DATA_DIR}` contains Home Assistant configuration; `${NAS_DEPLOY_DIR}/data` holds MariaDB data files; `${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}` stores the SQLite recorder when `RECORDER_BACKEND=sqlite`.
+

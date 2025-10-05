@@ -36,7 +36,7 @@ This guide captures the NAS conventions PiHA-Deployer expects today and highligh
 - `NAS_DEPLOY_DIR=/share/Container/compose/mariadb`
 - `MARIADB_DATA_DIR=/share/Container/compose/mariadb/data`
 
-These defaults are now baked into `home-assistant/mariadb/setup-nas-mariadb.sh`. Override them in `.env` if your NAS uses a different layout.
+These defaults are now baked into `infrastructure/mariadb/setup-nas-mariadb.sh`. Override them in `.env` if your NAS uses a different layout.
 
 When bootstrapping directly on the NAS, create the directory and move into it before downloading files:
 ```
@@ -44,7 +44,7 @@ ssh <nas-user>@<NAS_IP>
 mkdir -p /share/Container/compose/mariadb
 cd /share/Container/compose/mariadb
 ```
-Then copy or create `.env` in that folder and either run the one-liner shown in the component README (download `setup-nas-mariadb.sh` and execute it) or use `docker compose up -d` manually. If you keep `home-assistant/mariadb/.env` in your PiHA-Deployer clone, you can still run `bash home-assistant/mariadb/setup-nas-mariadb.sh` from there to perform the same actions over SSH.
+Then copy or create `.env` in that folder and either run the one-liner shown in the component README (download `setup-nas-mariadb.sh` and execute it) or use `docker compose up -d` manually. If you keep `infrastructure/mariadb/.env` in your PiHA-Deployer clone, you can still run `bash infrastructure/mariadb/setup-nas-mariadb.sh` from there to perform the same actions over SSH.
 
 ## Common Script Adaptation Issues
 1. **Path differences** - avoid `/opt/` style paths on QNAP; use `/share/Container/` instead.
@@ -64,3 +64,4 @@ Always verify that the target filesystem is local (ext4, ZFS, Btrfs, etc.). Avoi
 
 ---
 Update this document when the deployment targets or defaults change so future automation runs stay aligned with the environment.
+

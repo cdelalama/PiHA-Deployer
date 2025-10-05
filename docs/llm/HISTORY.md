@@ -1,3 +1,38 @@
+## 2025-10-05 - Codex - Introduce shared Mosquitto infrastructure
+
+Summary: Added the NAS-hosted Mosquitto deployment under `infrastructure/mqtt/` with installer, compose, and ACL guidance; updated Zigbee2MQTT docs and restructure plan accordingly.
+
+Files updated:
+- infrastructure/mqtt/README.md
+- infrastructure/mqtt/setup-mosquitto.sh
+- infrastructure/mqtt/docker-compose.yml
+- infrastructure/mqtt/.env.example
+- zigbee2mqtt/README.md
+- docs/RESTRUCTURE_PLAN.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.0)
+Notes: Zigbee2MQTT still uses its bundled broker until cut-over plan is executed.
+## 2025-10-05 - Codex - Move MariaDB helper to infrastructure layer
+
+Summary: Migrated the MariaDB bootstrap scripts, compose file, and documentation into `infrastructure/mariadb/`, added a new `.env.example`, and updated all references (installer, README, test matrix, NAS docs). Left compatibility stubs in the legacy directory.
+
+Files updated:
+- infrastructure/mariadb/README.md
+- infrastructure/mariadb/setup-nas-mariadb.sh
+- infrastructure/mariadb/docker-compose.yml
+- infrastructure/mariadb/.env.example
+- home-assistant/install-home-assistant.sh
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md
+- home-assistant/mariadb/README.md
+- home-assistant/mariadb/setup-nas-mariadb.sh
+- docs/NAS_CONFIGURATION.md
+- docs/RESTRUCTURE_PLAN.md
+- docs/llm/HANDOFF.md
+
+Version impact: yes (infrastructure/mariadb/setup-nas-mariadb.sh -> 1.1.0)
+Notes: Legacy script delegates to the new path; follow-up task is to migrate Mosquitto under `infrastructure/mqtt/`.
 ## 2025-10-05 - Codex - Outline infrastructure migration for MariaDB and Mosquitto
 
 Summary: Added migration plans for MariaDB and Mosquitto under the new infrastructure tree and updated the restructure tracker accordingly.
@@ -791,6 +826,8 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
+
 
 
 

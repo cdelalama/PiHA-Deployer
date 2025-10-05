@@ -164,9 +164,9 @@ Running Recorder on MariaDB avoids SQLite-on-SMB corruption and preserves UI his
 > Set `RECORDER_BACKEND=mariadb` (and include the full `MARIADB_*` block) to run Recorder on the NAS. The installer stops if the database is unavailable, prints the bootstrap command, and writes managed `secrets.yaml`/`configuration.yaml` entries when it succeeds. Legacy configs with `ENABLE_MARIADB_CHECK=true` continue to work.
 
 1) Deploy MariaDB on your NAS (via SSH)
-- Option A: run `home-assistant/mariadb/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
-  - One-liner: `ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh | bash"`
-- Option B: manually follow `home-assistant/mariadb/docker-compose.yml` and `home-assistant/mariadb/README.md` as a template.
+- Option A: run `infrastructure/mariadb/setup-nas-mariadb.sh` from this repository. It connects via SSH, copies `docker-compose.yml` and `.env`, and starts the container automatically (Docker required on the NAS).
+  - One-liner: `ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh | bash"`
+- Option B: manually follow `infrastructure/mariadb/docker-compose.yml` and `infrastructure/mariadb/README.md` as a template.
 - Ensure MariaDB listens on `3306` and is reachable from the Pi.
 
 2) (Optional) Manual configuration
@@ -191,7 +191,7 @@ Notes:
 - Keep MariaDB data on a local NAS filesystem (not on SMB/CIFS).
 - The installer issues a NAS cooldown (`NAS_COOLDOWN_SECONDS`, default 5s) before launching containers to minimise CIFS locking issues.
 - When upgrading from older releases that stored everything locally, the installer migrates YAML/configuration files to `${HA_DATA_DIR}` and relocates `home-assistant_v2.db*` into `${SQLITE_DATA_DIR}` automatically (leaving the original directory as a backup).
-- If the installer reports that MariaDB is missing or misconfigured, fix it using the one-liner above and rerun the script. See `home-assistant/mariadb/README.md` for detailed setup instructions.
+- If the installer reports that MariaDB is missing or misconfigured, fix it using the one-liner above and rerun the script. See `infrastructure/mariadb/README.md` for detailed setup instructions.
 
 ## Troubleshooting
 - Verify Docker and Compose: `docker ps` and `docker compose ls`
@@ -205,6 +205,7 @@ Notes:
 ## Notes
 - This setup uses a local Portainer per Raspberry Pi for simplicity. A centralized Portainer Server + Agents can be added later as an enhancement.
   - Future plan: move Portainer Server to NAS and install Portainer Agent on each Raspberry Pi.
+
 
 
 

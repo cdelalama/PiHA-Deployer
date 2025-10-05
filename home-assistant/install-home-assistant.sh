@@ -451,10 +451,10 @@ print_mariadb_bootstrap_hint() {
   echo -e "${BLUE}[INFO] Manual bootstrap (recommended for fresh installs):${NC}"
   echo -e "${BLUE}  1) ssh <nas-user>@${host_hint}${NC}"
   echo -e "${BLUE}  2) mkdir -p /share/Container/compose/mariadb && cd /share/Container/compose/mariadb${NC}"
-  echo -e "${BLUE}  3) Place .env in that directory (see home-assistant/mariadb/README.md for required keys).${NC}"
-  echo -e "${BLUE}  4) Run: curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh${NC}"
+  echo -e "${BLUE}  3) Place .env in that directory (see infrastructure/mariadb/README.md for required keys).${NC}"
+  echo -e "${BLUE}  4) Run: curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh && bash setup-nas-mariadb.sh${NC}"
   echo -e "${BLUE}  5) From the Pi, verify connectivity with: nc -vz ${host_hint} 3306${NC}"
-  echo -e "${BLUE}[INFO] Optional automation: if you already have home-assistant/mariadb/.env in your PiHA-Deployer clone, run 'bash home-assistant/mariadb/setup-nas-mariadb.sh' there to perform the same steps over SSH.${NC}"
+  echo -e "${BLUE}[INFO] Optional automation: if you already have infrastructure/mariadb/.env in your PiHA-Deployer clone, run 'bash infrastructure/mariadb/setup-nas-mariadb.sh' there to perform the same steps over SSH.${NC}"
   echo
 }
 
@@ -495,30 +495,30 @@ print_mariadb_followup() {
       echo -e "${GREEN}[OK] MariaDB recorder configured automatically. Review ${HA_DATA_DIR}/configuration.yaml if you need further tweaks.${NC}"
       ;;
     available)
-      echo -e "${GREEN}[OK] MariaDB is ready. Configure Home Assistant recorder using the credentials above (see home-assistant/mariadb/README.md).${NC}"
+      echo -e "${GREEN}[OK] MariaDB is ready. Configure Home Assistant recorder using the credentials above (see infrastructure/mariadb/README.md).${NC}"
       ;;
     reachable_no_mysql)
       echo -e "${YELLOW}[WARN] MariaDB port reachable but credential check skipped (mysql client missing). Install 'mariadb-client' or run manual tests if needed.${NC}"
       ;;
     not_requested)
       echo -e "${BLUE}[INFO] MariaDB validation not requested. Set RECORDER_BACKEND=mariadb (or ENABLE_MARIADB_CHECK=true for legacy configs) to use the NAS MariaDB recorder.${NC}"
-      echo -e "${BLUE}Refer to home-assistant/mariadb/README.md when ready.${NC}"
+      echo -e "${BLUE}Refer to infrastructure/mariadb/README.md when ready.${NC}"
       ;;
     auth_failed)
-      echo -e "${YELLOW}[WARN] MariaDB authentication failed. Confirm credentials in .env and in the NAS deployment (home-assistant/mariadb/docker-compose.yml).${NC}"
+      echo -e "${YELLOW}[WARN] MariaDB authentication failed. Confirm credentials in .env and in the NAS deployment (infrastructure/mariadb/docker-compose.yml).${NC}"
       ;;
     unreachable)
-      echo -e "${YELLOW}[WARN] MariaDB appears offline. Start it on the NAS using home-assistant/mariadb/docker-compose.yml or run 'docker compose up -d' on the NAS.${NC}"
+      echo -e "${YELLOW}[WARN] MariaDB appears offline. Start it on the NAS using infrastructure/mariadb/docker-compose.yml or run 'docker compose up -d' on the NAS.${NC}"
       print_mariadb_bootstrap_hint
       ;;
     skipped)
       echo -e "${YELLOW}[WARN] MariaDB validation skipped. Set RECORDER_BACKEND=mariadb (and provide MARIADB_* variables) to enable automated checks.${NC}"
-      echo -e "${BLUE}Refer to home-assistant/mariadb/README.md for setup instructions.${NC}"
+      echo -e "${BLUE}Refer to infrastructure/mariadb/README.md for setup instructions.${NC}"
       print_mariadb_bootstrap_hint
       ;;
     missing_vars)
       echo -e "${YELLOW}[WARN] MariaDB check requested but configuration is incomplete. Add all MARIADB_* variables to .env and rerun.${NC}"
-      echo -e "${BLUE}See home-assistant/mariadb/README.md for the required values.${NC}"
+      echo -e "${BLUE}See infrastructure/mariadb/README.md for the required values.${NC}"
       print_mariadb_bootstrap_hint
       ;;
   esac
@@ -679,3 +679,5 @@ if [ "${RECORDER_BACKEND}" = "sqlite" ]; then
   echo -e "${BLUE}- SQLite DB: ${SQLITE_DATA_DIR}${NC}"
 fi
 print_mariadb_followup
+
+
