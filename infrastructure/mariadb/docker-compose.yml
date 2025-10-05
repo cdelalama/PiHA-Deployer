@@ -13,7 +13,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - mysqladmin ping -h localhost -uroot -p"$${MARIADB_ROOT_PASSWORD}" || exit 1
+        - mysqladmin ping -h 127.0.0.1 -u"$${MARIADB_USER}" -p"$${MARIADB_PASSWORD}" || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
