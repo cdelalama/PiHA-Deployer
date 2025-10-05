@@ -1,5 +1,5 @@
 # Node-RED Deployment Scripts
-
+\n> **Restructure notice:** This component will move under infrastructure/ during the ongoing migration. Track progress in docs/RESTRUCTURE_PLAN.md.\n
 ## Purpose
 Automated Docker deployment of Node-RED with Portainer, Syncthing, and NAS synchronization for Raspberry Pi home automation.
 
@@ -47,7 +47,7 @@ Password note: if any password contains a `$`, escape it as `\$` in `.env` to av
 
 Optional shared config (common/Common.env)
 - Place shared defaults in `common/Common.env` (gitignored) loaded before `.env`.
-- Load order: `../common/Common.env` → `../common/common.env` → `common/Common.env` → `common/common.env` → `$HOME/.piha/common.env` → `/etc/piha/common.env` → `.env`.
+- Load order: `../common/Common.env` ??? `../common/common.env` ??? `common/Common.env` ??? `common/common.env` ??? `$HOME/.piha/common.env` ??? `/etc/piha/common.env` ??? `.env`.
 - Suggested: `NAS_MOUNT_DIR`, `DOCKER_USER_ID`, `DOCKER_GROUP_ID`, `TZ`, `PORTAINER_PASS` (if shared).
 
 ## How to Run
@@ -97,4 +97,5 @@ Contributions and PRs are welcome.
 MIT License
 
 Copyright (c) 2024 cdelalama
+
 

@@ -1,3 +1,24 @@
+## 2025-10-05 - Codex - Begin infrastructure/application restructure
+
+Summary: Published the target repository layout, scaffolded the new infrastructure/application directories, and rewrote core docs to describe the NAS-led architecture. Added restructure notices to legacy components and updated the handoff for the migration roadmap.
+
+Files updated:
+- docs/RESTRUCTURE_PLAN.md (new overall plan)
+- docs/PROJECT_CONTEXT.md
+- README.md
+- infrastructure/README.md
+- infrastructure/*/README.md (placeholders)
+- application/README.md
+- application/home-assistant/*/README.md (placeholders)
+- application/control-plane/README.md (placeholder)
+- docs/OPERATIONS/README.md (placeholder)
+- home-assistant/README.md
+- node-red/README.md
+- zigbee2mqtt/README.md
+- docs/llm/HANDOFF.md
+
+Version impact: no (documentation and scaffolding only)
+Notes: Legacy installers remain under their original directories until Phase 2/3 moves them.
 ## 2025-10-05 - Codex - Prune empty host directories on HA uninstall
 
 Summary: Bumped the Home Assistant uninstaller to v1.2.1 so full wipes remove the host-level NAS directory when it ends up empty, keeping the NAS tree clean. Updated component docs and test matrix to mention the behaviour.
@@ -264,7 +285,7 @@ Files updated:
 - docs/llm/HANDOFF.md (version/status updated)
 
 Version impact: yes (home-assistant/install-home-assistant.sh -> 1.1.8)
-Notes: Pipeline runs (`curl � | sudo bash`) now exit immediately unless the reuse flag is set; interactive runs still prompt for confirmation.
+Notes: Pipeline runs (`curl ??? | sudo bash`) now exit immediately unless the reuse flag is set; interactive runs still prompt for confirmation.
 
 ---
 
@@ -735,5 +756,6 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
 
 

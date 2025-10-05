@@ -1,145 +1,66 @@
 # PiHA-Deployer Project Context
 
-## Project Vision
+## Vision
+Deliver a home automation platform that can operate unattended for months, with the NAS orchestrating recovery, PoE-managed resets, and planned failover between a primary HAOS appliance and a Docker-based standby. The repository is being restructured to encode this design explicitly.
 
-Goal: Automated deployment of home automation services on Raspberry Pi with NAS synchronization.
+## Architectural Layers
+1. **Infrastructure (NAS-centric)**
+   - MariaDB recorder backend with backups and periodic restore drills.
+   - Mosquitto broker hosting leadership markers and automation traffic.
+   - Zigbee2MQTT coordinator plus cold-standby strategy and NVRAM exports.
+   - Node-RED flow engine deployed in active/passive mode with leadership gates.
+   - Supporting services: monitoring/alerting, VPN access, PoE switch automation.
+2. **Application (Consumers)**
+   - Home Assistant OS as the primary appliance (snapshots, Safe Mode, guided restore).
+   - Home Assistant in Docker as a standby observer that promotes itself when the NAS withdraws the primary heartbeat.
+   - Control-plane scripts that enforce leadership rules and manage promotion/demotion.
+3. **Operations & Runbooks**
+   - Git-based configuration replication with deliberate delay and freeze flag.
+   - Scheduled failover/return drills, backup validation exercises, and Zigbee coordinator swap procedures.
 
-Current Status: Node-RED component is complete and stable. Home Assistant installer v1.3.0 adds the hybrid SQLite mode (NAS-hosted configuration with a local database) and keeps MariaDB validation; the uninstaller v1.2.1 now lets you keep the configuration, optionally reset the recorder, and prunes empty host directories on full wipes; full on-device regression is still pending. Zigbee2MQTT stack is deployed and running in production on a dedicated Pi (validated 2025-09-21).
-
-## Architecture Overview
-
-Core Components
-- Node-RED (complete)
-  - Docker container with persistent data
-  - Web interface for automation flows
-  - Integration with Portainer and Syncthing
-- Home Assistant (validation)
-  - Similar Docker deployment pattern
-  - Home automation hub
-  - Integration with the same NAS sync system
-- Zigbee2MQTT (production)
-  - Zigbee coordinator + Mosquitto broker + Portainer
-  - Runs on dedicated Pi with SONOFF USB dongle and NAS-backed data
-  - Provides MQTT bridge for Home Assistant automations
-- Supporting Services
-  - Portainer: Docker container management
-  - Syncthing: File synchronization with NAS
-  - SMB/CIFS client: Mounts NAS shares (no Samba server configured on the Pi)
-
-Infrastructure
-- Target platform: Multiple Raspberry Pi devices with Raspberry Pi OS
-- **Deployment model**: Each component deploys on separate Pi
-  - Node-RED component: dedicated Pi
-  - Home Assistant component: separate dedicated Pi
-- Containerization: Docker + Docker Compose per Pi
-- Storage: SMB/CIFS mount to shared NAS for persistent data
-- Network: Standard LAN; VLAN/IOT networks optional
-
-## Project Structure
-
+## Repository Layout (Target)
 ```
 PiHA-Deployer/
-|-- README.md                      # Project overview & quick starts
-|-- LLM_START_HERE.md              # LLM entry point
-|-- docs/
-|   |-- PROJECT_CONTEXT.md         # This file
-|   |-- VERSIONING_RULES.md        # Version management
-|   `-- llm/
-|       |-- HANDOFF.md             # Current state handoff
-|       `-- HISTORY.md             # Change history log
-|-- node-red/                      # Node-RED deployment (complete)
-|   |-- README.md                  # Component overview
-|   |-- .env.example               # Configuration template
-|   |-- install-node-red.sh        # Main installer (v1.0.67)
-|   |-- PiHA-Deployer-NodeRED.sh   # Container setup (v1.0.34)
-|   |-- configure-syncthing.sh     # Syncthing configuration (v1.1.5)
-|   |-- load_env_vars.sh           # Environment loader (v1.0.4)
-|   `-- docker-compose.yml         # Service definitions
-|-- home-assistant/                # Home Assistant deployment
-|   |-- README.md                  # Component overview
-|   |-- install-home-assistant.sh  # Main installer (v1.3.0)
-|   |-- docker-compose.yml         # Service definitions (Portainer + Home Assistant)
-|   `-- mariadb/                   # MariaDB for recorder (runs on NAS)
-|       |-- README.md              # MariaDB setup guide
-|       |-- docker-compose.yml     # MariaDB service definition
-|       `-- setup-nas-mariadb.sh   # NAS bootstrap script
-`-- zigbee2mqtt/                   # Zigbee coordinator deployment
-    |-- README.md                  # Component overview
-    |-- install-zigbee2mqtt.sh     # Main installer (v1.1.3)
-    `-- docker-compose.yml         # Service definitions (Z2M + Mosquitto + Portainer)
+??? infrastructure/                # Shared services (Nas-managed)
+?   ??? mariadb/
+?   ??? mqtt/
+?   ??? zigbee2mqtt/
+?   ??? node-red/
+?   ??? monitoring/
+?   ??? vpn/
+?   ??? poe-control/
+??? application/
+?   ??? home-assistant/
+?   ?   ??? haos/
+?   ?   ??? docker-standby/
+?   ?   ??? leadership/
+?   ??? control-plane/
+??? docs/
+?   ??? PROJECT_CONTEXT.md          # This document
+?   ??? RESTRUCTURE_PLAN.md         # Live tracker for the migration
+?   ??? VERSIONING_RULES.md
+?   ??? OPERATIONS/                 # (Planned) Runbooks and drills
+?   ??? llm/
+?       ??? HANDOFF.md
+?       ??? HISTORY.md
+??? home-assistant/ (legacy until Phase 3)
+??? node-red/        (legacy until Phase 2)
+??? zigbee2mqtt/     (legacy until Phase 2)
+??? ...
 ```
 
+> The legacy top-level component folders remain operational until their content migrates into the new structure. Track progress in `docs/RESTRUCTURE_PLAN.md`.
 
-## Development Conventions
+## Current Status (2025-10-05)
+- Restructure plan published; infrastructure/application directories scaffolded.
+- Installer/uninstaller scripts for Home Assistant continue to live in `home-assistant/` and will move into `application/home-assistant/docker-standby/` during Phase 3.
+- Node-RED and Zigbee2MQTT deployments remain in production under the legacy layout.
+- Documentation updates in progress to reflect the leadership contract, delayed sync policy, and PoE-managed recovery.
 
-File naming
-- Scripts: kebab-case with .sh extension
-- Documentation: UPPER_CASE.md for project docs, README.md for components
-- Environment: .env for local config, .env.example for templates
+## Next Milestones
+1. Update root `README.md` to present the new layer split and navigation.
+2. Document the MQTT leadership contract and synchronization policies.
+3. Migrate MariaDB/MQTT scripts into `infrastructure/` with refreshed guidance.
+4. Split Home Assistant documentation into HAOS vs standby roles.
 
-Code standards
-- Language: All code comments and documentation in English
-- Logging: Use [OK]/[ERROR]/[INFO]/[WARN] prefixes
-- Colors: Standardized BLUE/GREEN/RED/YELLOW variables
-- Versioning: VERSION="x.y.z" at top of each script
-
-Environment configuration
-- Required: .env file with variables per component
-- NAS integration: SMB/CIFS mount configuration mandatory
-- Security: Restrictive file permissions for secrets (e.g., 600 for .env)
-
-Environment files policy
-- `.env` is the source of truth and contains sensitive values. Do not commit secrets or change existing credentials.
-- `.env.example` is generated automatically from `.env` by a plugin. Do not edit `.env.example` manually.
-- When a new variable is needed:
-  - Document the new variable (purpose, default/expected format) in the relevant README and in HANDOFF.
-  - Update scripts to read the variable (without hardcoding secrets).
-  - Ask the user to populate the value in `.env`. The plugin will regenerate `.env.example` from `.env`.
-  - Treat making a variable newly required as a MAJOR version change (see VERSIONING_RULES).
-
-## Storage Layout Convention (Group by Host)
-
-- Single mount point on every Raspberry Pi: `${NAS_MOUNT_DIR}` (recommended `/mnt/piha`).
-- Group data by host under `hosts/<HOST_ID>/` to avoid collisions and simplify recovery.
-- Examples:
-  - Node-RED on host `nodered-pi-01`:
-    - `NODE_RED_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/node-red`
-    - `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
-  - Home Assistant on host `ha-pi-01`:
-    - `HA_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant`
-    - `PORTAINER_DATA_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/portainer`
-- Recommended: keep `DOCKER_COMPOSE_DIR` on NAS per host
-  - `DOCKER_COMPOSE_DIR=${NAS_MOUNT_DIR}/hosts/${HOST_ID}/compose`
-- Optional shared area: `${NAS_MOUNT_DIR}/shared/` (for purely shared assets, if needed).
-
-## Shared Configuration (common.env)
-
-- To reduce duplication across Raspberry Pis/components, common defaults can be kept in a shared env file.
-- Primary location (recommended): `common/Common.env` at repo root (ignored by Git to avoid committing secrets).
-- Load precedence (later wins):
-  1) `../common/Common.env` then `../common/common.env` (repo-level, sibling to component folder)
-  2) `common/Common.env` then `common/common.env` (inside component folder)
-  3) `$HOME/.piha/common.env` (host-local, not versioned)
-  4) `/etc/piha/common.env` (system-wide, not versioned)
-  5) `./Common.env` then `./common.env` (current directory, useful in local tests)
-  6) `.env` (component-specific, authoritative)
-- Recommended in `common.env` (example): `NAS_MOUNT_DIR`, `DOCKER_USER_ID`, `DOCKER_GROUP_ID`, `TZ`.
-- Keep secrets in `common/Common.env` (gitignored) or per-host local files; `.env` per componente puede sobrescribirlos si es necesario.
-
-## Component Links
-
-- Node-RED: node-red/README.md (current implementation)
-- Home Assistant: home-assistant/README.md
-- Zigbee2MQTT: zigbee2mqtt/README.md
-
-## Technology Stack
-
-- Base OS: Raspberry Pi OS (Debian-based)
-- Containers: Docker + Docker Compose
-- File Sync: Syncthing
-- Storage: SMB/CIFS (NAS integration)
-- Web UI: Portainer
-
----
-
-Next: read docs/VERSIONING_RULES.md
+Refer to `docs/RESTRUCTURE_PLAN.md` for detailed task tracking and ownership.

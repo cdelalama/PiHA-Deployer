@@ -1,5 +1,5 @@
 # Home Assistant Deployment Scripts
-
+\n> **Restructure notice:** Home Assistant assets will migrate to pplication/home-assistant/ during Phase 3. Follow docs/RESTRUCTURE_PLAN.md for updates.\n
 ## Purpose
 Automated Docker deployment of Home Assistant with Portainer and NAS-backed persistent data on a fresh Raspberry Pi.
 
@@ -205,6 +205,7 @@ Notes:
 ## Notes
 - This setup uses a local Portainer per Raspberry Pi for simplicity. A centralized Portainer Server + Agents can be added later as an enhancement.
   - Future plan: move Portainer Server to NAS and install Portainer Agent on each Raspberry Pi.
+
 
 
 

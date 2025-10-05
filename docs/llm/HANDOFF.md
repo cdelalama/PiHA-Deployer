@@ -2,35 +2,31 @@
 
 ## Current Status
 
-Last Updated: 2025-10-05 - Claude
-Session Focus: Enhanced documentation security by adding explicit file permission commands for .env creation and cleaned obsolete environment variables from configuration.
-Status: Home Assistant installer 1.3.0 keeps configuration on the NAS while isolating the SQLite database locally; the uninstaller 1.2.1 lets you preserve the configuration, optionally wipe the recorder (SQLite or MariaDB), removes empty host directories on full wipes, and still cleans the local recorder when requested. Documentation now includes secure .env creation steps. Zigbee2MQTT installer 1.1.3 preserves `configuration.yaml` after the first run; production stack on `cdelalamazigbee` remains healthy.
+Last Updated: 2025-10-05 - Codex
+Session Focus: Kick-off of the repository restructure (infrastructure vs application split) and documentation realignment.
+Status: Target layout published with scaffolded directories under `infrastructure/` and `application/`; restructure plan and core docs updated. Legacy installers remain in place until migration phases move them.
 
 ## Immediate Context
 
-Current Work
-- Home Assistant documentation enhanced with secure .env file creation (chmod 600) in README.md and TEST_MATRIX.md to prevent credential exposure; obsolete environment variables (ENABLE_MARIADB_CHECK, HA_ALLOW_EXISTING_DATA, UNINSTALL_PURGE_*) removed from .env for cleaner interactive prompting.
-- Home Assistant uninstaller v1.2.1 prompts interactively to keep configuration and recorder data (no env overrides), prunes empty host directories on full wipes, and still cleans the local recorder when wiped.
-- Home Assistant installer v1.3.0 keeps YAML/configuration on the NAS and mounts `${SQLITE_DATA_DIR}` locally for the recorder, migrating legacy installs automatically.
-- Home Assistant test matrix updated to v1.3.0 to cover the hybrid SQLite mode (config on NAS, DB local) alongside the MariaDB scenarios.
-- MariaDB helper (home-assistant/mariadb/setup-nas-mariadb.sh v1.0.9) unchanged; NAS guide still vendor-agnostic.
-- Zigbee2MQTT installer v1.1.3 now seeds `configuration.yaml` only when missing so customised deployments persist; production host `cdelalamazigbee` remains stable (containers: zigbee2mqtt, mosquitto, portainer_z2m).
+- `docs/RESTRUCTURE_PLAN.md` captures the target tree, configuration contract, phased roadmap, and progress tracker.
+- `docs/PROJECT_CONTEXT.md` and the root `README.md` now describe the layered architecture and reference the restructure plan.
+- Placeholder READMEs created for new directories (infrastructure services, application roles, operations runbooks).
+- Legacy component READMEs include a notice pointing to the ongoing migration.
+- No scripts or compose files have been relocated yet; functional behaviour is unchanged.
 
-Active Files
-- docs/PROJECT_CONTEXT.md (status + version table refreshed)
-- docs/llm/HANDOFF.md (this file)
-- docs/llm/HISTORY.md (recent session log)
-- home-assistant/install-home-assistant.sh (v1.3.0 hybrid SQLite)
-- home-assistant/uninstall-home-assistant.sh (v1.2.1 keep-config/keep-db prompts + host dir prune)
-- home-assistant/TEST_MATRIX.md (v1.3.0 scenario updates + secure .env creation)
-- home-assistant/README.md (secure .env creation steps)
-- home-assistant/.env (cleaned obsolete variables)
-- README.md (root) & home-assistant/README.md (doc alignment)
-- zigbee2mqtt/install-zigbee2mqtt.sh (v1.1.3 config preservation)
-- zigbee2mqtt/README.md (config retention note)
+## Active Files
+- docs/RESTRUCTURE_PLAN.md (new)
+- docs/PROJECT_CONTEXT.md (rewritten for new architecture)
+- README.md (root navigation updated)
+- infrastructure/** (scaffolding)
+- application/** (scaffolding)
+- docs/OPERATIONS/README.md (placeholder)
+- home-assistant/README.md (restructure notice)
+- node-red/README.md (restructure notice)
+- zigbee2mqtt/README.md (restructure notice)
 
-Current Versions
-- node-red/install-node-red.sh: 1.0.67
+## Current Versions
+- node-red/install-node-red.sh: 1.0.67 (no changes)
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
@@ -40,28 +36,21 @@ Current Versions
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities
-
-1) **VERIFY**: Execute Test Matrix scenario 1A + 1H on real hardware to confirm the hybrid SQLite layout (config reused from NAS, database recreated under `${SQLITE_DATA_DIR}`) and exercise the uninstaller prompts (keep configuration and decide whether to retain SQLite or MariaDB recorder data), validating recorder cleanup and the host-directory prune.
-2) **CHECK**: Re-run Zigbee2MQTT installer on `cdelalamazigbee` (or a lab box) to ensure `configuration.yaml` is left untouched after the first deployment.
-3) **DECIDE**: Confirm whether MariaDB data should stay under `${NAS_DEPLOY_DIR}`/data (current default) or move to a different NAS path. Update README + `.env` if needed.
-4) **VALIDATE**: Run home-assistant/mariadb/setup-nas-mariadb.sh against the QNAP with the new defaults to confirm directories and permissions.
-5) **DOCUMENT**: Capture the production Zigbee2MQTT deployment footprint (host `cdelalamazigbee`, NAS paths, monitoring/log rotation) and fold it into component docs/ops notes.
-6) **ONGOING**: Keep HISTORY and HANDOFF current; document any new env vars or behavioural changes.
-7) **DOC**: Record the final decision on MariaDB data directory layout for future automation runs.
+1. **Docs**: Flesh out `application/home-assistant/` (HAOS vs Docker standby) and document MQTT leadership contract + delayed sync policy.
+2. **Infrastructure Migration**: Move MariaDB and Mosquitto assets into `infrastructure/` with refreshed guidance and cross-links.
+3. **Control Plane**: Draft the NAS orchestration workflow (health checks, heartbeat topics, PoE integration) inside `application/control-plane/`.
+4. **Runbooks**: Populate `docs/OPERATIONS/` with failover, return-to-primary, backup validation, and Zigbee coordinator swap procedures.
+5. **Testing**: Plan validation strategy for leadership promotion/demotion and recorder integrity once tooling lands.
 
 ## Do Not Touch
-
-
-- Node-RED script logic (stable) unless explicitly requested
-- Existing docker-compose service definitions
+- Existing installer/uninstaller logic until documentation under the new structure is ready to replace it.
+- Zigbee2MQTT production configuration files (coordinate with user before modifications).
 
 ## Open Questions
-
-- Central Portainer Server + Agents: postpone until HA + Zigbee stacks are validated.
-- Additional Home Assistant sidecar services (MQTT broker, etc.): future scope.
+- MQTT topic hierarchy and payload schema for leadership heartbeats.
+- Git repository layout for delayed config sync (one repo per host vs monorepo).
+- PoE switch API specifics (model, authentication, rate limits).
 
 ## Testing Notes
-
-During development you may copy files from Windows to the Pi using a Samba share on the Pi. For production, rely on GitHub-based installs.
-
-
+- No automated or manual tests were run in this session (documentation-only changes).
+- Once control plane scripts exist, design mock/simulated environments for promotion drills before touching production hardware.

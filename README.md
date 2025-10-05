@@ -1,141 +1,38 @@
 # PiHA-Deployer
 
-Automation scripts to deploy the Pi Home Automation stack (Node-RED, Home Assistant, Zigbee2MQTT, supporting NAS services) on Raspberry Pi devices with NAS-backed persistence.
+Scripts and documentation to deploy a resilient home automation stack on Raspberry Pi with NAS-orchestrated failover. The project is being restructured to separate shared infrastructure (MariaDB, Mosquitto, Zigbee2MQTT, Node-RED, monitoring, VPN, PoE control) from application roles (Home Assistant OS primary, Docker standby, control plane).
 
-## Components
+## Repository Layout (Transition State)
+- `infrastructure/` ? new home for NAS-managed services (scaffolded; migration in progress)
+- `application/` ? new home for Home Assistant profiles and control plane tooling (scaffolded)
+- `docs/` ? project context, restructure plan, operations runbooks (WIP)
+- `home-assistant/`, `node-red/`, `zigbee2mqtt/` ? legacy locations for current installers (to be migrated)
 
-- **Home Assistant** (`home-assistant/`)
-- **Zigbee2MQTT** (`zigbee2mqtt/`)
-- **Node-RED** (`node-red/`)
-- **Home Assistant / MariaDB** (`home-assistant/mariadb/`)
-- **NAS guidance** (`docs/NAS_CONFIGURATION.md`)
+See `docs/RESTRUCTURE_PLAN.md` for live tracking of the migration phases and ownership.
 
 ## Documentation Map
+- `LLM_START_HERE.md` ? onboarding, policies, and workflow
+- `docs/PROJECT_CONTEXT.md` ? architecture overview (updated for the restructure)
+- `docs/RESTRUCTURE_PLAN.md` ? target layout, phases, and progress tracker
+- `docs/VERSIONING_RULES.md` ? script version policy
+- `docs/NAS_CONFIGURATION.md` ? NAS setup guidance (legacy; pending refresh)
+- `docs/llm/HANDOFF.md` ? current focus / next steps
+- `docs/llm/HISTORY.md` ? chronological change log
 
-- `LLM_START_HERE.md`: entry point with rules and checklist (read first)
-- `docs/PROJECT_CONTEXT.md`: architecture, conventions, repo layout
-- `docs/VERSIONING_RULES.md`: SemVer policy for scripts
-- `docs/NAS_CONFIGURATION.md`: NAS-specific setup and directory structures
-- `docs/llm/HANDOFF.md`: current focus / next steps
-- `docs/llm/HISTORY.md`: chronological log of changes
+## Current Quick Starts (Legacy Paths)
+While the new structure is populated, use the existing installers:
+- **Home Assistant (Docker standby)** ? `home-assistant/install-home-assistant.sh`
+- **Home Assistant uninstaller** ? `home-assistant/uninstall-home-assistant.sh`
+- **Zigbee2MQTT stack** ? `zigbee2mqtt/install-zigbee2mqtt.sh`
+- **Node-RED stack** ? `node-red/install-node-red.sh`
 
-## Quick Start (Home Assistant)
+Each folder contains a README with detailed instructions and `.env` expectations. These assets will move into `application/` and `infrastructure/` as phases complete.
 
-1. SSH into your Pi and create a working directory:
+## Contribution Notes
+- Update `docs/llm/HANDOFF.md` and `docs/llm/HISTORY.md` with every change.
+- Keep documentation aligned: remove obsolete guidance when new behaviour is introduced.
+- All code/comments in English; conversations with the user in Spanish.
+- Follow the restructure plan when creating or moving files.
 
-```bash
-mkdir -p ~/piha-home-assistant && cd ~/piha-home-assistant
-```
-
-2. Create the shared config folder and add common variables (NAS credentials, UID/GID, Portainer password):
-
-```bash
-mkdir -p common
-cat <<'EOF' > common/Common.env
-DOCKER_USER_ID=1000
-DOCKER_GROUP_ID=1000
-NAS_IP=192.168.1.50
-NAS_SHARE_NAME=piha
-NAS_USERNAME=your_nas_user
-NAS_PASSWORD=changeMeSecure
-NAS_MOUNT_DIR=/mnt/piha
-PORTAINER_PASS=changeMePortainer
-EOF
-```
-
-(Adjust the values to match your NAS; this file is gitignored and must be created per host.)
-
-3. Create the component `.env` with host-specific values (see `home-assistant/README.md` for the full list; at minimum set `HOST_ID`, `BASE_DIR`, `HA_DATA_DIR`, ports).
-   - Choose the recorder backend with `RECORDER_BACKEND`: `sqlite` (default, keeps configuration on the NAS and stores the SQLite database locally) or `mariadb` (recorder data on the NAS).
-   - When `RECORDER_BACKEND=sqlite`, optionally set `SQLITE_DATA_DIR` (defaults to `/var/lib/piha/home-assistant/sqlite`) if you want the database somewhere other than the default local path.
-   - When `RECORDER_BACKEND=mariadb`, provide the full `MARIADB_*` block; the installer aborts if the database is unreachable.
-   - `ENABLE_MARIADB_CHECK` is still read for legacy setups but the installer now derives it from `RECORDER_BACKEND`.
-4. Run the installer directly from GitHub (requires `curl` and `sudo`):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/install-home-assistant.sh | sudo bash
-```
-
-
-- The script auto-downloads `docker-compose.yml` if missing.
-- When `RECORDER_BACKEND=mariadb`, the installer validates MariaDB:
-  - When the database is reachable, it configures `secrets.yaml` and `configuration.yaml` automatically.
-  - When the database is missing or misconfigured, it prints the bootstrap command and **aborts**, so you can provision the database and rerun.
-- Keep `RECORDER_BACKEND=sqlite` to use the managed hybrid mode (config on NAS, SQLite database local); switch to `mariadb` for a fully NAS-hosted recorder.
-5. Access Home Assistant at `http://<pi-ip>:8123` and Portainer at `http://<pi-ip>:9000`.
-
-### MariaDB on the NAS
-- **IMPORTANT**: The one-liner bootstrap command requires NAS-specific configuration. See `docs/NAS_CONFIGURATION.md` for your NAS vendor setup.
-- For QNAP NAS: Command currently broken - see HANDOFF.md for issue details
-- Generic setup: If the installer reports that MariaDB is missing, run this on the NAS (replace `<nas-user>` and `<NAS_IP>`):
-  ```bash
-  ssh <nas-user>@<NAS_IP> "curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/mariadb/setup-nas-mariadb.sh | bash"
-  ```
-- After it finishes, rerun the Home Assistant installer with `RECORDER_BACKEND=mariadb`.
-
-## Quick Start (Zigbee2MQTT)
-
-1. SSH into your Pi and create a working directory:
-
-```bash
-mkdir -p ~/piha-zigbee2mqtt && cd ~/piha-zigbee2mqtt
-```
-
-2. Create the shared config folder and populate `common/Common.env` with the NAS credentials and shared values (same format as Home Assistant).
-
-3. Create the `.env` for Zigbee2MQTT with host-specific values (HOST_ID, Z2M/MQTT/Portainer directories, USB overrides, ports; see `zigbee2mqtt/README.md`).
-
-4. Ensure the SONOFF dongle is connected and run the installer:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/zigbee2mqtt/install-zigbee2mqtt.sh -o install-zigbee2mqtt.sh
-chmod +x install-zigbee2mqtt.sh
-sudo bash install-zigbee2mqtt.sh
-```
-
-(The script writes a full configuration and skips the onboarding wizard.)
-
-## Quick Start (Node-RED)
-
-1. SSH into your Pi and create a working directory:
-
-```bash
-mkdir -p ~/piha-node-red && cd ~/piha-node-red
-```
-
-2. Create the shared config folder (`common/Common.env`) with NAS credentials, UID/GID, and ports shared with other components.
-
-3. Create the component `.env` (HOST_ID, Node-RED/MQTT/Syncthing paths, ports; see `node-red/README.md`).
-
-4. Run the installer directly from GitHub:
-
-```bash
-curl -sSL "https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/node-red/install-node-red.sh" | bash
-```
-
-## Environment Files
-
-- Each component expects a local `.env` with host-specific values (ports, paths, IDs).
-
-- Shared values (NAS credentials, UID/GID, mount path, Portainer password) should live in `common/Common.env` next to the component or in the repo root; the installers load these files automatically but they are **not** tracked in Git.
-
-- Example `common/Common.env` snippet (adjust to your environment):
-
-```bash
-DOCKER_USER_ID=1000
-DOCKER_GROUP_ID=1000
-NAS_IP=192.168.1.50
-NAS_SHARE_NAME=piha
-NAS_USERNAME=your_nas_user
-NAS_PASSWORD=changeMeSecure
-NAS_MOUNT_DIR=/mnt/piha
-PORTAINER_PASS=changeMePortainer
-```
-
-- Keep secrets out of version control; copy these files manually to each Raspberry Pi.
-
-## Contributing / Updates
-
-- Make sure to update `docs/llm/HANDOFF.md` and `docs/llm/HISTORY.md` with every change.
-- Follow ASCII-only rule unless the file already contains non-ASCII.
-- Never edit `.env.example` files manually; they are generated from user secrets.
+## Contact & Support
+For operational questions during the transition, rely on the runbooks and trackers referenced above. The goal is a system that can recover remotely: NAS-led promotion, PoE power-cycle, and deliberate configuration sync with freeze control.

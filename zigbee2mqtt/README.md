@@ -1,5 +1,5 @@
 # Zigbee2MQTT Component
-
+\n> **Restructure notice:** This component will move under infrastructure/ during the ongoing migration. Track progress in docs/RESTRUCTURE_PLAN.md.\n
 Automated deployment of Zigbee2MQTT with Mosquitto MQTT broker on Raspberry Pi for home automation relay control.
 
 ## Overview
@@ -144,13 +144,13 @@ USB_DEVICE_PATH=/dev/ttyUSB0  # or appropriate path
 Following Group-by-Host convention on NAS:
 ```
 /mnt/piha/hosts/z2m-pi-01/
-├── compose/                 # Docker Compose files
-├── zigbee2mqtt/            # Z2M configuration and data
-├── mosquitto/
-│   ├── config/            # Mosquitto configuration
-│   ├── data/              # MQTT persistence
-│   └── log/               # MQTT logs
-└── portainer/             # Portainer data
+????????? compose/                 # Docker Compose files
+????????? zigbee2mqtt/            # Z2M configuration and data
+????????? mosquitto/
+???   ????????? config/            # Mosquitto configuration
+???   ????????? data/              # MQTT persistence
+???   ????????? log/               # MQTT logs
+????????? portainer/             # Portainer data
 ```
 
 ## Troubleshooting
@@ -220,3 +220,4 @@ sudo mount -t cifs //NAS_IP/SHARE /mnt/test
 For project documentation and LLM coordination, see:
 - [LLM_START_HERE.md](../LLM_START_HERE.md)
 - [docs/PROJECT_CONTEXT.md](../docs/PROJECT_CONTEXT.md)
+
