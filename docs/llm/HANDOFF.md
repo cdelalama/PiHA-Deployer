@@ -3,8 +3,8 @@
 ## Current Status
 
 Last Updated: 2025-10-05 - Codex
-Session Focus: Migrated the shared Mosquitto broker into `infrastructure/mqtt/` while leaving production Zigbee2MQTT untouched.
-Status: Central MQTT deployment now lives under the infrastructure layer with installer, compose, and documentation; next step is to draft the NAS control plane.
+Session Focus: Added version/health reporting to the MariaDB installer and continued NAS infrastructure setup.
+Status: MariaDB setup-nas script now reports compose version, waits for health, and shows `docker compose ps`; Mosquitto deployment remains pending.
 
 ## Immediate Context
 
@@ -51,3 +51,4 @@ Status: Central MQTT deployment now lives under the infrastructure layer with in
 ## Testing Notes
 - No automated/manual tests executed; focus was file relocation and documentation.
 - Plan validation sequence once control-plane and Zigbee switchover tasks are scheduled.
+

@@ -141,3 +141,5 @@ mosquitto_pub -h <nas-ip> -t piha/leader/home-assistant/cmd -m promote
 
 
 
+
+

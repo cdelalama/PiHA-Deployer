@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -111,6 +111,58 @@ remote_exec_cmd() {
   fi
 }
 
+print_compose_version() {
+  local compose_path="$1"
+  local line=""
+  if is_local_host; then
+    if [ -f "$compose_path" ]; then
+      line=$(grep -E '^# VERSION=' "$compose_path" | head -n 1)
+    fi
+  else
+    line=$(remote_exec_cmd "grep -E '^# VERSION=' $(shell_quote \"$compose_path\") 2>/dev/null || true" | head -n 1 | tr -d '\r')
+  fi
+  if [ -n "$line" ]; then
+    local version="${line#*=}"
+    if [ -n "$version" ] && [ "$version" != "$line" ]; then
+      echo -e "${BLUE}[INFO] docker-compose.yml version: ${version}${NC}"
+    fi
+  fi
+}
+
+wait_for_container_health() {
+  local container="$1"
+  local timeout="${2:-120}"
+  local interval=5
+  local elapsed=0
+  local status=""
+  while [ $elapsed -lt $timeout ]; do
+    if is_local_host; then
+      status=$(${SUDO}docker inspect --format '{{.State.Health.Status}}' "$container" 2>/dev/null || echo no-healthcheck)
+    else
+      status=$(remote_exec_cmd "${SUDO}docker inspect --format '{{.State.Health.Status}}' ${container} 2>/dev/null || echo no-healthcheck")
+    fi
+    status=$(echo "$status" | head -n 1 | tr -d '\r')
+    case "$status" in
+      healthy)
+        echo -e "${GREEN}[OK] ${container} reported healthy${NC}"
+        return 0
+        ;;
+      unhealthy)
+        echo -e "${YELLOW}[WARN] ${container} healthcheck reported unhealthy${NC}"
+        return 1
+        ;;
+      no-healthcheck)
+        echo -e "${YELLOW}[WARN] ${container} does not define a healthcheck.${NC}"
+        return 1
+        ;;
+    esac
+    sleep "$interval"
+    elapsed=$((elapsed + interval))
+  done
+  echo -e "${YELLOW}[WARN] Timed out waiting for ${container} healthcheck (last status: ${status:-unknown})${NC}"
+  return 1
+}
+
 main() {
   load_env
   ensure_tools
@@ -122,7 +174,7 @@ main() {
 
   require_vars NAS_SSH_HOST NAS_SSH_USER MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD MARIADB_DATA_DIR PUBLISHED_PORT
 
-  local SUDO=""
+  SUDO=""
   if bool_true "$NAS_SSH_USE_SUDO"; then
     SUDO="sudo "
   fi
@@ -143,8 +195,8 @@ main() {
   echo -e "${GREEN}[OK] NAS reachable${NC}"
 
   echo -e "${BLUE}Creating deployment directories on NAS...${NC}"
-  remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$NAS_DEPLOY_DIR")"
-  remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$MARIADB_DATA_DIR")"
+  remote_exec_cmd "${SUDO}mkdir -p $(shell_quote \"$NAS_DEPLOY_DIR\")"
+  remote_exec_cmd "${SUDO}mkdir -p $(shell_quote \"$MARIADB_DATA_DIR\")"
 
   local same_dir="false"
   local script_abs="" deploy_abs=""
@@ -163,20 +215,22 @@ main() {
   fi
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
+  local compose_target="${NAS_DEPLOY_DIR}/docker-compose.yml"
   if is_local_host; then
-    local target="${NAS_DEPLOY_DIR}/docker-compose.yml"
-    if [ "$same_dir" = "true" ] && [ -f "$target" ]; then
+    if [ "$same_dir" = "true" ] && [ -f "$compose_target" ]; then
       echo -e "${YELLOW}[WARN] docker-compose.yml already present in ${NAS_DEPLOY_DIR}; skipping copy.${NC}"
     else
       if [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
-        cp "${SCRIPT_DIR}/docker-compose.yml" "$target"
+        cp "${SCRIPT_DIR}/docker-compose.yml" "$compose_target"
       else
-        curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/docker-compose.yml -o "$target"
+        curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/docker-compose.yml -o "$compose_target"
       fi
     fi
   else
-    scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/docker-compose.yml" >/dev/null
+    scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${compose_target}" >/dev/null
   fi
+
+  print_compose_version "$compose_target"
 
   echo -e "${BLUE}Rendering .env for MariaDB...${NC}"
   local tmp_env
@@ -199,14 +253,20 @@ EOF
   else
     scp -P "$NAS_SSH_PORT" "$tmp_env" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/.env" >/dev/null
   fi
-  remote_exec_cmd "${SUDO}chmod 600 $(shell_quote "${NAS_DEPLOY_DIR}/.env")"
+  remote_exec_cmd "${SUDO}chmod 600 $(shell_quote \"${NAS_DEPLOY_DIR}/.env\")"
 
   echo -e "${BLUE}Starting MariaDB container on NAS...${NC}"
-  if remote_exec_cmd "${SUDO}docker compose version >/dev/null 2>&1"; then
-    remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker compose -f docker-compose.yml up -d"
-  else
-    remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker-compose -f docker-compose.yml up -d"
+  local compose_cmd="${SUDO}docker compose"
+  if ! remote_exec_cmd "${SUDO}docker compose version >/dev/null 2>&1"; then
+    compose_cmd="${SUDO}docker-compose"
   fi
+
+  remote_exec_cmd "cd $(shell_quote \"$NAS_DEPLOY_DIR\") && ${compose_cmd} -f docker-compose.yml up -d"
+
+  wait_for_container_health "${MARIADB_CONTAINER_NAME:-mariadb}" 180
+
+  echo -e "${BLUE}[INFO] docker compose ps:${NC}"
+  remote_exec_cmd "cd $(shell_quote \"$NAS_DEPLOY_DIR\") && ${compose_cmd} ps"
 
   echo -e "${GREEN}[OK] MariaDB deployment finished${NC}"
   echo -e "${BLUE}Service details:${NC}"

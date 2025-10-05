@@ -24,22 +24,26 @@ Managed deployment of MariaDB on the NAS for Home Assistant Recorder. This repla
 | `TZ` | Timezone inside container |
 
 ## Deployment
-### Option A ? Run on the NAS (recommended)
+### Option A - Run on the NAS (recommended)
 ```bash
 ssh <nas-user>@<NAS_IP>
 mkdir -p /share/Container/compose/piha-homeassistant-mariadb
 cd /share/Container/compose/piha-homeassistant-mariadb
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh -o setup-nas-mariadb.sh
-bash setup-nas-mariadb.sh
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/.env.example -o .env
+chmod 600 .env
+vi .env
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mariadb/setup-nas-mariadb.sh | bash
 ```
 
-### Option B ? Run remotely from your PiHA-Deployer clone
+### Option B - Run remotely from your PiHA-Deployer clone
 ```bash
 # On your workstation or Pi where this repo lives
 cp infrastructure/mariadb/.env.example infrastructure/mariadb/.env  # fill in secrets
+vi infrastructure/mariadb/.env
 bash infrastructure/mariadb/setup-nas-mariadb.sh
 ```
-The helper reads `.env`, copies `docker-compose.yml` to the NAS (if missing), and launches the container via Docker Compose.
+
+The helper reads `.env`, copies `docker-compose.yml` to the NAS (if missing), prints the compose version, waits for the container to report **healthy**, and finally shows `docker compose ps`.
 
 ## Home Assistant Integration
 Add the secrets and recorder block (applies to HAOS and Docker standby):
@@ -68,10 +72,3 @@ recorder:
 ## Migration Notes
 - Legacy directory `home-assistant/mariadb/` now contains compatibility stubs that call these scripts.
 - Update all documentation/instructions to use `infrastructure/mariadb`. See `docs/RESTRUCTURE_PLAN.md` for status.
-
-
-
-
-
-
-

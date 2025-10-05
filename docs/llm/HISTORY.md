@@ -1,3 +1,15 @@
+## 2025-10-05 - Codex - Improve MariaDB deployment feedback
+
+Summary: Bumped the NAS MariaDB bootstrap to v1.1.1 so it prints the compose version, waits for the container healthcheck, and shows `docker compose ps`. Added a version tag and updated healthcheck in the compose file, refreshed the README/runbook instructions.
+
+Files updated:
+- infrastructure/mariadb/setup-nas-mariadb.sh
+- infrastructure/mariadb/docker-compose.yml
+- infrastructure/mariadb/README.md
+- docs/OPERATIONS/ha-dual-node.md
+
+Version impact: yes (infrastructure/mariadb/setup-nas-mariadb.sh -> 1.1.1, infrastructure/mariadb/docker-compose.yml -> 1.1.1)
+Notes: Script output now includes compose version and a health summary so operators can see success immediately.
 ## 2025-10-05 - Codex - Introduce shared Mosquitto infrastructure
 
 Summary: Added the NAS-hosted Mosquitto deployment under `infrastructure/mqtt/` with installer, compose, and ACL guidance; updated Zigbee2MQTT docs and restructure plan accordingly.
@@ -826,6 +838,7 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
 
 
 
