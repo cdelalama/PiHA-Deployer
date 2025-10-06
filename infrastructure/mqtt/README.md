@@ -47,6 +47,15 @@ bash infrastructure/mqtt/setup-mosquitto.sh
 ```
 The helper reads `.env`, copies `docker-compose.yml` to the NAS if missing, writes `mosquitto.conf`, creates password/ACL files when credentials are provided, and launches the service with Docker Compose.
 
+### Post-deployment checks
+```bash
+cd ${NAS_DEPLOY_DIR:-/share/Container/compose/mqtt}
+docker compose ps
+chmod 600 ${MQTT_CONFIG_DIR:-/share/Container/compose/mqtt/config}/passwd
+```
+- Run the commands above on the NAS after the script finishes to verify the `mosquitto` container is `running`.
+- Fix the warning from `mosquitto_passwd` by setting `chmod 600` (or `700`) on the generated `passwd` file before restarting the service (`docker compose restart`).
+
 ## Configuration Notes
 - **Leadership topics**: the generated `mosquitto.conf` references an ACL file (`/mosquitto/config/acl`). By default the script grants the primary `MQTT_USER` full access and allows read access to `piha/leader/#` for all authenticated users. Edit `${MQTT_CONFIG_DIR}/acl` to add granular rules (e.g., read-only observers for the standby instance and control plane).
 - **Authentication**: when `MQTT_USER`/`MQTT_PASSWORD` are set, anonymous access is disabled and `passwd` is generated via `mosquitto_passwd`. Leave them empty only for temporary lab setups.
@@ -65,4 +74,5 @@ The helper reads `.env`, copies `docker-compose.yml` to the NAS if missing, writ
 4. Update runbooks (`docs/OPERATIONS/`) with failover procedures and ACL management.
 
 Track progress and ownership in `docs/RESTRUCTURE_PLAN.md`.
+
 

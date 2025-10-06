@@ -186,3 +186,4 @@ mosquitto_pub -h <nas-ip> -t piha/leader/home-assistant/cmd -m promote
 - Update `docs/llm/HANDOFF.md` with any anomalies.
 - Once this validation succeeds, proceed with PoE automation and Zigbee2MQTT migration.
 
+
