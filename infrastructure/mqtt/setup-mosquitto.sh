@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -254,17 +254,25 @@ main() {
   fi
 
   echo -e "${BLUE}Copying docker-compose.yml...${NC}"
+  local target="${NAS_DEPLOY_DIR}/docker-compose.yml"
   if is_local_host; then
-    local target="${NAS_DEPLOY_DIR}/docker-compose.yml"
     if [ "$same_dir" = "true" ] && [ -f "$target" ]; then
       echo -e "${YELLOW}[WARN] docker-compose.yml already present in ${NAS_DEPLOY_DIR}; skipping copy.${NC}"
     else
-      cp "${SCRIPT_DIR}/docker-compose.yml" "$target"
+      if [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
+        cp "${SCRIPT_DIR}/docker-compose.yml" "$target"
+      else
+        curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/docker-compose.yml -o "$target"
+      fi
     fi
   else
-    scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${NAS_DEPLOY_DIR}/docker-compose.yml" >/dev/null
+    if [ -f "${SCRIPT_DIR}/docker-compose.yml" ]; then
+      scp -P "$NAS_SSH_PORT" "${SCRIPT_DIR}/docker-compose.yml" "$NAS_SSH_USER@$NAS_SSH_HOST:${target}" >/dev/null
+    else
+      curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/docker-compose.yml | \\
+        ssh -p "$NAS_SSH_PORT" "$NAS_SSH_USER@$NAS_SSH_HOST" "cat > $(shell_quote \"$target\")" >/dev/null
+    fi
   fi
-
   echo -e "${BLUE}Rendering .env for Mosquitto...${NC}"
   local tmp_env
   tmp_env=$(mktemp)
@@ -312,3 +320,4 @@ EOF
 }
 
 main "$@"
+

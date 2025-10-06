@@ -1,3 +1,17 @@
+## 2025-10-05 - Codex - Make Mosquitto bootstrap fetch compose automatically
+
+Summary: Updated the NAS Mosquitto setup helper to download docker-compose.yml when missing, so the runbook no longer needs a manual curl. Adjusted the README/runbook instructions and bumped the helper to 1.0.2.
+
+Files updated:
+- infrastructure/mqtt/setup-mosquitto.sh
+- infrastructure/mqtt/README.md
+- docs/OPERATIONS/ha-dual-node.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md
+
+Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.2)
+Notes: Option A now requires only the setup script; the post-deployment check still covers docker compose ps + chmod on passwd.
+
 ## 2025-10-05 - Codex - Align Mosquitto NAS deployment docs
 
 Summary: Documented the exact NAS-side steps for downloading the compose and bootstrap scripts, added post-deployment checks (compose ps + chmod on passwd), and restored the compose defaults. Bumped the Mosquitto setup helper to 1.0.1.

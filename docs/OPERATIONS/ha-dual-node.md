@@ -37,7 +37,6 @@ docker compose ps
 ssh <nas-user>@<NAS_IP>
 mkdir -p /share/Container/compose/piha-homeassistant-mqtt
 cd /share/Container/compose/piha-homeassistant-mqtt
-curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/docker-compose.yml -o docker-compose.yml
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/setup-mosquitto.sh -o setup-mosquitto.sh
 chmod +x setup-mosquitto.sh
 ./setup-mosquitto.sh
@@ -45,6 +44,7 @@ docker compose ps
 chmod 600 /share/Container/compose/mqtt/config/passwd
 ```
 
+The script automatically downloads `docker-compose.yml` into the target directory when it is missing.
 > **Post-check:** En el NAS, ejecuta `docker compose ps` dentro de `/share/Container/compose/mqtt` y corrige la advertencia de permisos con el comando anterior antes de reiniciar (`docker compose restart`) si Mosquitto lo requiere.
 
 After these steps both containers (`mariadb`, `mosquitto`) should appear as `running`.\n## Goals
@@ -54,7 +54,7 @@ After these steps both containers (`mariadb`, `mosquitto`) should appear as `run
 - Validate connectivity to shared MariaDB and Mosquitto.
 - Check leadership heartbeats and basic health monitoring prior to automating PoE failover.
 
-## Step 1 ? Baseline Verification
+## Step 1 - Baseline Verification
 
 Perform these checks before installing or resetting any Pi.
 
@@ -93,7 +93,7 @@ mount | grep /mnt/piha || true
 
 Reflash HAOS on the primary Pi if necessary.
 
-## Step 2 ? Install Home Assistant OS (Primary)
+## Step 2 - Install Home Assistant OS (Primary)
 
 1. Flash HAOS to the primary Pi and power it via PoE.
 2. Complete the onboarding wizard (`http://<haos-ip>:8123`).
@@ -112,7 +112,7 @@ mosquitto_sub -h <nas-ip> -t piha/leader/home-assistant/state -v
 
 Ensure HAOS publishes `state=leader` (via automation/script) and connects to MariaDB/Mosquitto without errors.
 
-## Step 3 ? Install Docker Standby (Secondary Pi)
+## Step 3 - Install Docker Standby (Secondary Pi)
 
 1. Prepare working directory:
 
@@ -150,7 +150,7 @@ mosquitto_sub -h <nas-ip> -t piha/leader/home-assistant/heartbeat -v
 
 ```
 
-## Step 4 ? Control Plane Smoke Test
+## Step 4 - Control Plane Smoke Test
 
 Manual checks until automation is in place:
 
@@ -163,7 +163,7 @@ curl -sf http://<standby-ip>:8123/api/ | head -n 5 || echo "Standby API requires
 
 Record timestamps and confirm both hosts respond.
 
-## Step 5 ? Promotion Drill (Manual)
+## Step 5 - Promotion Drill (Manual)
 
 1. Stop HAOS core:
 
@@ -183,11 +183,12 @@ mosquitto_pub -h <nas-ip> -t piha/leader/home-assistant/cmd -m promote
 4. Verify standby publishes `state=leader` and automations run.
 5. Restore HAOS snapshot, publish `cmd=demote`, standby returns to observer mode.
 
-## Step 6 ? Documentation & Handoff
+## Step 6 - Documentation & Handoff
 
 - Capture logs/outputs in this runbook after each drill.
 - Update `docs/llm/HANDOFF.md` with any anomalies.
 - Once this validation succeeds, proceed with PoE automation and Zigbee2MQTT migration.
+
 
 
 
