@@ -1,6 +1,6 @@
-## 2025-10-05 - Codex - Make Mosquitto bootstrap fetch compose automatically
+## 2025-10-05 - Codex - Mosquitto bootstrap auto-fetch + health fix
 
-Summary: Updated the NAS Mosquitto setup helper to download docker-compose.yml when missing, so the runbook no longer needs a manual curl. Adjusted the README/runbook instructions and bumped the helper to 1.0.2.
+Summary: Updated the NAS Mosquitto setup helper to download docker-compose.yml when missing and to pass MQTT credentials to the healthcheck. Documentation highlights the automatic download and the need for a healthy status after applying passwd permissions. Script bumped to 1.0.3.
 
 Files updated:
 - infrastructure/mqtt/setup-mosquitto.sh
@@ -9,8 +9,8 @@ Files updated:
 - docs/llm/HANDOFF.md
 - docs/llm/HISTORY.md
 
-Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.2)
-Notes: Option A now requires only the setup script; the post-deployment check still covers docker compose ps + chmod on passwd.
+Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.3)
+Notes: Option A now only downloads the helper script; if the container reports "unhealthy", ensure the generated `.env` includes MOSQUITTO_HEALTH_AUTH_ARGS and rerun the bootstrap.
 
 ## 2025-10-05 - Codex - Align Mosquitto NAS deployment docs
 

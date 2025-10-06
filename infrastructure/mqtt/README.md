@@ -54,6 +54,7 @@ docker compose ps
 chmod 600 ${MQTT_CONFIG_DIR:-/share/Container/compose/mqtt/config}/passwd
 ```
 - Run the commands above on the NAS after the script finishes to verify the `mosquitto` container is `running`.
+- Expect the container health status to report `healthy`; if it shows `unhealthy`, verify the generated `.env` contains `MOSQUITTO_HEALTH_AUTH_ARGS` (set automatically when `MQTT_USER`/`MQTT_PASSWORD` are provided) and rerun the chmod/health check.
 - Fix the warning from `mosquitto_passwd` by setting `chmod 600` (or `700`) on the generated `passwd` file before restarting the service (`docker compose restart`).
 
 ## Configuration Notes

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -274,6 +274,10 @@ main() {
     fi
   fi
   echo -e "${BLUE}Rendering .env for Mosquitto...${NC}"
+  local health_auth_args=""
+  if [ -n "$MQTT_USER" ] && [ -n "$MQTT_PASSWORD" ]; then
+    health_auth_args="-u ${MQTT_USER} -P ${MQTT_PASSWORD}"
+  fi
   local tmp_env
   tmp_env=$(mktemp)
   cat > "$tmp_env" <<EOF
@@ -283,6 +287,7 @@ MQTT_LOG_DIR=${MQTT_LOG_DIR}
 MQTT_CONTAINER_NAME=${MQTT_CONTAINER_NAME:-mosquitto}
 PUBLISHED_PORT=${PUBLISHED_PORT}
 TZ=${TZ:-Europe/Madrid}
+MOSQUITTO_HEALTH_AUTH_ARGS=${health_auth_args}
 EOF
 
   if is_local_host; then
@@ -320,4 +325,5 @@ EOF
 }
 
 main "$@"
+
 

@@ -46,6 +46,7 @@ chmod 600 /share/Container/compose/mqtt/config/passwd
 
 The script automatically downloads `docker-compose.yml` into the target directory when it is missing.
 > **Post-check:** En el NAS, ejecuta `docker compose ps` dentro de `/share/Container/compose/mqtt` y corrige la advertencia de permisos con el comando anterior antes de reiniciar (`docker compose restart`) si Mosquitto lo requiere.
+> Expect the container to show `Up ... (healthy)`. If it reports `unhealthy`, ensure the generated `.env` contains `MOSQUITTO_HEALTH_AUTH_ARGS` (auto-populated when `MQTT_USER`/`MQTT_PASSWORD` are set) and rerun the script if needed.
 
 After these steps both containers (`mariadb`, `mosquitto`) should appear as `running`.\n## Goals
 
