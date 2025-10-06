@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.2.1"
+VERSION="1.3.0"
 
 WORK_DIR=$(pwd)
 
@@ -132,26 +132,6 @@ delete_path() {
   fi
   sudo rm -rf "$target"
   echo -e "${GREEN}[OK] Removed ${label}${NC}"
-}
-
-purge_sqlite_recorder() {
-  local dir="${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}"
-  local base="${SQLITE_DB_FILENAME:-home-assistant_v2.db}"
-  local removed=false
-
-  for suffix in "" "-shm" "-wal"; do
-    local file="${dir}/${base}${suffix}"
-    if [ -f "$file" ]; then
-      sudo rm -f "$file" || true
-      removed=true
-    fi
-  done
-
-  if [ "$removed" = true ]; then
-    echo -e "${BLUE}SQLite recorder reset under ${dir}.${NC}"
-  else
-    echo -e "${YELLOW}[WARN] No SQLite recorder files found under ${dir}.${NC}"
-  fi
 }
 
 
@@ -490,15 +470,8 @@ prompt_optional_actions() {
 
   KEEP_DB=false
   if bool_true "$KEEP_CONFIG"; then
-    local recorder="${RECORDER_BACKEND,,}"
-    if [ "$recorder" = "sqlite" ]; then
-      if ask_yes_no "${YELLOW}Keep SQLite recorder data at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}? [y/N]: ${NC}"; then
-        KEEP_DB=true
-      fi
-    elif [ "$recorder" = "mariadb" ]; then
-      if ask_yes_no "${YELLOW}Keep NAS MariaDB deployment (${NAS_DEPLOY_DIR})? [y/N]: ${NC}"; then
-        KEEP_DB=true
-      fi
+    if ask_yes_no "${YELLOW}Keep NAS MariaDB deployment (${NAS_DEPLOY_DIR})? [y/N]: ${NC}"; then
+      KEEP_DB=true
     fi
   fi
 }
@@ -626,9 +599,6 @@ else
 fi
 TARGETS+=("${PORTAINER_DATA_DIR}:::Portainer data directory")
 TARGETS+=("${DOCKER_COMPOSE_DIR}:::Compose directory")
-if [ "${RECORDER_BACKEND,,}" = "sqlite" ] && ! bool_true "$KEEP_CONFIG"; then
-  TARGETS+=("${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}:::SQLite recorder directory")
-fi
 for entry in "${TARGETS[@]}"; do
   path="${entry%%:::*}"
   label="${entry##*:::}"
@@ -637,29 +607,9 @@ done
 
 maybe_remove_host_dir
 
-if bool_true "$KEEP_CONFIG" && [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
-  if bool_true "$KEEP_DB"; then
-    echo -e "${BLUE}SQLite recorder retained at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}.${NC}"
-  else
-    purge_sqlite_recorder
-  fi
-fi
-
-if [ -d "$NAS_MOUNT_DIR" ]; then
-  echo -e "${BLUE}Ensuring NAS mount point ownership...${NC}"
-  sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$NAS_MOUNT_DIR" || true
-fi
-
 cleanup_mariadb=true
-if [ "${RECORDER_BACKEND,,}" = "mariadb" ]; then
-  if bool_true "$KEEP_CONFIG" && bool_true "$KEEP_DB"; then
-    echo -e "${BLUE}MariaDB deployment preserved at ${NAS_DEPLOY_DIR}.${NC}"
-    cleanup_mariadb=false
-  fi
-else
-  if bool_true "$KEEP_CONFIG"; then
-    cleanup_mariadb=false
-  fi
+if bool_true "$KEEP_CONFIG" && bool_true "$KEEP_DB"; then
+  cleanup_mariadb=false
 fi
 
 if [ "$cleanup_mariadb" = true ]; then
@@ -672,18 +622,10 @@ fi
 
 if bool_true "$KEEP_CONFIG"; then
   echo -e "${BLUE}Home Assistant configuration preserved at ${HA_DATA_DIR}.${NC}"
-  if [ "${RECORDER_BACKEND,,}" = "sqlite" ]; then
-    if bool_true "$KEEP_DB"; then
-      echo -e "${BLUE}SQLite recorder retained at ${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}.${NC}"
-    else
-      echo -e "${BLUE}SQLite recorder reset; a fresh database will be created on next install.${NC}"
-    fi
-  elif [ "${RECORDER_BACKEND,,}" = "mariadb" ]; then
-    if bool_true "$KEEP_DB"; then
-      echo -e "${BLUE}MariaDB deployment preserved at ${NAS_DEPLOY_DIR}.${NC}"
-    else
-      echo -e "${BLUE}MariaDB deployment removed from ${NAS_DEPLOY_DIR}; rerun the installer to bootstrap a new database.${NC}"
-    fi
+  if bool_true "$KEEP_DB"; then
+    echo -e "${BLUE}MariaDB deployment preserved at ${NAS_DEPLOY_DIR}.${NC}"
+  else
+    echo -e "${BLUE}MariaDB deployment removed from ${NAS_DEPLOY_DIR}; rerun the installer to bootstrap a new database.${NC}"
   fi
 fi
 

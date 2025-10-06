@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.3.0"
+VERSION="1.4.0"
 
 # Colors
 BLUE='\033[0;36m'
@@ -10,10 +10,6 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
-
-LEGACY_SQLITE_CONFIG_DIR='/var/lib/piha/home-assistant'
-SQLITE_CONTAINER_SUBPATH='.sqlite-local'
-SQLITE_DB_FILENAME='home-assistant_v2.db'
 
 COMPOSE_SOURCE_URL="https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/home-assistant/docker-compose.yml"
 
@@ -169,6 +165,7 @@ post_load_fallbacks() {
 }
 
 MARIADB_CONFIGURE_PENDING=false
+MARIADB_STATUS="unverified"
 MARIADB_HINT_PRINTED=false
 
 ensure_packages() {
@@ -238,9 +235,6 @@ mount_nas() {
 setup_dirs() {
   echo -e "${BLUE}Preparing directories...${NC}"
   local dirs=("$DOCKER_COMPOSE_DIR" "$HA_DATA_DIR" "$PORTAINER_DATA_DIR")
-  if [ "${RECORDER_BACKEND}" = "sqlite" ]; then
-    dirs+=("$SQLITE_DATA_DIR")
-  fi
   for dir in "${dirs[@]}"; do
     sudo mkdir -p "$dir"
     sudo chown -R "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$dir"
@@ -270,11 +264,6 @@ copy_compose_and_env() {
   local env_tmp
   env_tmp=$(mktemp)
   cp .env "$env_tmp"
-  if grep -Eq '^[[:space:]]*SQLITE_DATA_DIR[[:space:]]*=' "$env_tmp"; then
-    grep -Ev '^[[:space:]]*SQLITE_DATA_DIR[[:space:]]*=' "$env_tmp" > "${env_tmp}.tmp"
-    mv "${env_tmp}.tmp" "$env_tmp"
-  fi
-  echo "SQLITE_DATA_DIR=${SQLITE_DATA_DIR}" >> "$env_tmp"
   cp "$env_tmp" "${BASE_DIR}/.env"
   rm -f "$env_tmp"
 }
@@ -284,82 +273,15 @@ nas_write_cooldown() {
     delay=5
   fi
   if [ "$delay" -gt 0 ]; then
-    echo -e "${BLUE}Waiting ${delay}s for NAS writes to settle... (SQLite on CIFS guard)${NC}"
+    echo -e "${BLUE}Waiting ${delay}s for NAS writes to settle before continuing${NC}"
     sync
     sleep "$delay"
   fi
 }
 
 
-migrate_sqlite_config_if_needed() {
-  [ "${RECORDER_BACKEND}" = "sqlite" ] || return
-  local legacy_dir="${LEGACY_SQLITE_CONFIG_DIR}"
-  if [ "$HA_DATA_DIR" = "$legacy_dir" ]; then
-    return
-  fi
-  if ! dir_has_content "$legacy_dir"; then
-    return
-  fi
-  if dir_has_content "$HA_DATA_DIR"; then
-    echo -e "${YELLOW}[WARN] Existing configuration detected in ${HA_DATA_DIR}; skipping automatic migration from ${legacy_dir}.${NC}"
-    echo -e "${YELLOW}[WARN] Review both directories and move YAML/custom files manually if needed.${NC}"
-    return
-  fi
-  echo -e "${BLUE}[INFO] Migrating existing Home Assistant configuration from ${legacy_dir} to ${HA_DATA_DIR}.${NC}"
-  sudo mkdir -p "$HA_DATA_DIR"
-  sudo cp -a "${legacy_dir}/." "$HA_DATA_DIR/" 2>/dev/null || true
-  echo -e "${BLUE}[INFO] Migration complete; old files remain in ${legacy_dir} for backup.${NC}"
-}
 
-relocate_sqlite_db_if_needed() {
-  [ "${RECORDER_BACKEND}" = "sqlite" ] || return
-  if [ "$HA_DATA_DIR" = "$SQLITE_DATA_DIR" ]; then
-    return
-  fi
-  local moved=false
-  for suffix in "" "-shm" "-wal"; do
-    local source_path="${HA_DATA_DIR}/${SQLITE_DB_FILENAME}${suffix}"
-    if [ -f "$source_path" ]; then
-      sudo mkdir -p "$SQLITE_DATA_DIR"
-      sudo mv "$source_path" "$SQLITE_DATA_DIR/" 2>/dev/null || true
-      moved=true
-    fi
-  done
-  if [ "$moved" = true ]; then
-    echo -e "${BLUE}[INFO] Relocated SQLite database files to ${SQLITE_DATA_DIR}.${NC}"
-  fi
-}
 
-configure_home_assistant_sqlite() {
-  echo -e "${BLUE}Configuring Home Assistant recorder for local SQLite storage...${NC}"
-  local config_file="${HA_DATA_DIR}/configuration.yaml"
-  local secrets_file="${HA_DATA_DIR}/secrets.yaml"
-  local purge_days="${RECORDER_PURGE_KEEP_DAYS:-14}"
-
-  sudo mkdir -p "${HA_DATA_DIR}"
-  sudo touch "$config_file"
-
-  sudo sed -i '/# --- PiHA-Deployer recorder config (managed) ---/,/# --- PiHA-Deployer recorder config ---/d' "$config_file"
-  if sudo grep -q '^[[:space:]]*recorder:' "$config_file"; then
-    echo -e "${YELLOW}[WARN] Existing recorder configuration detected in ${config_file}. Update it manually to point at sqlite:////config/${SQLITE_CONTAINER_SUBPATH}/${SQLITE_DB_FILENAME}.${NC}"
-  else
-    echo '' | sudo tee -a "$config_file" >/dev/null
-    sudo tee -a "$config_file" >/dev/null <<EOF
-# --- PiHA-Deployer recorder config (managed) ---
-recorder:
-  db_url: sqlite:////config/${SQLITE_CONTAINER_SUBPATH}/${SQLITE_DB_FILENAME}
-  purge_keep_days: ${purge_days}
-  commit_interval: 30
-# --- PiHA-Deployer recorder config ---
-EOF
-    sudo chown "${DOCKER_USER_ID}:${DOCKER_GROUP_ID}" "$config_file" 2>/dev/null || true
-    sudo chmod 664 "$config_file" 2>/dev/null || true
-  fi
-
-  if [ -f "$secrets_file" ]; then
-    sudo sed -i '/^recorder_db_url:/d' "$secrets_file"
-  fi
-}
 
 configure_home_assistant_mariadb() {
   echo -e "${BLUE}Configuring Home Assistant recorder for MariaDB...${NC}"
@@ -495,30 +417,20 @@ print_mariadb_followup() {
       echo -e "${GREEN}[OK] MariaDB recorder configured automatically. Review ${HA_DATA_DIR}/configuration.yaml if you need further tweaks.${NC}"
       ;;
     available)
-      echo -e "${GREEN}[OK] MariaDB is ready. Configure Home Assistant recorder using the credentials above (see infrastructure/mariadb/README.md).${NC}"
+      echo -e "${GREEN}[OK] MariaDB is ready. Recorder configuration will point to the shared database.${NC}"
       ;;
     reachable_no_mysql)
       echo -e "${YELLOW}[WARN] MariaDB port reachable but credential check skipped (mysql client missing). Install 'mariadb-client' or run manual tests if needed.${NC}"
       ;;
-    not_requested)
-      echo -e "${BLUE}[INFO] MariaDB validation not requested. Set RECORDER_BACKEND=mariadb (or ENABLE_MARIADB_CHECK=true for legacy configs) to use the NAS MariaDB recorder.${NC}"
-      echo -e "${BLUE}Refer to infrastructure/mariadb/README.md when ready.${NC}"
-      ;;
     auth_failed)
-      echo -e "${YELLOW}[WARN] MariaDB authentication failed. Confirm credentials in .env and in the NAS deployment (infrastructure/mariadb/docker-compose.yml).${NC}"
+      echo -e "${YELLOW}[WARN] MariaDB authentication failed. Confirm credentials in .env and on the NAS deployment.${NC}"
       ;;
     unreachable)
       echo -e "${YELLOW}[WARN] MariaDB appears offline. Start it on the NAS using infrastructure/mariadb/docker-compose.yml or run 'docker compose up -d' on the NAS.${NC}"
       print_mariadb_bootstrap_hint
       ;;
-    skipped)
-      echo -e "${YELLOW}[WARN] MariaDB validation skipped. Set RECORDER_BACKEND=mariadb (and provide MARIADB_* variables) to enable automated checks.${NC}"
-      echo -e "${BLUE}Refer to infrastructure/mariadb/README.md for setup instructions.${NC}"
-      print_mariadb_bootstrap_hint
-      ;;
     missing_vars)
-      echo -e "${YELLOW}[WARN] MariaDB check requested but configuration is incomplete. Add all MARIADB_* variables to .env and rerun.${NC}"
-      echo -e "${BLUE}See infrastructure/mariadb/README.md for the required values.${NC}"
+      echo -e "${RED}[ERROR] MariaDB configuration incomplete. Add all MARIADB_* variables to .env and rerun.${NC}"
       print_mariadb_bootstrap_hint
       ;;
   esac
@@ -550,34 +462,6 @@ verify_running() {
 load_env
 post_load_fallbacks
 
-# Normalize recorder backend selection
-if [ -z "${RECORDER_BACKEND:-}" ]; then
-  if bool_true "${ENABLE_MARIADB_CHECK:-false}"; then
-    echo -e "${YELLOW}[WARN] ENABLE_MARIADB_CHECK=true is deprecated; set RECORDER_BACKEND=mariadb instead.${NC}"
-    RECORDER_BACKEND="mariadb"
-  else
-    RECORDER_BACKEND="sqlite"
-  fi
-fi
-RECORDER_BACKEND="$(printf '%s' "${RECORDER_BACKEND}" | tr '[:upper:]' '[:lower:]')"
-case "${RECORDER_BACKEND}" in
-  sqlite|mariadb) ;;
-  *)
-    echo -e "${RED}[ERROR] Unsupported RECORDER_BACKEND=${RECORDER_BACKEND}. Use 'sqlite' or 'mariadb'.${NC}"
-    exit 1
-    ;;
-esac
-
-if bool_true "${ENABLE_MARIADB_CHECK:-false}" && [ "${RECORDER_BACKEND}" = "sqlite" ]; then
-  echo -e "${YELLOW}[WARN] ENABLE_MARIADB_CHECK=true conflicts with RECORDER_BACKEND=sqlite; ignoring ENABLE_MARIADB_CHECK.${NC}"
-fi
-
-if [ "${RECORDER_BACKEND}" = "mariadb" ]; then
-  ENABLE_MARIADB_CHECK=true
-else
-  ENABLE_MARIADB_CHECK=false
-fi
-
 
 require_vars \
   BASE_DIR DOCKER_USER_ID DOCKER_GROUP_ID HOST_ID \
@@ -587,33 +471,33 @@ require_vars \
 ensure_packages
 ensure_docker
 
+if [ -z "$MARIADB_HOST" ]; then
+  if [ -n "$NAS_IP" ]; then
+    MARIADB_HOST="$NAS_IP"
+  else
+    MARIADB_HOST="localhost"
+  fi
+fi
+[ -z "$MARIADB_PORT" ] && MARIADB_PORT=3306
+
+if ! require_mariadb_vars; then
+  print_mariadb_followup
+  echo -e "${RED}[ERROR] MariaDB variables missing; update .env before rerunning.${NC}"
+  exit 1
+fi
+
+check_mariadb
+if [ "$MARIADB_STATUS" = "available" ] || [ "$MARIADB_STATUS" = "reachable_no_mysql" ]; then
+  MARIADB_CONFIGURE_PENDING=true
+else
+  print_mariadb_followup
+  echo -e "${RED}[ERROR] MariaDB validation failed; aborting installation.${NC}"
+  exit 1
+fi
+
 echo -e "${BLUE}Checking NAS connectivity...${NC}"
 if ! ping -c 2 "$NAS_IP" >/dev/null 2>&1; then
   echo -e "${RED}[ERROR] Cannot reach NAS at $NAS_IP${NC}"; exit 1
-fi
-
-MARIADB_STATUS="not_requested"
-MARIADB_CONFIGURE_PENDING="false"
-if bool_true "${ENABLE_MARIADB_CHECK:-false}"; then
-  MARIADB_STATUS="skipped"
-  [ -z "$MARIADB_HOST" ] && MARIADB_HOST="$NAS_IP"
-  [ -z "$MARIADB_PORT" ] && MARIADB_PORT=3306
-  if require_mariadb_vars; then
-    check_mariadb
-    if [ "$MARIADB_STATUS" = "available" ]; then
-      MARIADB_CONFIGURE_PENDING="true"
-    else
-      if [ "$MARIADB_HINT_PRINTED" != "true" ]; then
-        print_mariadb_followup
-      fi
-      echo -e "${RED}[ERROR] MariaDB validation failed; aborting installation.${NC}"
-      exit 1
-    fi
-  else
-    print_mariadb_followup
-    echo -e "${RED}[ERROR] MariaDB validation failed due to missing variables; aborting installation.${NC}"
-    exit 1
-  fi
 fi
 
 mount_nas
@@ -628,34 +512,11 @@ DEFAULT_NAS_HA_DIR="${NAS_MOUNT_DIR}/hosts/${HOST_ID}/home-assistant"
 if [ -z "$HA_DATA_DIR" ]; then
   HA_DATA_DIR="$DEFAULT_NAS_HA_DIR"
 fi
-if [ "${RECORDER_BACKEND}" = "sqlite" ]; then
-  if [ -z "$SQLITE_DATA_DIR" ]; then
-    SQLITE_DATA_DIR="/var/lib/piha/home-assistant/sqlite"
-  fi
-  SQLITE_DATA_DIR="${SQLITE_DATA_DIR%/}"
-  SQLITE_DB_PATH="${SQLITE_DATA_DIR}/${SQLITE_DB_FILENAME}"
-  if [[ "$SQLITE_DATA_DIR" == ${NAS_MOUNT_DIR}* ]]; then
-    echo -e "${YELLOW}[WARN] SQLITE_DATA_DIR points to the NAS (${SQLITE_DATA_DIR}); this defeats the local-storage guard and may reintroduce database locking issues.${NC}"
-  fi
-  echo -e "${BLUE}[INFO] Home Assistant configuration will live on ${HA_DATA_DIR}; SQLite database stored locally under ${SQLITE_DATA_DIR}.${NC}"
-else
-  SQLITE_DATA_DIR="${SQLITE_DATA_DIR:-/var/lib/piha/home-assistant/sqlite}"
-fi
-
-
-if [ "${RECORDER_BACKEND}" = "sqlite" ]; then
-  migrate_sqlite_config_if_needed
-  relocate_sqlite_db_if_needed
-fi
 
 check_existing_data
 setup_dirs
-if [ "${RECORDER_BACKEND}" = "mariadb" ]; then
-  if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
-    configure_home_assistant_mariadb
-  fi
-elif [ "${RECORDER_BACKEND}" = "sqlite" ]; then
-  configure_home_assistant_sqlite
+if [ "$MARIADB_CONFIGURE_PENDING" = "true" ]; then
+  configure_home_assistant_mariadb
 fi
 write_portainer_secret
 copy_compose_and_env
@@ -674,10 +535,7 @@ echo -e "\n${GREEN}Setup complete${NC}"
 echo -e "${BLUE}- Home Assistant: http://$IP:${HA_PORT:-8123}${NC}"
 echo -e "${BLUE}- Portainer: http://$IP:${PORTAINER_PORT:-9000}${NC}"
 echo -e "${BLUE}- NAS mount: ${NAS_MOUNT_DIR}${NC}"
-if [ "${RECORDER_BACKEND}" = "sqlite" ]; then
-  echo -e "${BLUE}- SQLite config: ${HA_DATA_DIR}${NC}"
-  echo -e "${BLUE}- SQLite DB: ${SQLITE_DATA_DIR}${NC}"
-fi
 print_mariadb_followup
+
 
 

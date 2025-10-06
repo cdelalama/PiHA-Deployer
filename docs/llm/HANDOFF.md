@@ -3,52 +3,52 @@
 ## Current Status
 
 Last Updated: 2025-10-05 - Codex
-Session Focus: Added version/health reporting to the MariaDB installer and continued NAS infrastructure setup.
-Status: MariaDB setup-nas script now reports compose version, waits for health, and shows `docker compose ps`; Mosquitto deployment remains pending.
+Session Focus: Removed SQLite support from the Home Assistant stack; installer/uninstaller and docs are now MariaDB-only.
+Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance unconditionally and configures recorder automatically. Uninstaller v1.3.0 only prompts for preserving NAS config and MariaDB. Documentation and samples updated to match.
 
 ## Immediate Context
 
-- `infrastructure/mqtt/` contains the README, `.env.example`, compose file, and `setup-mosquitto.sh` helper (v1.0.0) for the NAS-hosted broker.
-- Zigbee2MQTT README notes the forthcoming switch to the shared broker; the existing compose still includes Mosquitto until validation.
-- `docs/RESTRUCTURE_PLAN.md` marks the Mosquitto migration complete and updates the next actions (control plane, Git sync, runbooks, Zigbee switchover planning).
-- MariaDB relocation completed earlier; both shared services now live under `infrastructure/`.
+- `home-assistant/install-home-assistant.sh` requires MariaDB reachability before launching containers.
+- `home-assistant/uninstall-home-assistant.sh` cleans the NAS MariaDB deployment unless the operator keeps it.
+- `.env.example`, README, and TEST_MATRIX describe the MariaDB-only workflow; SQLite guidance was removed.
+- Shared infrastructure services live under `infrastructure/` (`mariadb/` v1.1.1, `mqtt/` v1.0.0).
 
 ## Active Files
-- infrastructure/mariadb/** (unchanged since last handoff)
-- infrastructure/mqtt/README.md
-- infrastructure/mqtt/.env.example
-- infrastructure/mqtt/docker-compose.yml
-- infrastructure/mqtt/setup-mosquitto.sh
-- zigbee2mqtt/README.md (shared broker note)
-- docs/RESTRUCTURE_PLAN.md
+- home-assistant/install-home-assistant.sh
+- home-assistant/uninstall-home-assistant.sh
+- home-assistant/docker-compose.yml
+- home-assistant/.env.example
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md
+- docs/llm/HISTORY.md
+- docs/llm/HANDOFF.md
 
 ## Current Versions
+- home-assistant/install-home-assistant.sh: 1.4.0
+- home-assistant/uninstall-home-assistant.sh: 1.3.0
+- infrastructure/mariadb/setup-nas-mariadb.sh: 1.1.1
+- infrastructure/mqtt/setup-mosquitto.sh: 1.0.0
 - node-red/install-node-red.sh: 1.0.67
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
 - node-red/load_env_vars.sh: 1.0.4
-- home-assistant/install-home-assistant.sh: 1.3.0
-- home-assistant/uninstall-home-assistant.sh: 1.2.1
-- infrastructure/mariadb/setup-nas-mariadb.sh: 1.1.0
-- infrastructure/mqtt/setup-mosquitto.sh: 1.0.0
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities
-1. Outline NAS control-plane responsibilities and PoE workflow in `application/control-plane/README.md`.
-2. Design the delayed Git replication automation and freeze flag implementation.
-3. Populate `docs/OPERATIONS/` with failover/backup runbooks once control-plane scaffolding exists.
-4. Plan the Zigbee2MQTT switchover from embedded Mosquitto to the shared broker (validation steps, rollback).
+1. Validate the MariaDB-only installer/uninstaller on hardware (fresh install, reuse flow, failure paths, NAS cleanup).
+2. Update dual-node runbooks once both HAOS primary and Docker standby are proven against the shared MariaDB/MQTT services.
+3. Continue the control-plane design (leadership topics, PoE automation, delayed Git replication).
+4. Plan the Zigbee2MQTT migration to the shared Mosquitto broker, including rollback steps.
 
 ## Do Not Touch
-- Production Zigbee2MQTT compose (contains Mosquitto) until the shared broker is validated and a cut-over plan is approved.
-- Legacy installers beyond the updated path references.
+- Production Zigbee2MQTT compose (still bundling Mosquitto) until the shared broker validation plan is complete.
+- Legacy installer branches that were not part of this refactor.
 
 ## Open Questions
-- Final credential scheme and ACL rules for leadership topics (multiple users vs shared account).
-- TLS requirements for the shared broker.
-- Control-plane tooling stack (Bash vs Python vs Node-RED).
+- Migration steps for existing SQLite deployments?document required manual actions before upgrading to v1.4.0.
+- Final ACL and credential model for the leadership/control-plane topics on Mosquitto.
+- Tooling choice for the control-plane watcher (Bash vs Python vs Node-RED scripts).
 
 ## Testing Notes
-- No automated/manual tests executed; focus was file relocation and documentation.
-- Plan validation sequence once control-plane and Zigbee switchover tasks are scheduled.
-
+- No automated tests executed; manual validation pending on real hardware.
+- Need to exercise installer/uninstaller prompts and error cases once access to the Pi + NAS lab is available.

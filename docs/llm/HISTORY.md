@@ -1,4 +1,19 @@
-## 2025-10-05 - Codex - Improve MariaDB deployment feedback
+## 2025-10-05 - Codex - Drop SQLite recorder mode
+
+Summary: Home Assistant installer v1.4.0 now enforces the NAS-hosted MariaDB recorder, removes the RECORDER_BACKEND selection and all SQLite-specific handling. The uninstaller v1.3.0 only asks whether to keep the NAS configuration and MariaDB deployment. Documentation and samples were updated to match the MariaDB-only architecture.
+
+Files updated:
+- home-assistant/install-home-assistant.sh
+- home-assistant/uninstall-home-assistant.sh
+- home-assistant/docker-compose.yml
+- home-assistant/.env.example
+- home-assistant/README.md
+- home-assistant/TEST_MATRIX.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md
+
+Version impact: yes (home-assistant/install-home-assistant.sh -> 1.4.0, home-assistant/uninstall-home-assistant.sh -> 1.3.0)
+Notes: MariaDB is now mandatory; legacy SQLite workflows are no longer supported and existing deployments must migrate before upgrading.## 2025-10-05 - Codex - Improve MariaDB deployment feedback
 
 Summary: Bumped the NAS MariaDB bootstrap to v1.1.1 so it prints the compose version, waits for the container healthcheck, and shows `docker compose ps`. Added a version tag and updated healthcheck in the compose file, refreshed the README/runbook instructions.
 
@@ -838,6 +853,7 @@ Files updated:
 
 Version impact: yes (home-assistant installer bumped to 1.1.5)
 Notes: Managed recorder block is marked in `configuration.yaml`; existing manual recorder configs remain untouched.
+
 
 
 
