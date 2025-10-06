@@ -1,16 +1,16 @@
 services:
   mosquitto:
     image: eclipse-mosquitto:2.0
-    container_name: 
+    container_name: ${MQTT_CONTAINER_NAME:-mosquitto}
     restart: unless-stopped
     ports:
-      - ":1883"
+      - "${PUBLISHED_PORT:-1883}:1883"
     environment:
-      - TZ=
+      - TZ=${TZ:-Europe/Madrid}
     volumes:
-      - :/mosquitto/config
-      - :/mosquitto/data
-      - :/mosquitto/log
+      - "${MQTT_CONFIG_DIR:-./config}:/mosquitto/config"
+      - "${MQTT_DATA_DIR:-./data}:/mosquitto/data"
+      - "${MQTT_LOG_DIR:-./log}:/mosquitto/log"
     healthcheck:
       test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 1883 -t _healthcheck -m ok -q 0"]
       interval: 30s

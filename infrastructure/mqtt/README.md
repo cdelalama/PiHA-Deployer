@@ -34,8 +34,10 @@ Managed deployment of the shared Mosquitto MQTT broker running on the NAS. This 
 ssh <nas-user>@<NAS_IP>
 mkdir -p /share/Container/compose/mqtt
 cd /share/Container/compose/mqtt
+curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/docker-compose.yml -o docker-compose.yml
 curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infrastructure/mqtt/setup-mosquitto.sh -o setup-mosquitto.sh
-bash setup-mosquitto.sh
+chmod +x setup-mosquitto.sh
+./setup-mosquitto.sh
 ```
 
 ### Option B ? Run remotely from your PiHA-Deployer clone
@@ -63,3 +65,4 @@ The helper reads `.env`, copies `docker-compose.yml` to the NAS if missing, writ
 4. Update runbooks (`docs/OPERATIONS/`) with failover procedures and ACL management.
 
 Track progress and ownership in `docs/RESTRUCTURE_PLAN.md`.
+
