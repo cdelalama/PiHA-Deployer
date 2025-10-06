@@ -42,7 +42,10 @@ curl -fsSL https://raw.githubusercontent.com/cdelalama/PiHA-Deployer/main/infras
 chmod +x setup-mosquitto.sh
 ./setup-mosquitto.sh
 docker compose ps
+chmod 600 /share/Container/compose/mqtt/config/passwd
 ```
+
+> **Post-check:** En el NAS, ejecuta `docker compose ps` dentro de `/share/Container/compose/mqtt` y corrige la advertencia de permisos con el comando anterior antes de reiniciar (`docker compose restart`) si Mosquitto lo requiere.
 
 After these steps both containers (`mariadb`, `mosquitto`) should appear as `running`.\n## Goals
 
@@ -185,5 +188,6 @@ mosquitto_pub -h <nas-ip> -t piha/leader/home-assistant/cmd -m promote
 - Capture logs/outputs in this runbook after each drill.
 - Update `docs/llm/HANDOFF.md` with any anomalies.
 - Once this validation succeeds, proceed with PoE automation and Zigbee2MQTT migration.
+
 
 

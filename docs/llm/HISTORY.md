@@ -1,3 +1,18 @@
+## 2025-10-05 - Codex - Align Mosquitto NAS deployment docs
+
+Summary: Documented the exact NAS-side steps for downloading the compose and bootstrap scripts, added post-deployment checks (compose ps + chmod on passwd), and restored the compose defaults. Bumped the Mosquitto setup helper to 1.0.1.
+
+Files updated:
+- infrastructure/mqtt/docker-compose.yml
+- infrastructure/mqtt/setup-mosquitto.sh
+- infrastructure/mqtt/README.md
+- docs/OPERATIONS/ha-dual-node.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md
+
+Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.1)
+Notes: Operators must run the documented post-check to adjust passwd permissions whenever the bootstrap script creates the auth file.
+
 ## 2025-10-05 - Codex - Drop SQLite recorder mode
 
 Summary: Home Assistant installer v1.4.0 now enforces the NAS-hosted MariaDB recorder, removes the RECORDER_BACKEND selection and all SQLite-specific handling. The uninstaller v1.3.0 only asks whether to keep the NAS configuration and MariaDB deployment. Documentation and samples were updated to match the MariaDB-only architecture.
