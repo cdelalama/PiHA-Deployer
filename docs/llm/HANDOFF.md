@@ -2,9 +2,9 @@
 
 ## Current Status
 
-Last Updated: 2025-10-05 - Codex
-Session Focus: Home Assistant now enforces MariaDB-only recorder flow; Mosquitto NAS bootstrap auto-downloads compose and injects healthcheck auth so docs match the runbook.
-Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance unconditionally. Mosquitto bootstrap 1.0.3 auto-fetches docker-compose.yml, writes MOSQUITTO_HEALTH_AUTH_ARGS for the healthcheck, and docs/runbook cover the post-check + passwd fix. Uninstaller v1.3.0 only prompts for preserving NAS config and MariaDB.
+Last Updated: 2025-10-07 - Codex
+Session Focus: Mosquitto bootstrap hardens NAS data directory permissions to keep healthchecks green.
+Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance unconditionally. Mosquitto bootstrap 1.0.4 now copies compose assets, writes healthcheck credentials, and enforces 700 perms on mosquitto.db to stop unhealthy loops. Uninstaller v1.3.0 only prompts for preserving NAS config and MariaDB.
 
 ## Immediate Context
 
@@ -12,7 +12,7 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 - NAS Mosquitto bootstrap instructions now cover the automatic docker-compose download, credentialled healthcheck, post-deployment checks, and passwd permission fix.
 - `home-assistant/uninstall-home-assistant.sh` cleans the NAS MariaDB deployment unless the operator keeps it.
 - `.env.example`, README, and TEST_MATRIX describe the MariaDB-only workflow; SQLite guidance was removed.
-- Shared infrastructure services live under `infrastructure/` (`mariadb/` v1.1.1, `mqtt/` v1.0.3 with refreshed compose + docs).
+- Shared infrastructure services live under `infrastructure/` (`mariadb/` v1.1.1, `mqtt/` v1.0.4 with automatic data directory hardening).
 
 ## Active Files
 - home-assistant/install-home-assistant.sh
@@ -32,7 +32,7 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 - home-assistant/install-home-assistant.sh: 1.4.0
 - home-assistant/uninstall-home-assistant.sh: 1.3.0
 - infrastructure/mariadb/setup-nas-mariadb.sh: 1.1.1
-- infrastructure/mqtt/setup-mosquitto.sh: 1.0.3
+- infrastructure/mqtt/setup-mosquitto.sh: 1.0.4
 - node-red/install-node-red.sh: 1.0.67
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
@@ -57,6 +57,7 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 ## Testing Notes
 - No automated tests executed; manual validation pending on real hardware.
 - Need to exercise installer/uninstaller prompts and error cases once access to the Pi + NAS lab is available.
+
 
 
 

@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -203,6 +203,20 @@ setup_auth_files() {
     echo -e "${YELLOW}[WARN] MQTT_USER/MQTT_PASSWORD not set; broker will allow anonymous connections.${NC}"
   fi
 }
+secure_data_permissions() {
+  echo -e "${BLUE}Hardening Mosquitto data permissions...${NC}"
+  remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$MQTT_DATA_DIR")"
+  remote_exec_cmd "${SUDO}chmod 700 $(shell_quote "$MQTT_DATA_DIR") || true"
+  remote_exec_cmd "${SUDO}chown -R 1883:1883 $(shell_quote "$MQTT_DATA_DIR") || true"
+  local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e \"$f\" ] || continue; chmod 700 \"$f\" || true; done"
+  remote_exec_cmd "${SUDO}sh -c $(shell_quote "$secure_script")"
+}
+
+secure_container_permissions() {
+  local container="${MQTT_CONTAINER_NAME:-mosquitto}"
+  local container_script="if [ -d /mosquitto/data ]; then chmod 700 /mosquitto/data || true; for f in /mosquitto/data/mosquitto.db*; do [ -e \"$f\" ] || continue; chmod 700 \"$f\" || true; done; fi"
+  remote_exec_cmd "${SUDO}docker exec $(shell_quote "$container") sh -c $(shell_quote "$container_script") || true"
+}
 
 main() {
   load_env
@@ -303,6 +317,7 @@ EOF
 
   deploy_config_files
   setup_auth_files
+  secure_data_permissions
 
   echo -e "${BLUE}Starting Mosquitto container on NAS...${NC}"
   if remote_exec_cmd "${SUDO}docker compose version >/dev/null 2>&1"; then
@@ -310,6 +325,8 @@ EOF
   else
     remote_exec_cmd "cd $(shell_quote "$NAS_DEPLOY_DIR") && ${SUDO}docker-compose -f docker-compose.yml up -d"
   fi
+  secure_container_permissions
+  secure_data_permissions
 
   echo -e "${GREEN}[OK] Mosquitto deployment finished${NC}"
   echo -e "${BLUE}Service details:${NC}"
@@ -325,5 +342,6 @@ EOF
 }
 
 main "$@"
+
 
 

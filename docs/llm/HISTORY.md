@@ -892,3 +892,14 @@ Notes: Managed recorder block is marked in `configuration.yaml`; existing manual
 
 
 
+## 2025-10-07 - Codex - Harden Mosquitto data permissions
+
+Summary: Mosquitto NAS bootstrap now forces 700 permissions on the data directory and mosquitto.db (host + container) to keep the healthcheck healthy without manual chmod.
+
+Files updated:
+- infrastructure/mqtt/setup-mosquitto.sh (now 1.0.4)
+- docs/llm/HANDOFF.md (current status/version list refreshed)
+
+Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.4)
+Notes: Script runs chmod/chown before and after container start; docker exec step is tolerant if the container is still booting.
+---
