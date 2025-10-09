@@ -2,7 +2,7 @@
 set -e
 
 # Version
-VERSION="1.0.5"
+VERSION="1.0.6"
 
 BLUE='\033[0;36m'
 GREEN='\033[0;32m'
@@ -207,13 +207,13 @@ secure_data_permissions() {
   echo -e "${BLUE}Hardening Mosquitto data permissions...${NC}"
   remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$MQTT_DATA_DIR")"
   if remote_exec_cmd "${SUDO}chown -R 1883:1883 $(shell_quote "$MQTT_DATA_DIR") >/dev/null 2>&1"; then
-    remote_exec_cmd "${SUDO}chmod 700 $(shell_quote "$MQTT_DATA_DIR") || true"
-    local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 700 "$f" || true; done"
+    remote_exec_cmd "${SUDO}chmod 0700 $(shell_quote "$MQTT_DATA_DIR") || true"
+    local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0700 "$f" || true; done"
     remote_exec_cmd "${SUDO}sh -c $(shell_quote "$secure_script")"
   else
-    echo -e "${YELLOW}[WARN] NAS share does not allow chown; falling back to chmod 770 on ${MQTT_DATA_DIR}.${NC}"
-    remote_exec_cmd "${SUDO}chmod 770 $(shell_quote "$MQTT_DATA_DIR") || true"
-    local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 770 "$f" || true; done"
+    echo -e "${YELLOW}[WARN] NAS share does not allow chown; falling back to chmod 0770 on ${MQTT_DATA_DIR}.${NC}"
+    remote_exec_cmd "${SUDO}chmod 0770 $(shell_quote "$MQTT_DATA_DIR") || true"
+    local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0770 "$f" || true; done"
     remote_exec_cmd "${SUDO}sh -c $(shell_quote "$secure_script")"
   fi
 }
@@ -223,11 +223,11 @@ secure_container_permissions() {
   local container_script='set -e
 if [ -d /mosquitto/data ]; then
   if chown -R mosquitto:mosquitto /mosquitto/data >/dev/null 2>&1; then
-    chmod 700 /mosquitto/data || true
-    for f in /mosquitto/data/mosquitto.db*; do [ -e "$f" ] || continue; chmod 700 "$f" || true; done
+    chmod 0700 /mosquitto/data || true
+    for f in /mosquitto/data/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0700 "$f" || true; done
   else
-    chmod 770 /mosquitto/data || true
-    for f in /mosquitto/data/mosquitto.db*; do [ -e "$f" ] || continue; chmod 770 "$f" || true; done
+    chmod 0770 /mosquitto/data || true
+    for f in /mosquitto/data/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0770 "$f" || true; done
   fi
 fi
 if [ -f /mosquitto/config/passwd ]; then
@@ -361,6 +361,7 @@ EOF
 }
 
 main "$@"
+
 
 
 

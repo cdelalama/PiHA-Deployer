@@ -895,3 +895,14 @@ Files updated:
 Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.5)
 Notes: Script attempts chown/chmod inside and outside the container; if chown fails (e.g. CIFS), it downgrades to chmod 770 and still reapplies permissions after restart.
 ---
+## 2025-10-07 - Codex - Mosquitto chmod fallback for CIFS shares
+
+Summary: Mosquitto NAS bootstrap bumps to v1.0.6, switching chmod calls to 0700/0770 so BusyBox on CIFS shares accepts them when chown is blocked.
+
+Files updated:
+- infrastructure/mqtt/setup-mosquitto.sh (now 1.0.6)
+- docs/llm/HANDOFF.md (version list/status refreshed)
+
+Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.6)
+Notes: Script keeps hardening before/after container start; if NAS blocks chown, chmod 0770 succeeds without manual intervention.
+---

@@ -3,8 +3,8 @@
 ## Current Status
 
 Last Updated: 2025-10-07 - Codex
-Session Focus: Mosquitto bootstrap hardens NAS data directory permissions and tolerates NAS shares without chown support.
-Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance unconditionally. Mosquitto bootstrap 1.0.5 now copies compose assets, writes healthcheck credentials, enforces secure perms on mosquitto.db, and falls back to 770 when the NAS share rejects chown. Uninstaller v1.3.0 only prompts for preserving NAS config and MariaDB.
+Session Focus: Mosquitto bootstrap hardens NAS data directory permissions and tolerates NAS shares without chown support (chmod fallback).
+Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance unconditionally. Mosquitto bootstrap 1.0.6 now copies compose assets, writes healthcheck credentials, enforces secure perms on mosquitto.db, and falls back to chmod 0770 when the NAS share rejects chown. Uninstaller v1.3.0 only prompts for preserving NAS config and MariaDB.
 
 ## Immediate Context
 
@@ -32,7 +32,7 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 - home-assistant/install-home-assistant.sh: 1.4.0
 - home-assistant/uninstall-home-assistant.sh: 1.3.0
 - infrastructure/mariadb/setup-nas-mariadb.sh: 1.1.1
-- infrastructure/mqtt/setup-mosquitto.sh: 1.0.5
+- infrastructure/mqtt/setup-mosquitto.sh: 1.0.6
 - node-red/install-node-red.sh: 1.0.67
 - node-red/PiHA-Deployer-NodeRED.sh: 1.0.34
 - node-red/configure-syncthing.sh: 1.1.5
@@ -57,6 +57,7 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 ## Testing Notes
 - No automated tests executed; manual validation pending on real hardware.
 - Need to exercise installer/uninstaller prompts and error cases once access to the Pi + NAS lab is available.
+
 
 
 
