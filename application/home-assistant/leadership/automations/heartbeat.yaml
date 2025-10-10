@@ -13,12 +13,10 @@ action:
     data:
       topic: piha/leader/home-assistant/heartbeat
       payload: >
-        {{
-          {
-            "ts": now().isoformat(),
-            "host_id": "haos-primary"
-          } | tojson
-        }}
+        {
+          "ts": "{{ now().isoformat() }}",
+          "host_id": "haos-primary"
+        }
       retain: true
       qos: 1
 mode: single

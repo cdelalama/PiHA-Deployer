@@ -119,12 +119,13 @@ This enables monitoring/alerting dashboards to reconstruct history.
 - Align Node-RED leadership gating with the same contract once documented.
 
 Keep this document updated as tooling is implemented. Scripts leveraging this contract will live alongside this README.
+
 ## Automation Assets
-- utomations/heartbeat.yaml publishes the retained leader state and heartbeat every 30 seconds. Copy it to your HAOS config (/config/automations/leadership/heartbeat.yaml) or import it via the UI before bringing the standby online.
-- When using Git sync for HAOS, include this file in the repo so fresh installs enable the heartbeat automatically. Example deployment from the NAS:
-  `ash
+- `automations/heartbeat.yaml` publishes the retained leader state and heartbeat every 30 seconds; copy it into HAOS (`/config/automations/leadership/heartbeat.yaml`) or import it via the UI before bringing the standby online.
+- When Git-syncing the HAOS config, include this file so fresh installs emit the heartbeat automatically. Example push from the NAS:
+  ```bash
   scp application/home-assistant/leadership/automations/heartbeat.yaml \
       haos-primary:/config/automations/leadership/heartbeat.yaml
   ssh haos-primary "ha core reload"
-  `
-- Confirm the automation is active by subscribing to piha/leader/home-assistant/# and verifying the retained state and heartbeat payloads.
+  ```
+- TODO: add a control-plane bootstrap step that copies this automation into HAOS `/config` and reloads automations so the heartbeat comes up automatically after reinstall.
