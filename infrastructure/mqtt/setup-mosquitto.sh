@@ -203,36 +203,39 @@ setup_auth_files() {
     echo -e "${YELLOW}[WARN] MQTT_USER/MQTT_PASSWORD not set; broker will allow anonymous connections.${NC}"
   fi
 }
+
 secure_data_permissions() {
   echo -e "${BLUE}Hardening Mosquitto data permissions...${NC}"
   remote_exec_cmd "${SUDO}mkdir -p $(shell_quote "$MQTT_DATA_DIR")"
+  remote_exec_cmd "${SUDO}touch $(shell_quote "$MQTT_DATA_DIR/mosquitto.db")" || true
   if remote_exec_cmd "${SUDO}chown -R 1883:1883 $(shell_quote "$MQTT_DATA_DIR") >/dev/null 2>&1"; then
     remote_exec_cmd "${SUDO}chmod 0700 $(shell_quote "$MQTT_DATA_DIR") || true"
-    local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0700 "$f" || true; done"
-    remote_exec_cmd "${SUDO}sh -c $(shell_quote "$secure_script")"
   else
-    echo -e "${YELLOW}[WARN] NAS share does not allow chown; falling back to chmod 0770 on ${MQTT_DATA_DIR}.${NC}"
-    remote_exec_cmd "${SUDO}chmod 0770 $(shell_quote "$MQTT_DATA_DIR") || true"
-    local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0770 "$f" || true; done"
-    remote_exec_cmd "${SUDO}sh -c $(shell_quote "$secure_script")"
+    echo -e "${YELLOW}[WARN] NAS share does not allow chown; attempting chmod 0700 and falling back to 0770.${NC}"
+    remote_exec_cmd "${SUDO}chmod 0700 $(shell_quote "$MQTT_DATA_DIR") >/dev/null 2>&1 || ${SUDO}chmod 0770 $(shell_quote "$MQTT_DATA_DIR") || true"
   fi
+  local secure_script="for f in '$MQTT_DATA_DIR'/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0700 "$f" >/dev/null 2>&1 || chmod 0770 "$f" || true; done"
+  remote_exec_cmd "${SUDO}sh -c $(shell_quote "$secure_script")"
 }
 
 secure_container_permissions() {
   local container="${MQTT_CONTAINER_NAME:-mosquitto}"
   local container_script='set -e
 if [ -d /mosquitto/data ]; then
+  touch /mosquitto/data/mosquitto.db 2>/dev/null || true
   if chown -R mosquitto:mosquitto /mosquitto/data >/dev/null 2>&1; then
     chmod 0700 /mosquitto/data || true
-    for f in /mosquitto/data/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0700 "$f" || true; done
   else
-    chmod 0770 /mosquitto/data || true
-    for f in /mosquitto/data/mosquitto.db*; do [ -e "$f" ] || continue; chmod 0770 "$f" || true; done
+    chmod 0700 /mosquitto/data >/dev/null 2>&1 || chmod 0770 /mosquitto/data || true
   fi
+  for f in /mosquitto/data/mosquitto.db*; do
+    [ -e "$f" ] || continue
+    chmod 0700 "$f" >/dev/null 2>&1 || chmod 0770 "$f" || true
+  done
 fi
 if [ -f /mosquitto/config/passwd ]; then
   chown root:root /mosquitto/config/passwd >/dev/null 2>&1 || true
-  chmod 600 /mosquitto/config/passwd || true
+  chmod 0600 /mosquitto/config/passwd || true
 fi'
   remote_exec_cmd "${SUDO}docker exec $(shell_quote "$container") sh -c $(shell_quote "$container_script") || true"
 }
