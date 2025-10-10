@@ -906,3 +906,4 @@ Files updated:
 Version impact: yes (infrastructure/mqtt/setup-mosquitto.sh -> 1.0.6)
 Notes: Script keeps hardening before/after container start; if NAS blocks chown, chmod 0770 succeeds without manual intervention.
 ---
+## 2025-10-10 - Codex - Document HAOS heartbeat requirement\n\nSummary: Updated HANDOFF to highlight the need to publish the HAOS MQTT heartbeat before installing the standby node, and refreshed the Mosquitto version reference.\n\nFiles updated:\n- docs/llm/HANDOFF.md\n\nVersion impact: no\n---\n

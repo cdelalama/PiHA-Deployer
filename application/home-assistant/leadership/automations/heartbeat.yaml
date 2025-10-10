@@ -1,0 +1,26 @@
+alias: MQTT Leadership Heartbeat
+description: Publish retained leader state and heartbeat for NAS failover
+trigger:
+  - platform: time_pattern
+    seconds: "/30"
+action:
+  - service: mqtt.publish
+    data:
+      topic: piha/leader/home-assistant/state
+      payload: leader
+      retain: true
+      qos: 1
+  - service: mqtt.publish
+    data:
+      topic: piha/leader/home-assistant/heartbeat
+      payload: >
+        {{
+          {
+            "node_id": "haos-primary",
+            "state": "leader",
+            "timestamp": now().isoformat()
+          } | tojson
+        }}
+      retain: true
+      qos: 1
+mode: single

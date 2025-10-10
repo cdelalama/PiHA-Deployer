@@ -12,7 +12,8 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 - NAS Mosquitto bootstrap instructions now cover the automatic docker-compose download, credentialled healthcheck, post-deployment checks, and passwd permission fix.
 - `home-assistant/uninstall-home-assistant.sh` cleans the NAS MariaDB deployment unless the operator keeps it.
 - `.env.example`, README, and TEST_MATRIX describe the MariaDB-only workflow; SQLite guidance was removed.
-- Shared infrastructure services live under `infrastructure/` (`mariadb/` v1.1.1, `mqtt/` v1.0.4 with automatic data directory hardening).
+- HAOS primary must publish the MQTT leadership heartbeat (automation/blueprint pending); standby install blocked until heartbeat confirmed.
+- Shared infrastructure services live under `infrastructure/` (`mariadb/` v1.1.1, `mqtt/` v1.0.6 with automatic data directory hardening).
 
 ## Active Files
 - home-assistant/install-home-assistant.sh
@@ -40,11 +41,11 @@ Status: Home Assistant installer v1.4.0 validates the NAS MariaDB instance uncon
 - zigbee2mqtt/install-zigbee2mqtt.sh: 1.1.3
 
 ## Top Priorities
-1. Validate the MariaDB-only installer/uninstaller on hardware (fresh install, reuse flow, failure paths, NAS cleanup).
-2. Update dual-node runbooks once both HAOS primary and Docker standby are proven against the shared MariaDB/MQTT services.
-3. Continue the control-plane design (leadership topics, PoE automation, delayed Git replication).
-4. Plan the Zigbee2MQTT migration to the shared Mosquitto broker, including rollback steps.
-
+1. Publish the HAOS MQTT heartbeat automation/blueprint and confirm retained messages before enabling standby.
+2. Validate the MariaDB-only installer/uninstaller on hardware (fresh install, reuse flow, failure paths, NAS cleanup).
+3. Update dual-node runbooks once both HAOS primary and Docker standby are proven against the shared MariaDB/MQTT services.
+4. Continue the control-plane design (leadership topics, PoE automation, delayed Git replication).
+5. Plan the Zigbee2MQTT migration to the shared Mosquitto broker, including rollback steps.
 ## Do Not Touch
 - Production Zigbee2MQTT compose (still bundling Mosquitto) until the shared broker validation plan is complete.
 - Legacy installer branches that were not part of this refactor.
