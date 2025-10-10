@@ -5,7 +5,10 @@
       "Bash(where dd)",
       "Bash(ssh:*)",
       "Bash(npm view:*)",
-      "Bash(claude-code --version)"
+      "Bash(claude-code --version)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
