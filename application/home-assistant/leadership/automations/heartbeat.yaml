@@ -1,5 +1,4 @@
 alias: MQTT Leadership Heartbeat
-description: Publish retained leader state and heartbeat for NAS failover
 trigger:
   - platform: time_pattern
     seconds: "/30"
@@ -16,9 +15,8 @@ action:
       payload: >
         {{
           {
-            "node_id": "haos-primary",
-            "state": "leader",
-            "timestamp": now().isoformat()
+            "ts": now().isoformat(),
+            "host_id": "haos-primary"
           } | tojson
         }}
       retain: true
