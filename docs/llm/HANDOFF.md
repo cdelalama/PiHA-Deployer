@@ -3,9 +3,9 @@
 
 ## Current Status
 
-Last Updated: 2025-10-10 - Codex
-Session Focus: HAOS heartbeat automation documented and Mosquitto/MariaDB validated for standby bring-up.
-Status: Mosquitto bootstrap v1.0.6 and MariaDB v1.1.1 are healthy on the NAS. HAOS primary must copy/import \\pplication/home-assistant/leadership/automations/heartbeat.yaml\\ before installing the Docker standby so the leader publishes retained state/heartbeat messages.
+Last Updated: 2026-09-12 - Codex
+Session Focus: Preserve the existing HAOS work while registering this established DocKit adoption and synchronizing only the fleet independent-review policy.
+Status: `.dockit-enabled` now makes the repository discoverable to central fleet tooling. The Fable-preferred, exact-Opus-on-recorded-quota fallback policy is present in `LLM_START_HERE.md`; selective state remains at the prior full-template identity because this was not a complete DocKit upgrade. No application, Home Assistant, NAS, network, secret, deployment, or runtime state changed. The earlier Mosquitto/MariaDB and heartbeat notes below remain historical operational context and were not revalidated in this documentation-only slice.
 
 ## Immediate Context
 

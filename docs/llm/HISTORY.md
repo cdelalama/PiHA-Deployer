@@ -1,3 +1,16 @@
+## 2026-09-12 - Codex - Register existing DocKit adoption and sync review policy
+
+Summary: Added `.dockit-enabled` so central fleet discovery includes PiHA-Deployer and selectively inserted the operator-wide independent-review policy. Exact Fable `claude-fable-5-1` at high effort remains preferred; exact Opus `claude-opus-5[1m]` at high effort is allowed only after direct Fable quota exhaustion. The existing 4.9.5 full-template state was deliberately preserved because no full DocKit upgrade was performed.
+
+Files updated:
+- .dockit-enabled
+- LLM_START_HERE.md
+- docs/llm/HANDOFF.md
+- docs/llm/HISTORY.md
+
+Version impact: no (governance documentation and registration only; no versioned component script changed)
+Notes: No application, Home Assistant, NAS, network, secret, deployment, or runtime state changed.
+
 ## 2025-10-05 - Codex - Mosquitto bootstrap auto-fetch + health fix
 
 Summary: Updated the NAS Mosquitto setup helper to download docker-compose.yml when missing and to pass MQTT credentials to the healthcheck. Documentation highlights the automatic download and the need for a healthy status after applying passwd permissions. Script bumped to 1.0.3.
