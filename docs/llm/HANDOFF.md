@@ -3,9 +3,20 @@
 
 ## Current Status
 
+- Last Updated: 2026-09-23 - Codex (DocKit fleet update).
+- Source tooling: DocKit 4.16.2 adopted; see `docs/llm/DOCKIT_ADOPTION.md`.
+  Existing project work and runtime acceptance remain authoritative below.
+
+
 Last Updated: 2026-09-12 - Codex
 Session Focus: Preserve the existing HAOS work while registering this established DocKit adoption and synchronizing only the fleet independent-review policy.
-Status: `.dockit-enabled` now makes the repository discoverable to central fleet tooling. The Fable-preferred, exact-Opus-on-recorded-quota fallback policy is present in `LLM_START_HERE.md`; selective state remains at the prior full-template identity because this was not a complete DocKit upgrade. No application, Home Assistant, NAS, network, secret, deployment, or runtime state changed. The earlier Mosquitto/MariaDB and heartbeat notes below remain historical operational context and were not revalidated in this documentation-only slice.
+Historical 2026-09-12 policy (superseded by current Opus 5.5 guidance): Status: `.dockit-enabled` now makes the repository discoverable to central fleet tooling. The Fable-preferred, exact-Opus-on-recorded-quota fallback policy is present in `LLM_START_HERE.md`; selective state remains at the prior full-template identity because this was not a complete DocKit upgrade. No application, Home Assistant, NAS, network, secret, deployment, or runtime state changed. The earlier Mosquitto/MariaDB and heartbeat notes below remain historical operational context and were not revalidated in this documentation-only slice.
+
+## Open work -- next concrete step
+
+Review `docs/llm/DOCKIT_ADOPTION.md` and `docs/llm/DECISIONS.md` (D-001), then
+resume the existing HAOS work in `docs/OPERATIONS/ha-dual-node.md` under its
+original runtime gates. The kit update does not authorize deployment.
 
 ## Immediate Context
 
